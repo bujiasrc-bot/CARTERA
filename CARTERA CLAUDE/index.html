@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Cartera</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0c0c10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Cartera">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+:root {
+  --bg: #0c0c10;
+  --card: #13131a;
+  --card2: #1a1a24;
+  --border: #252535;
+  --text: #eeeaf4;
+  --muted: #6b6b85;
+  --accent: #c8b5ff;
+  --accent2: #7effd4;
+  --accent3: #ffb86c;
+  --red: #ff6b6b;
+  --green: #7effd4;
+  --yellow: #ffb86c;
+  --blue: #6bcfff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* NAV */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(12,12,16,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 4px;
+  overflow-x: auto;
+}
+.nav-brand {
+  font-family: 'Lora', serif;
+  font-size: 16px;
+  color: var(--accent);
+  letter-spacing: -0.3px;
+  margin-right: 24px;
+  white-space: nowrap;
+  padding: 16px 0;
+}
+.nav-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted);
+  font-family: 'Syne', sans-serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 16px 14px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* PAGES */
+.page { display: none; padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
+.page.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* SECTION TITLE */
+.section-title {
+  font-family: 'Lora', serif;
+  font-size: 22px; font-weight: 400;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.section-sub {
+  font-size: 12px; color: var(--muted);
+  margin-bottom: 24px; letter-spacing: 0.3px;
+}
+
+/* STAT CARDS */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent-line, var(--accent));
+  border-radius: 16px 16px 0 0;
+}
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+.stat-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+.neu { color: var(--yellow); }
+
+/* GRID 2 COL */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 16px; }
+@media(max-width:700px) { .grid2,.grid3 { grid-template-columns:1fr; } }
+
+/* CHART CARD */
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+}
+.chart-card.full { grid-column: 1/-1; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap.tall { height: 280px; }
+.chart-wrap.donut { height: 260px; }
+
+/* TABLE */
+.inv-table { width: 100%; border-collapse: collapse; }
+.inv-table th {
+  font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--border);
+}
+.inv-table th:first-child { text-align: left; }
+.inv-table td {
+  padding: 10px 12px; font-size: 13px; text-align: right;
+  border-bottom: 1px solid rgba(37,37,53,0.5);
+}
+.inv-table td:first-child { text-align: left; font-weight: 600; }
+.inv-table tr:last-child td { border-bottom: none; }
+.inv-table tr:hover td { background: rgba(200,181,255,0.03); }
+
+/* BADGE */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;
+}
+.badge.pos { background: rgba(126,255,212,0.12); color: var(--green); }
+.badge.neg { background: rgba(255,107,107,0.12); color: var(--red); }
+.badge.neu { background: rgba(255,184,108,0.12); color: var(--yellow); }
+
+/* PROGRESS BAR */
+.progress-wrap { margin-bottom: 12px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+.progress-label span:last-child { color: var(--muted); }
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+
+/* UPDATE FORM */
+.update-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.update-form-title {
+  font-family: 'Lora', serif; font-size: 18px;
+  margin-bottom: 6px;
+}
+.update-form-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block; font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+}
+.form-group input {
+  width: 100%; background: var(--card2);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
+  padding: 10px 14px; outline: none;
+  transition: border-color 0.2s;
+}
+.form-group input:focus { border-color: var(--accent); }
+.form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-save {
+  background: var(--accent); color: #0c0c10;
+  border: none; border-radius: 10px; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  padding: 10px 22px; transition: opacity 0.2s;
+}
+.btn-save:hover { opacity: 0.85; }
+.btn-reset {
+  background: none; border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+  color: var(--muted); padding: 10px 18px; transition: all 0.2s;
+}
+.btn-reset:hover { border-color: var(--red); color: var(--red); }
+.save-msg {
+  font-size: 12px; color: var(--green);
+  align-self: center; opacity: 0; transition: opacity 0.3s;
+}
+.save-msg.show { opacity: 1; }
+
+/* DONUT CENTER */
+.donut-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center; pointer-events: none;
+}
+.donut-center .big { font-size: 22px; font-weight: 700; }
+.donut-center .small { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* PROYECTO CARD (Urbanitae) */
+.proyecto-card {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.proy-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.proy-amount { font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+.proy-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+
+/* CASHFLOW */
+.cashflow-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.cashflow-row:last-child { border: none; }
+.cf-name { font-size: 13px; font-weight: 600; }
+.cf-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.cf-amount { font-size: 16px; font-weight: 700; }
+
+/* PRIVACY MODE */
+.btn-privacy {
+  background: none; border: 1px solid var(--border); border-radius: 8px;
+  color: var(--muted); cursor: pointer;
+  font-size: 16px; padding: 6px 10px;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.btn-privacy:hover { border-color: var(--accent); color: var(--accent); }
+.btn-privacy.active { border-color: var(--accent); color: var(--accent); background: rgba(200,181,255,0.08); }
+
+body.privacy .private {
+  color: transparent !important;
+  background: rgba(255,255,255,0.08) !important;
+  border-radius: 6px;
+  user-select: none;
+  pointer-events: none;
+  filter: blur(0px);
+  position: relative;
+  min-width: 60px;
+  display: inline-block;
+}
+body.privacy .private::after {
+  content: '••••••';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  font-size: 13px; letter-spacing: 2px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
+}
+body.privacy input.private {
+  color: transparent !important;
+  text-shadow: 0 0 8px rgba(200,181,255,0.4);
+  filter: blur(4px);
+  pointer-events: none;
+}
+body.privacy .private-row { opacity: 0; pointer-events: none; }
+
+/* Privacy: blur para elementos no-span */
+body.privacy .cf-amount,
+body.privacy .proy-amount,
+body.privacy .euro-val,
+body.privacy td.euro-cell { filter: blur(5px); user-select:none; pointer-events:none; }
+body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
+
+/* Last update label */
+.last-update { font-size: 11px; color: var(--muted); margin-top: 8px; text-align: right; }
+
+/* RANKING */
+.rank-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.rank-item:last-child { border: none; }
+.rank-num { font-size: 11px; color: var(--muted); width: 16px; }
+.rank-name { font-size: 13px; font-weight: 600; flex: 1; }
+.rank-bar-wrap { width: 120px; }
+.rank-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.rank-fill { height: 100%; border-radius: 3px; }
+.rank-pct { font-size: 13px; font-weight: 700; width: 52px; text-align: right; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">📊 Mi Cartera</div>
+  <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()" title="Modo privado">👁</button>
+  <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
+  <button class="nav-btn" onclick="showPage('inmuebles')">Inmuebles</button>
+  <button class="nav-btn" onclick="showPage('bestinver')">Bestinver</button>
+  <button class="nav-btn" onclick="showPage('bolsa')">Bolsa</button>
+  <button class="nav-btn" onclick="showPage('indexa')">Indexa</button>
+  <button class="nav-btn" onclick="showPage('urbanitae')">Urbanitae</button>
+  <button class="nav-btn" onclick="showPage('bbva')">BBVA PP</button>
+  <button class="nav-btn" onclick="showPage('myinvestor')">MyInvestor</button>
+</nav>
+
+<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+<div id="page-dashboard" class="page active">
+  <div class="section-title">Dashboard Global</div>
+  <div class="section-sub">Vista consolidada de toda tu cartera · actualiza los valores actuales aquí abajo</div>
+
+  <!-- FORMULARIO DE ACTUALIZACIÓN -->
+  <div class="update-form">
+    <div class="update-form-title">Actualizar valores actuales</div>
+    <div class="update-form-sub">Introduce el valor de mercado actual de cada posición. Los cambios se guardan automáticamente y se reflejan en toda la app.</div>
+    <div class="form-grid" id="update-form-grid"></div>
+    <div class="form-actions">
+      <button class="btn-save" onclick="saveValues()">Guardar y recalcular</button>
+      <button class="btn-reset" onclick="resetValues()">Restablecer originales</button>
+      <span class="save-msg" id="save-msg">✓ Guardado correctamente</span>
+    </div>
+    <div class="last-update" id="last-update-label"></div>
+  </div>
+
+  <!-- KPIs GLOBALES -->
+  <div class="stats-row" id="global-kpis"></div>
+
+  <!-- CHARTS FILA 1 -->
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Distribución actual</div>
+      <div class="chart-wrap donut" style="position:relative">
+        <canvas id="chart-donut"></canvas>
+        <div class="donut-center">
+          <div class="big" id="donut-total">—</div>
+          <div class="small">total</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Ranking por rentabilidad %</div>
+      <div id="ranking-list"></div>
+    </div>
+  </div>
+
+  <!-- CHARTS FILA 2 -->
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Invertido vs Valor actual por plataforma</div>
+      <div class="chart-wrap tall"><canvas id="chart-compare"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Ganancia € por plataforma</div>
+      <div class="chart-wrap tall"><canvas id="chart-ganancia"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INMUEBLES ═══════════════════ -->
+<div id="page-inmuebles" class="page">
+  <div class="section-title">Inmuebles</div>
+  <div class="section-sub">2 propiedades físicas en España · patrimonio inmobiliario directo</div>
+
+  <div class="stats-row">
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Total invertido</div>
+      <div class="stat-value" id="inm-inv"><span class="private">163.230 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value pos" id="inm-act"><span class="private">206.704 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">Plusvalía latente</div>
+      <div class="stat-value pos" id="inm-plus"><span class="private">+43.474 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Renta neta / mes</div>
+      <div class="stat-value" style="color:var(--blue)"><span class="private">~881 €</span></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Invertido vs Valor actual</div>
+      <div class="chart-wrap"><canvas id="chart-inm-compare"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Cashflow mensual neto</div>
+      <div style="padding-top:8px">
+        <div class="cashflow-row">
+          <div><div class="cf-name">🏠 Galdós</div><div class="cf-detail"><span class="private">Ingresos 515€ · Gastos 70€</span></div></div>
+          <div class="cf-amount pos euro-val">+444 €/mes</div>
+        </div>
+        <div class="cashflow-row">
+          <div><div class="cf-name">🏠 Mesías</div><div class="cf-detail"><span class="private">Ingresos 500€ · Gastos 63€</span></div></div>
+          <div class="cf-amount pos euro-val">+437 €/mes</div>
+        </div>
+        <div class="cashflow-row">
+          <div><div class="cf-name" style="color:var(--accent)">TOTAL NETO</div></div>
+          <div class="cf-amount euro-val" style="color:var(--accent);font-size:20px">+881 €/mes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Capital recuperado vía rentas</div>
+      <div style="padding-top:8px">
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Galdós</span><span><span class="private">13.287€ / 81.350€</span></span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:16.3%;background:var(--accent)"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">16.3% recuperado</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Mesías</span><span><span class="private">8.338€ / 81.880€</span></span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:10.2%;background:var(--blue)"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">10.2% recuperado</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Rentabilidad por inmueble</div>
+      <div class="chart-wrap"><canvas id="chart-inm-rent"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Detalle de gastos anuales</div>
+    <table class="inv-table">
+      <thead><tr><th>Inmueble</th><th>Comunidad</th><th>IBI</th><th>Basura</th><th>Seguro</th><th>Total/año</th><th>€/mes</th></tr></thead>
+      <tbody>
+        <tr><td>Galdós</td><td><span class="private">322 €</span></td><td><span class="private">157 €</span></td><td><span class="private">83 €</span></td><td><span class="private">283 €</span></td><td><span class="private">845 €</span></td><td><span class="private">70 €</span></td></tr>
+        <tr><td>Mesías</td><td><span class="private">480 €</span></td><td><span class="private">194 €</span></td><td><span class="private">83 €</span></td><td>—</td><td><span class="private">757 €</span></td><td><span class="private">63 €</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════ BESTINVER ═══════════════════ -->
+<div id="page-bestinver" class="page">
+  <div class="section-title">Bestinver</div>
+  <div class="section-sub">Fondos de inversión activos · gestora value española</div>
+
+  <div class="stats-row">
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Total invertido</div>
+      <div class="stat-value" id="best-inv"><span class="private">72.186 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value pos" id="best-act"><span class="private">104.000 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">Ganancia total</div>
+      <div class="stat-value pos" id="best-gan"><span class="private">+31.814 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Rentabilidad</div>
+      <div class="stat-value pos" id="best-rent">+44.1%</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Saldo por fondo</div>
+      <div class="chart-wrap"><canvas id="chart-best-fondos"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Reembolsos realizados</div>
+      <div class="chart-wrap"><canvas id="chart-best-reemb"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">Detalle de posiciones · valores calculados con NAV actual</div>
+    <table class="inv-table">
+      <thead><tr><th>Fondo</th><th>Titular</th><th>Invertido</th><th>Saldo actual</th><th>Ganancia €</th><th>Rent. %</th><th>NAV actual</th></tr></thead>
+      <tbody id="best-tabla-body">
+        <tr><td>Bestinfond F.I.</td><td style="text-align:right">C y R</td><td style="text-align:right"><span class="private">39.750 €</span></td><td style="text-align:right"><span class="private">57.094 €</span></td><td class="pos" style="text-align:right"><span class="private">+17.344 €</span></td><td style="text-align:right"><span class="badge pos">+43.6%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
+        <tr><td>Bestinver Mixto F.I.</td><td style="text-align:right">C y R</td><td style="text-align:right"><span class="private">31.686 €</span></td><td style="text-align:right"><span class="private">46.594 €</span></td><td class="pos" style="text-align:right"><span class="private">+14.908 €</span></td><td style="text-align:right"><span class="badge pos">+47.1%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">45,211524</td></tr>
+        <tr><td>Bestinfond F.I.</td><td style="text-align:right">Carmen</td><td style="text-align:right"><span class="private">555 €</span></td><td style="text-align:right"><span class="private">570 €</span></td><td class="pos" style="text-align:right"><span class="private">+15 €</span></td><td style="text-align:right"><span class="badge pos">+2.7%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
+        <tr><td>Bestinfond F.I.</td><td style="text-align:right">Marta</td><td style="text-align:right"><span class="private">500 €</span></td><td style="text-align:right"><span class="private">515 €</span></td><td class="pos" style="text-align:right"><span class="private">+15 €</span></td><td style="text-align:right"><span class="badge pos">+2.9%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════ BOLSA ═══════════════════ -->
+<div id="page-bolsa" class="page">
+  <div class="section-title">Bolsa</div>
+  <div class="section-sub">Acciones directas en BME · mercado español</div>
+
+  <div class="stats-row">
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Total invertido</div>
+      <div class="stat-value" id="bol-inv"><span class="private">8.438 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value" id="bol-act"><span class="private">9.313 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">P/G total</div>
+      <div class="stat-value pos" id="bol-gan"><span class="private">+874 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Rentabilidad</div>
+      <div class="stat-value pos" id="bol-rent">+10.4%</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Invertido vs Actual por valor</div>
+      <div class="chart-wrap"><canvas id="chart-bol-compare"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Distribución por sector</div>
+      <div class="chart-wrap donut" style="position:relative">
+        <canvas id="chart-bol-sector"></canvas>
+        <div class="donut-center">
+          <div class="small">sectores</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">Posiciones en cartera</div>
+    <table class="inv-table">
+      <thead><tr><th>Ticker</th><th>Nombre</th><th>Sector</th><th>Acciones</th><th>P. Compra</th><th>P. Actual</th><th>Total inv.</th><th>Saldo act.</th><th>P/G €</th><th>P/G %</th></tr></thead>
+      <tbody>
+        <tr><td>SCYR</td><td>Sacyr</td><td>Infraes.</td><td>715</td><td><span class="private">3,77€</span></td><td><span class="private">4,56€</span></td><td><span class="private">2.696€</span></td><td><span class="private">3.260€</span></td><td class="pos"><span class="private">+565€</span></td><td><span class="badge pos">+20.9%</span></td></tr>
+        <tr><td>SAN</td><td>Santander</td><td>Banca</td><td>229</td><td><span class="private">10,61€</span></td><td><span class="private">10,62€</span></td><td><span class="private">2.430€</span></td><td><span class="private">2.432€</span></td><td class="pos"><span class="private">+2€</span></td><td><span class="badge neu">+0.1%</span></td></tr>
+        <tr><td>IAG</td><td>IAG</td><td>Aerolíneas</td><td>350</td><td><span class="private">4,02€</span></td><td><span class="private">4,58€</span></td><td><span class="private">1.407€</span></td><td><span class="private">1.603€</span></td><td class="pos"><span class="private">+196€</span></td><td><span class="badge pos">+13.9%</span></td></tr>
+        <tr><td>SAN</td><td>Santander</td><td>Banca</td><td>190</td><td><span class="private">10,03€</span></td><td><span class="private">10,62€</span></td><td><span class="private">1.906€</span></td><td><span class="private">2.018€</span></td><td class="pos"><span class="private">+112€</span></td><td><span class="badge pos">+5.9%</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Dividendos cobrados</div>
+    <div class="cashflow-row">
+      <div><div class="cf-name">Sacyr (SCYR)</div><div class="cf-detail">BME · Feb 2026</div></div>
+      <div class="cf-amount pos euro-val"><span class="private">+34,65 €</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INDEXA ═══════════════════ -->
+<div id="page-indexa" class="page">
+  <div class="section-title">Indexa Capital</div>
+  <div class="section-sub">Roboadvisor · gestión indexada global · cartera automática</div>
+
+  <div class="stats-row">
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Invertido</div>
+      <div class="stat-value" id="idx-inv"><span class="private">13.850 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value pos" id="idx-act"><span class="private">15.192 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">Ganancia</div>
+      <div class="stat-value pos" id="idx-gan"><span class="private">+1.342 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Rentabilidad</div>
+      <div class="stat-value pos" id="idx-rent">+9.7%</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Invertido vs Valor actual</div>
+      <div class="chart-wrap"><canvas id="chart-idx-compare"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Características</div>
+      <div style="padding-top:8px">
+        <div class="cashflow-row">
+          <div class="cf-name">Tipo</div><div style="font-weight:600">Roboadvisor indexado</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Cobertura</div><div style="font-weight:600">Global</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Gestión</div><div style="font-weight:600">Automática (ETFs)</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Comisión aprox.</div><div style="font-weight:600">~0.43% anual</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Fecha inicio</div><div style="font-weight:600">2026</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ URBANITAE ═══════════════════ -->
+<div id="page-urbanitae" class="page">
+  <div class="section-title">Urbanitae</div>
+  <div class="section-sub">Crowdfunding inmobiliario · 4 proyectos en España</div>
+
+  <div class="stats-row">
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Total invertido</div>
+      <div class="stat-value"><span class="private">5.500 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value pos"><span class="private">5.548 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">Total cobrado</div>
+      <div class="stat-value neu"><span class="private">47,76 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Proyectos activos</div>
+      <div class="stat-value" style="color:var(--blue)">4</div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="proyecto-card">
+      <div class="proy-name">🏗️ Burgos</div>
+      <div class="proy-amount"><span class="private">500 €</span></div>
+      <div class="proy-row"><span>Estado</span><span class="badge neu">En curso</span></div>
+      <div class="proy-row"><span>Cobrado</span><span class="private">0 €</span></div>
+      <div class="proy-row"><span>Rentabilidad</span><span>0%</span></div>
+    </div>
+    <div class="proyecto-card">
+      <div class="proy-name">🏗️ Estepona</div>
+      <div class="proy-amount"><span class="private">1.500 €</span></div>
+      <div class="proy-row"><span>Estado</span><span class="badge neu">En curso</span></div>
+      <div class="proy-row"><span>Cobrado</span><span class="private">0 €</span></div>
+      <div class="proy-row"><span>Rentabilidad</span><span>0%</span></div>
+    </div>
+    <div class="proyecto-card" style="border-color:rgba(126,255,212,0.3)">
+      <div class="proy-name">🏗️ Madrid</div>
+      <div class="proy-amount"><span class="private">1.500 €</span></div>
+      <div class="proy-row"><span>Estado</span><span class="badge pos">Con retorno</span></div>
+      <div class="proy-row"><span>Cobrado</span><span class="pos private">47,76 €</span></div>
+      <div class="proy-row"><span>Rentabilidad</span><span class="pos">+3.18%</span></div>
+    </div>
+    <div class="proyecto-card">
+      <div class="proy-name">🏗️ Galicia</div>
+      <div class="proy-amount"><span class="private">2.000 €</span></div>
+      <div class="proy-row"><span>Estado</span><span class="badge neu">En curso</span></div>
+      <div class="proy-row"><span>Cobrado</span><span class="private">0 €</span></div>
+      <div class="proy-row"><span>Rentabilidad</span><span>0%</span></div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Inversión por proyecto</div>
+    <div class="chart-wrap"><canvas id="chart-urb"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ BBVA PP ═══════════════════ -->
+<div id="page-bbva" class="page">
+  <div class="section-title">BBVA Plan de Pensiones</div>
+  <div class="section-sub">PP 2040 · fondo de jubilación con horizonte largo plazo</div>
+
+  <div class="stats-row">
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Aportado</div>
+      <div class="stat-value" id="bbva-inv"><span class="private">21.248 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value pos" id="bbva-act"><span class="private">23.168 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">Ganancia</div>
+      <div class="stat-value pos" id="bbva-gan"><span class="private">+1.920 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Rentabilidad</div>
+      <div class="stat-value pos" id="bbva-rent">+9.0%</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Aportado vs Valor actual</div>
+      <div class="chart-wrap"><canvas id="chart-bbva-compare"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Características del plan</div>
+      <div style="padding-top:8px">
+        <div class="cashflow-row">
+          <div class="cf-name">Tipo</div><div style="font-weight:600">Plan de Pensiones</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Fondo</div><div style="font-weight:600">PP 2040</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Perfil</div><div style="font-weight:600">Jubilación / Largo plazo</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Cobertura</div><div style="font-weight:600">Global</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Liquidez</div><div style="font-weight:600;color:var(--yellow)">Ilíquido (hasta jubilación)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MYINVESTOR ═══════════════════ -->
+<div id="page-myinvestor" class="page">
+  <div class="section-title">MyInvestor</div>
+  <div class="section-sub">Sego Energías Renovables · fondo de inversión</div>
+
+  <div class="stats-row">
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Invertido</div>
+      <div class="stat-value" id="my-inv"><span class="private">3.012 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value pos" id="my-act"><span class="private">3.215 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">Ganancia</div>
+      <div class="stat-value pos" id="my-gan"><span class="private">+203 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Rentabilidad</div>
+      <div class="stat-value pos" id="my-rent">+6.7%</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Invertido vs Valor actual</div>
+      <div class="chart-wrap"><canvas id="chart-my-compare"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Características</div>
+      <div style="padding-top:8px">
+        <div class="cashflow-row">
+          <div class="cf-name">Fondo</div><div style="font-weight:600">Sego Energías Renovables</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Sector</div><div style="font-weight:600;color:var(--green)">Energías Renovables</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Tipo</div><div style="font-weight:600">Fondo de inversión</div>
+        </div>
+        <div class="cashflow-row">
+          <div class="cf-name">Plataforma</div><div style="font-weight:600">MyInvestor</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATOS BASE (valores de compra fijos) ───────────────────────────────────
+const BASE = {
+  inmuebles:  { inv: 163230,    act: 206704   },
+  bbva:       { inv: 21247.53,  act: 23167.68 },
+  indexa:     { inv: 13850,     act: 15191.68 },
+  bolsa:      { inv: 8438.29,   act: 9312.18  },
+  urbanitae:  { inv: 5500,      act: 5547.76  },
+  myinvestor: { inv: 3011.6,    act: 3214.69  },
+};
+
+// ─── BESTINVER: PARTICIPACIONES FIJAS (nunca cambian) ───────────────────────
+// Datos reales de la imagen de Bestinver del 19/05/26
+const BEST_FONDOS = [
+  { nombre: 'Bestinfond F.I.',    titular: 'C y R',   partic: 169.320881, coste: 39750.32 },
+  { nombre: 'Bestinver Mixto F.I.', titular: 'C y R', partic: 1030.581112, coste: 31686.34 },
+  { nombre: 'Bestinfond F.I.',    titular: 'Carmen',  partic: 1.691143,   coste: 555.00   },
+  { nombre: 'Bestinfond F.I.',    titular: 'Marta',   partic: 1.526110,   coste: 500.00   },
+];
+// NAV base (19 mayo 2026, según imagen)
+const NAV_BASE = { bestinfond: 337.196531, mixto: 45.211524 };
+// Coste total Bestinver
+const BEST_INV_TOTAL = BEST_FONDOS.reduce((s, f) => s + f.coste, 0); // 72491.66
+
+const LABELS = {
+  inmuebles: 'Inmuebles', bbva: 'BBVA PP',
+  indexa: 'Indexa Capital', bolsa: 'Bolsa', urbanitae: 'Urbanitae', myinvestor: 'MyInvestor'
+};
+
+const COLORS = {
+  inmuebles: '#c8b5ff', bbva: '#ffb86c',
+  indexa: '#7effd4', bolsa: '#6bcfff', urbanitae: '#ff9de2', myinvestor: '#a8ff78'
+};
+
+const STORAGE_KEY = 'cartera_valores_v3';
+
+// ─── ESTADO ─────────────────────────────────────────────────────────────────
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  const s = {};
+  for (const k in BASE) s[k] = BASE[k].act;
+  // NAV iniciales de Bestinver
+  s.nav_bestinfond = NAV_BASE.bestinfond;
+  s.nav_mixto      = NAV_BASE.mixto;
+  return s;
+}
+
+// Helper: calcula valor actual total Bestinver según NAVs guardados
+function bestActual(st) {
+  const nav_f = st.nav_bestinfond || NAV_BASE.bestinfond;
+  const nav_m = st.nav_mixto      || NAV_BASE.mixto;
+  return BEST_FONDOS.reduce((sum, f) => {
+    const nav = f.nombre.includes('Mixto') ? nav_m : nav_f;
+    return sum + f.partic * nav;
+  }, 0);
+}
+
+// Valor actual de cada fondo individual
+function bestFondoActual(fondo, st) {
+  const nav_f = st.nav_bestinfond || NAV_BASE.bestinfond;
+  const nav_m = st.nav_mixto      || NAV_BASE.mixto;
+  const nav = fondo.nombre.includes('Mixto') ? nav_m : nav_f;
+  return fondo.partic * nav;
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(STORAGE_KEY + '_ts', new Date().toISOString());
+}
+
+// ─── NAVEGACIÓN ─────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ─── FORMULARIO DE ACTUALIZACIÓN ────────────────────────────────────────────
+function buildForm() {
+  const grid = document.getElementById('update-form-grid');
+  grid.innerHTML = '';
+
+  // ── Sección Bestinver (NAV) ──
+  const sep = document.createElement('div');
+  sep.style.cssText = 'grid-column:1/-1; display:flex; align-items:center; gap:10px; margin-bottom:2px; margin-top:4px;';
+  sep.innerHTML = `
+    <span style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Bestinver · Valor Liquidativo (NAV)</span>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    <span style="font-size:10px;color:var(--muted)">Cópialo directamente de tu web Bestinver</span>`;
+  grid.appendChild(sep);
+
+  const navFields = [
+    { key: 'nav_bestinfond', label: 'NAV Bestinfond F.I.', hint: 'ej: 337,196531' },
+    { key: 'nav_mixto',      label: 'NAV Bestinver Mixto F.I.', hint: 'ej: 45,211524' },
+  ];
+  navFields.forEach(f => {
+    const g = document.createElement('div');
+    g.className = 'form-group';
+    const val = (state[f.key] || NAV_BASE[f.key === 'nav_bestinfond' ? 'bestinfond' : 'mixto']);
+    g.innerHTML = `
+      <label style="color:var(--accent)">${f.label}</label>
+      <input type="number" id="inp-${f.key}" value="${val.toFixed(6)}" step="0.000001" min="0" placeholder="${f.hint}" style="border-color:rgba(200,181,255,0.3)" class="private" />`;
+    grid.appendChild(g);
+  });
+
+  // Preview automático al escribir
+  ['nav_bestinfond','nav_mixto'].forEach(key => {
+    setTimeout(() => {
+      const inp = document.getElementById('inp-' + key);
+      if (inp) inp.addEventListener('input', () => { updateNavPreview(); updateBestTotal(); });
+    }, 50);
+  });
+
+  // ── Separador resto de plataformas ──
+  const sep2 = document.createElement('div');
+  sep2.style.cssText = 'grid-column:1/-1; display:flex; align-items:center; gap:10px; margin-top:10px; margin-bottom:2px;';
+  sep2.innerHTML = `<span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Otras plataformas · Valor actual total</span><div style="flex:1;height:1px;background:var(--border)"></div>`;
+  grid.appendChild(sep2);
+
+  // ── Casilla Bestinver Total (solo lectura, idéntico diseño al resto) ──
+  const bestTotalGroup = document.createElement('div');
+  bestTotalGroup.className = 'form-group';
+  const bestTotalVal = bestActual(state);
+  bestTotalGroup.innerHTML = `
+    <label>BESTINVER</label>
+    <input id="best-total-val" type="text"
+      value="${bestTotalVal.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2})}"
+      readonly class="private"
+      style="cursor:default; opacity:0.7;"
+      title="Calculado automáticamente desde los NAVs" />`;
+  grid.appendChild(bestTotalGroup);
+
+  for (const k in BASE) {
+    const g = document.createElement('div');
+    g.className = 'form-group';
+    g.innerHTML = `
+      <label>${LABELS[k].toUpperCase()}</label>
+      <input type="number" id="inp-${k}" value="${state[k].toFixed(2)}" step="0.01" min="0" placeholder="${BASE[k].act}" class="private" />`;
+    grid.appendChild(g);
+  }
+
+  // Preview Bestinver
+  const previewDiv = document.createElement('div');
+  previewDiv.id = 'nav-preview';
+  previewDiv.style.cssText = 'grid-column:1/-1; background:var(--card2); border:1px solid rgba(200,181,255,0.2); border-radius:12px; padding:14px 16px; display:none;';
+  grid.appendChild(previewDiv);
+
+  updateNavPreview();
+  updateLastUpdateLabel();
+}
+
+function updateBestTotal() {
+  const nav_f = parseFloat(document.getElementById('inp-nav_bestinfond')?.value) || state.nav_bestinfond;
+  const nav_m = parseFloat(document.getElementById('inp-nav_mixto')?.value)      || state.nav_mixto;
+  const tempSt = { nav_bestinfond: nav_f, nav_mixto: nav_m };
+  const total = bestActual(tempSt);
+  const el = document.getElementById('best-total-val');
+  if (el) el.value = total.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function updateNavPreview() {
+  const nav_f = parseFloat(document.getElementById('inp-nav_bestinfond')?.value) || state.nav_bestinfond;
+  const nav_m = parseFloat(document.getElementById('inp-nav_mixto')?.value)      || state.nav_mixto;
+  const tempSt = { nav_bestinfond: nav_f, nav_mixto: nav_m };
+  const total = bestActual(tempSt);
+  const ganancia = total - BEST_INV_TOTAL;
+  const pct = (ganancia / BEST_INV_TOTAL * 100).toFixed(2);
+
+  const rows = BEST_FONDOS.map(f => {
+    const v = bestFondoActual(f, tempSt);
+    const g = v - f.coste;
+    const p = (g / f.coste * 100).toFixed(2);
+    const color = g >= 0 ? 'var(--green)' : 'var(--red)';
+    return `<tr>
+      <td style="padding:5px 8px;font-size:12px;font-weight:600">${f.nombre.replace(' F.I.','')}</td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">${f.titular}</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right">${f.partic.toFixed(6)}</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">${fmt(v)}</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:${color};font-weight:700"><span class="private">${g>=0?'+':''}${fmt(g)}</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:${color}">${g>=0?'+':''}${p}%</td>
+    </tr>`;
+  }).join('');
+
+  const prev = document.getElementById('nav-preview');
+  if (!prev) return;
+  prev.style.display = 'block';
+  prev.innerHTML = `
+    <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
+      Vista previa Bestinver
+      <span style="margin-left:12px;font-size:13px;color:var(--text)">Total: <span class="private">${fmt(total)}</span></span>
+      <span style="margin-left:8px;font-size:13px;color:${ganancia>=0?'var(--green)':'var(--red)'}"><span class="private">${ganancia>=0?'+':''}${fmt(ganancia)}</span> (${ganancia>=0?'+':''}${pct}%)</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="font-size:10px;color:var(--muted);text-align:left;padding:4px 8px">Fondo</th>
+        <th style="font-size:10px;color:var(--muted);text-align:left;padding:4px 8px">Titular</th>
+        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Participaciones</th>
+        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Valor actual</th>
+        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Ganancia €</th>
+        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Rent. %</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function saveValues() {
+  // Guardar NAVs de Bestinver
+  const nav_f = parseFloat(document.getElementById('inp-nav_bestinfond').value);
+  const nav_m = parseFloat(document.getElementById('inp-nav_mixto').value);
+  if (!isNaN(nav_f) && nav_f > 0) state.nav_bestinfond = nav_f;
+  if (!isNaN(nav_m) && nav_m > 0) state.nav_mixto = nav_m;
+
+  // Guardar resto de plataformas
+  for (const k in BASE) {
+    const val = parseFloat(document.getElementById('inp-' + k).value);
+    if (!isNaN(val) && val >= 0) state[k] = val;
+  }
+  saveState();
+  updateLastUpdateLabel();
+  renderAll();
+  updateBestTotal();
+  const msg = document.getElementById('save-msg');
+  msg.classList.add('show');
+  setTimeout(() => msg.classList.remove('show'), 2500);
+}
+
+function resetValues() {
+  for (const k in BASE) state[k] = BASE[k].act;
+  state.nav_bestinfond = NAV_BASE.bestinfond;
+  state.nav_mixto      = NAV_BASE.mixto;
+  saveState();
+  buildForm();
+  renderAll();
+}
+
+function updateLastUpdateLabel() {
+  const ts = localStorage.getItem(STORAGE_KEY + '_ts');
+  const el = document.getElementById('last-update-label');
+  if (ts) {
+    const d = new Date(ts);
+    el.textContent = 'Última actualización: ' + d.toLocaleString('es-ES');
+  } else {
+    el.textContent = 'Usando valores originales del archivo';
+  }
+}
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+const fmt = (n, d=0) => n.toLocaleString('es-ES', { minimumFractionDigits:d, maximumFractionDigits:d }) + ' €';
+const fmtPct = (n) => (n >= 0 ? '+' : '') + (n * 100).toFixed(1) + '%';
+const cls = (v) => v >= 0 ? 'pos' : 'neg';
+
+// gain/rent para plataformas normales (BASE) o bestinver
+function gainFor(k) {
+  if (k === 'bestinver') return bestActual(state) - BEST_INV_TOTAL;
+  return state[k] - BASE[k].inv;
+}
+function rentFor(k) {
+  if (k === 'bestinver') return gainFor(k) / BEST_INV_TOTAL;
+  return gainFor(k) / BASE[k].inv;
+}
+function actFor(k) {
+  if (k === 'bestinver') return bestActual(state);
+  return state[k];
+}
+function invFor(k) {
+  if (k === 'bestinver') return BEST_INV_TOTAL;
+  return BASE[k].inv;
+}
+// Mantener compatibilidad con código que usa gain(k)/rent(k) sobre BASE keys
+const gain = (k) => gainFor(k);
+const rent = (k) => rentFor(k);
+
+const chartDefaults = {
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family:'Syne' } } },
+    y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family:'Syne' } } }
+  }
+};
+
+const charts = {};
+function makeChart(id, type, data, options={}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) { charts[id].destroy(); }
+  charts[id] = new Chart(ctx, { type, data, options: { ...chartDefaults, ...options, responsive:true, maintainAspectRatio:false } });
+}
+
+// ─── RENDER ALL ─────────────────────────────────────────────────────────────
+function renderAll() {
+  renderDashboard();
+  renderInmuebles();
+  renderBestinver();
+  renderBolsa();
+  renderIndexa();
+  renderUrbanitae();
+  renderBBVA();
+  renderMyInvestor();
+}
+
+// ── DASHBOARD ───────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const allKeys = [...Object.keys(BASE), 'bestinver'];
+  const totalInv = allKeys.reduce((s, k) => s + invFor(k), 0);
+  const totalAct = allKeys.reduce((s, k) => s + actFor(k), 0);
+  const totalGain = totalAct - totalInv;
+  const totalRent = totalGain / totalInv;
+
+  // KPIs
+  document.getElementById('global-kpis').innerHTML = `
+    <div class="stat-card" style="--accent-line:var(--muted)">
+      <div class="stat-label">Total invertido</div>
+      <div class="stat-value"><span class="private">${fmt(totalInv)}</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value ${cls(totalGain)}"><span class="private">${fmt(totalAct)}</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">Ganancia total</div>
+      <div class="stat-value ${cls(totalGain)}"><span class="private">${totalGain >= 0 ? '+' : ''}${fmt(totalGain)}</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Rentabilidad</div>
+      <div class="stat-value ${cls(totalRent)}">${fmtPct(totalRent)}</div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Plataformas</div>
+      <div class="stat-value" style="color:var(--accent)">${allKeys.length}</div>
+    </div>
+  `;
+
+  const allColors = { ...COLORS, bestinver: '#ff6b6b' };
+  const allLabels = { ...LABELS, bestinver: 'Bestinver' };
+
+  // Donut
+  document.getElementById('donut-total').textContent = fmt(totalAct);
+  makeChart('chart-donut', 'doughnut', {
+    labels: allKeys.map(k => allLabels[k]),
+    datasets: [{
+      data: allKeys.map(k => actFor(k)),
+      backgroundColor: allKeys.map(k => allColors[k]),
+      borderColor: '#0c0c10', borderWidth: 3, hoverOffset: 8
+    }]
+  }, {
+    cutout: '68%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: (ctx) => { const pct = ((ctx.raw / totalAct) * 100).toFixed(1); return ` ${fmt(ctx.raw)} (${pct}%)`; } } }
+    }
+  });
+
+  // Ranking
+  const sorted = [...allKeys].sort((a, b) => rentFor(b) - rentFor(a));
+  const maxR = rentFor(sorted[0]);
+  document.getElementById('ranking-list').innerHTML = sorted.map((k, i) => {
+    const r = rentFor(k);
+    const pct = (r * 100).toFixed(1);
+    const fillW = Math.max(0, (r / maxR) * 100).toFixed(1);
+    const color = r >= 0 ? 'var(--green)' : 'var(--red)';
+    return `
+      <div class="rank-item">
+        <span class="rank-num">${i + 1}</span>
+        <span class="rank-name">${allLabels[k]}</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"><div class="rank-fill" style="width:${fillW}%;background:${color}"></div></div>
+        </div>
+        <span class="rank-pct" style="color:${color}">${r >= 0 ? '+' : ''}${pct}%</span>
+      </div>`;
+  }).join('');
+
+  // Compare bars
+  makeChart('chart-compare', 'bar', {
+    labels: allKeys.map(k => allLabels[k]),
+    datasets: [
+      { label: 'Invertido', data: allKeys.map(k => invFor(k)), backgroundColor: 'rgba(107,108,133,0.6)', borderRadius: 6 },
+      { label: 'Actual',    data: allKeys.map(k => actFor(k)), backgroundColor: allKeys.map(k => allColors[k] + 'cc'), borderRadius: 6 }
+    ]
+  }, {
+    plugins: { legend: { display: true, labels: { color: '#9e9eb0', font: { family:'Syne' } } } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family:'Syne', size:10 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family:'Syne' }, callback: v => (v/1000).toFixed(0)+'k€' } }
+    }
+  });
+
+  // Ganancia bars
+  makeChart('chart-ganancia', 'bar', {
+    labels: allKeys.map(k => allLabels[k]),
+    datasets: [{
+      label: 'Ganancia €',
+      data: allKeys.map(k => gainFor(k)),
+      backgroundColor: allKeys.map(k => gainFor(k) >= 0 ? allColors[k] + 'bb' : '#ff6b6bbb'),
+      borderRadius: 6
+    }]
+  }, {
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family:'Syne', size:10 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family:'Syne' }, callback: v => (v >= 0 ? '+' : '') + (v/1000).toFixed(0)+'k€' } }
+    }
+  });
+}
+
+// ── INMUEBLES ───────────────────────────────────────────────────────────────
+function renderInmuebles() {
+  const inv = BASE.inmuebles.inv, act = state.inmuebles;
+  const g = act - inv;
+  document.getElementById('inm-inv').innerHTML  = `<span class="private">${fmt(inv)}</span>`;
+  document.getElementById('inm-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
+  document.getElementById('inm-plus').innerHTML = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
+
+  makeChart('chart-inm-compare', 'bar', {
+    labels: ['Galdós', 'Mesías'],
+    datasets: [
+      { label: 'Invertido', data: [81350, 81880], backgroundColor: 'rgba(107,108,133,0.6)', borderRadius: 6 },
+      { label: 'Actual',    data: [state.inmuebles * 100000/206704, state.inmuebles * 106704/206704], backgroundColor: ['#c8b5ffcc','#a8ff78cc'], borderRadius: 6 }
+    ]
+  }, { plugins: { legend: { display:true, labels: { color:'#9e9eb0', font:{family:'Syne'} } } },
+       scales: { x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'}}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>(v/1000).toFixed(0)+'k€'}} } });
+
+  makeChart('chart-inm-rent', 'bar', {
+    labels: ['Galdós\n(plusvalía)', 'Galdós\n(renta)', 'Mesías\n(plusvalía)', 'Mesías\n(renta)'],
+    datasets: [{ data: [22.9, 6.6, 23.2, 6.4], backgroundColor: ['#c8b5ffcc','#7effd4cc','#c8b5ffcc','#7effd4cc'], borderRadius: 6 }]
+  }, { scales: { x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:10}}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'%'}} } });
+}
+
+// ── BESTINVER ────────────────────────────────────────────────────────────────
+function renderBestinver() {
+  const inv = BEST_INV_TOTAL;
+  const act = bestActual(state);
+  const g = act - inv;
+
+  document.getElementById('best-inv').innerHTML  = `<span class="private">${fmt(inv)}</span>`;
+  document.getElementById('best-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
+  document.getElementById('best-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
+  document.getElementById('best-rent').textContent = fmtPct(g / inv);
+
+  const labels = BEST_FONDOS.map(f => f.nombre.replace(' F.I.','') + '\n(' + f.titular + ')');
+  const actuals = BEST_FONDOS.map(f => bestFondoActual(f, state));
+  const costes  = BEST_FONDOS.map(f => f.coste);
+
+  makeChart('chart-best-fondos', 'bar', {
+    labels,
+    datasets: [
+      { label: 'Invertido', data: costes,  backgroundColor: 'rgba(107,108,133,0.6)', borderRadius: 6 },
+      { label: 'Actual',    data: actuals, backgroundColor: '#ff6b6bcc', borderRadius: 6 }
+    ]
+  }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
+       scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>(v/1000).toFixed(0)+'k€'}}} });
+
+  makeChart('chart-best-reemb', 'doughnut', {
+    labels: ['Bestinver Mixto','Bestinfond'],
+    datasets: [{ data: [3000, 7000], backgroundColor: ['#ff6b6bcc','#ffb86ccc'], borderColor:'#0c0c10', borderWidth:3 }]
+  }, { cutout:'60%', plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}} });
+
+  // Actualizar tabla detalle
+  const tbody = document.getElementById('best-tabla-body');
+  if (tbody) {
+    tbody.innerHTML = BEST_FONDOS.map(f => {
+      const v = bestFondoActual(f, state);
+      const g = v - f.coste;
+      const p = (g / f.coste * 100).toFixed(2);
+      const nav = f.nombre.includes('Mixto') ? state.nav_mixto : state.nav_bestinfond;
+      return `<tr>
+        <td>${f.nombre}</td>
+        <td style="text-align:right">${f.titular}</td>
+        <td style="text-align:right"><span class="private">${fmt(f.coste)}</span></td>
+        <td style="text-align:right"><span class="private">${fmt(v)}</span></td>
+        <td class="${g>=0?'pos':'neg'}" style="text-align:right"><span class="private">${g>=0?'+':''}${fmt(g)}</span></td>
+        <td style="text-align:right"><span class="badge ${g>=0?'pos':'neg'}">${g>=0?'+':''}${p}%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">${nav.toFixed(6)}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+// ── BOLSA ────────────────────────────────────────────────────────────────────
+function renderBolsa() {
+  const inv = BASE.bolsa.inv, act = state.bolsa;
+  const g = act - inv;
+  document.getElementById('bol-inv').innerHTML  = `<span class="private">${fmt(inv)}</span>`;
+  document.getElementById('bol-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
+  document.getElementById('bol-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
+  document.getElementById('bol-rent').textContent = fmtPct(g / inv);
+
+  const ratio = act / 9312.18;
+  makeChart('chart-bol-compare', 'bar', {
+    labels: ['SCYR', 'SAN (x229)', 'IAG', 'SAN (x190)'],
+    datasets: [
+      { label:'Invertido', data:[2695.55,2430.04,1407,1905.7], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
+      { label:'Actual',    data:[3260.4*ratio,2431.98*ratio,1603*ratio,2017.8*ratio], backgroundColor:'#6bcfffcc', borderRadius:6 }
+    ]
+  }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
+       scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
+
+  makeChart('chart-bol-sector', 'doughnut', {
+    labels: ['Infraestructuras','Banca','Aerolíneas'],
+    datasets:[{ data:[2695.55,4347.74+1905.7,1407], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc'], borderColor:'#0c0c10', borderWidth:3 }]
+  }, { cutout:'60%', plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}} });
+}
+
+// ── INDEXA ───────────────────────────────────────────────────────────────────
+function renderIndexa() {
+  const inv = BASE.indexa.inv, act = state.indexa;
+  const g = act - inv;
+  document.getElementById('idx-inv').innerHTML  = `<span class="private">${fmt(inv)}</span>`;
+  document.getElementById('idx-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
+  document.getElementById('idx-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
+  document.getElementById('idx-rent').textContent = fmtPct(g / inv);
+
+  makeChart('chart-idx-compare', 'bar', {
+    labels: ['Indexa Capital'],
+    datasets: [
+      { label:'Invertido', data:[inv], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
+      { label:'Actual',    data:[act], backgroundColor:'#7effd4cc', borderRadius:6 }
+    ]
+  }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
+       scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>(v/1000).toFixed(0)+'k€'}}} });
+}
+
+// ── URBANITAE ─────────────────────────────────────────────────────────────────
+function renderUrbanitae() {
+  makeChart('chart-urb', 'bar', {
+    labels: ['Burgos','Estepona','Madrid','Galicia'],
+    datasets:[{ data:[500,1500,1500,2000], backgroundColor:['#c8b5ffcc','#ff9de2cc','#7effd4cc','#ffb86ccc'], borderRadius:8 }]
+  }, { scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
+}
+
+// ── BBVA ─────────────────────────────────────────────────────────────────────
+function renderBBVA() {
+  const inv = BASE.bbva.inv, act = state.bbva;
+  const g = act - inv;
+  document.getElementById('bbva-inv').innerHTML  = `<span class="private">${fmt(inv)}</span>`;
+  document.getElementById('bbva-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
+  document.getElementById('bbva-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
+  document.getElementById('bbva-rent').textContent = fmtPct(g / inv);
+
+  makeChart('chart-bbva-compare', 'bar', {
+    labels: ['BBVA PP 2040'],
+    datasets: [
+      { label:'Aportado', data:[inv], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
+      { label:'Actual',   data:[act], backgroundColor:'#ffb86ccc', borderRadius:6 }
+    ]
+  }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
+       scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',callback:v=>(v/1000).toFixed(0)+'k€'}}} });
+}
+
+// ── MYINVESTOR ────────────────────────────────────────────────────────────────
+function renderMyInvestor() {
+  const inv = BASE.myinvestor.inv, act = state.myinvestor;
+  const g = act - inv;
+  document.getElementById('my-inv').innerHTML  = `<span class="private">${fmt(inv)}</span>`;
+  document.getElementById('my-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
+  document.getElementById('my-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
+  document.getElementById('my-rent').textContent = fmtPct(g / inv);
+
+  makeChart('chart-my-compare', 'bar', {
+    labels: ['Sego Renovables'],
+    datasets: [
+      { label:'Invertido', data:[inv], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
+      { label:'Actual',    data:[act], backgroundColor:'#a8ff78cc', borderRadius:6 }
+    ]
+  }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
+       scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',callback:v=>v+'€'}}} });
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+buildForm();
+renderAll();
+
+// ─── PRIVACY MODE ────────────────────────────────────────────────────────────
+let privacyOn = localStorage.getItem('cartera_privacy') === '1';
+
+function togglePrivacy() {
+  privacyOn = !privacyOn;
+  localStorage.setItem('cartera_privacy', privacyOn ? '1' : '0');
+  applyPrivacy();
+}
+
+function applyPrivacy() {
+  const btn = document.getElementById('btn-privacy');
+  if (privacyOn) {
+    document.body.classList.add('privacy');
+    btn.classList.add('active');
+    btn.textContent = '🙈';
+    btn.title = 'Mostrar valores';
+  } else {
+    document.body.classList.remove('privacy');
+    btn.classList.remove('active');
+    btn.textContent = '👁';
+    btn.title = 'Modo privado';
+  }
+  // Ocultar/mostrar ejes Y de todos los gráficos activos
+  Object.values(charts).forEach(chart => {
+    if (chart.options.scales && chart.options.scales.y) {
+      chart.options.scales.y.ticks.display = !privacyOn;
+      chart.update('none');
+    }
+  });
+}
+
+// Aplicar estado guardado al cargar
+applyPrivacy();
+</script>
+</body>
+</html>
