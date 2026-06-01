@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/akapr/Downloads/index_11.html -->
-<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="es">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi Cartera</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -9,20 +9,20 @@
 <script>
 if (typeof Chart === 'undefined') {
   var s = document.createElement('script');
-s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+  s.src = 'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js';
   document.head.appendChild(s);
 }
 </script>
 
 <!-- PWA -->
-<link rel="manifest" href="file:///C:/Users/akapr/Downloads/manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0c0c10">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mi Cartera">
-<link rel="apple-touch-icon" href="file:///C:/Users/akapr/Downloads/icon-192.png">
-<link rel="icon" type="image/png" sizes="192x192" href="file:///C:/Users/akapr/Downloads/icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>
 :root {
   --bg: #0c0c10;
@@ -389,15 +389,15 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 <nav class="nav">
   <div class="nav-brand">📊 Mi Cartera</div>
   <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()" title="Modo privado">👁</button>
-  <button class="nav-btn" onclick="showPage(&#39;dashboard&#39;)">Dashboard</button>
-  <button class="nav-btn active" onclick="showPage(&#39;inmuebles&#39;)">Inmuebles</button>
-  <button class="nav-btn" onclick="showPage(&#39;bestinver&#39;)">Bestinver</button>
-  <button class="nav-btn" onclick="showPage(&#39;bolsa&#39;)">Bolsa</button>
-  <button class="nav-btn" onclick="showPage(&#39;indexa&#39;)">Indexa</button>
-  <button class="nav-btn" onclick="showPage(&#39;urbanitae&#39;)">Urbanitae</button>
-  <button class="nav-btn" onclick="showPage(&#39;bbva&#39;)">BBVA PP</button>
-  <button class="nav-btn" onclick="showPage(&#39;myinvestor&#39;)">MyInvestor</button>
-  <button class="nav-btn" style="color:var(--accent);border-bottom:2px solid transparent" onclick="showPage(&#39;datos&#39;)">✏️ Datos</button>
+  <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
+  <button class="nav-btn" onclick="showPage('inmuebles')">Inmuebles</button>
+  <button class="nav-btn" onclick="showPage('bestinver')">Bestinver</button>
+  <button class="nav-btn" onclick="showPage('bolsa')">Bolsa</button>
+  <button class="nav-btn" onclick="showPage('indexa')">Indexa</button>
+  <button class="nav-btn" onclick="showPage('urbanitae')">Urbanitae</button>
+  <button class="nav-btn" onclick="showPage('bbva')">BBVA PP</button>
+  <button class="nav-btn" onclick="showPage('myinvestor')">MyInvestor</button>
+  <button class="nav-btn" style="color:var(--accent);border-bottom:2px solid transparent" onclick="showPage('datos')">✏️ Datos</button>
 </nav>
 
 <!-- ═══════════════════ DATOS ═══════════════════ -->
@@ -415,11 +415,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="datos-grid">
       <div class="datos-field">
         <label>Valor actual Galdós</label>
-        <input type="number" id="d-inm-galdos" placeholder="ej: 100000" step="100">
+        <input type="number" id="d-inm-galdos" placeholder="ej: 100000" step="100" />
       </div>
       <div class="datos-field">
         <label>Valor actual Mesías</label>
-        <input type="number" id="d-inm-mesias" placeholder="ej: 106704" step="100">
+        <input type="number" id="d-inm-mesias" placeholder="ej: 106704" step="100" />
       </div>
     </div>
     <div class="datos-result" id="d-inm-result"></div>
@@ -439,11 +439,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="datos-grid">
       <div class="datos-field">
         <label>NAV Bestinfond F.I.</label>
-        <input type="number" id="d-nav-bestinfond" placeholder="ej: 337.196531" step="0.000001" class="nav-input">
+        <input type="number" id="d-nav-bestinfond" placeholder="ej: 337.196531" step="0.000001" class="nav-input" />
       </div>
       <div class="datos-field">
         <label>NAV Bestinver Mixto F.I.</label>
-        <input type="number" id="d-nav-mixto" placeholder="ej: 45.211524" step="0.000001" class="nav-input">
+        <input type="number" id="d-nav-mixto" placeholder="ej: 45.211524" step="0.000001" class="nav-input" />
       </div>
     </div>
     <div class="datos-result" id="d-best-result"></div>
@@ -462,15 +462,15 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="datos-grid">
       <div class="datos-field">
         <label>SCYR · Sacyr (€/acción)</label>
-        <input type="number" id="d-scyr" placeholder="ej: 4.56" step="0.01">
+        <input type="number" id="d-scyr" placeholder="ej: 4.56" step="0.01" />
       </div>
       <div class="datos-field">
         <label>SAN · Santander (€/acción)</label>
-        <input type="number" id="d-san" placeholder="ej: 10.62" step="0.01">
+        <input type="number" id="d-san" placeholder="ej: 10.62" step="0.01" />
       </div>
       <div class="datos-field">
         <label>IAG (€/acción)</label>
-        <input type="number" id="d-iag" placeholder="ej: 4.58" step="0.01">
+        <input type="number" id="d-iag" placeholder="ej: 4.58" step="0.01" />
       </div>
     </div>
     <div class="datos-result" id="d-bol-result"></div>
@@ -489,12 +489,12 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="datos-grid">
       <div class="datos-field">
         <label>Valor actual total</label>
-        <input type="number" id="d-indexa" placeholder="ej: 15191.68" step="0.01">
+        <input type="number" id="d-indexa" placeholder="ej: 15191.68" step="0.01" />
       </div>
     </div>
     <div class="datos-result" id="d-idx-result"></div>
     <div style="margin-top:14px">
-      <button class="btn-datos-save" onclick="saveDatosSimple(&#39;indexa&#39;,&#39;d-indexa&#39;,&#39;d-idx-result&#39;)">Guardar Indexa</button>
+      <button class="btn-datos-save" onclick="saveDatosSimple('indexa','d-indexa','d-idx-result')">Guardar Indexa</button>
     </div>
   </div>
 
@@ -508,12 +508,12 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="datos-grid">
       <div class="datos-field">
         <label>Valor actual total</label>
-        <input type="number" id="d-bbva" placeholder="ej: 23167.68" step="0.01">
+        <input type="number" id="d-bbva" placeholder="ej: 23167.68" step="0.01" />
       </div>
     </div>
     <div class="datos-result" id="d-bbva-result"></div>
     <div style="margin-top:14px">
-      <button class="btn-datos-save" onclick="saveDatosSimple(&#39;bbva&#39;,&#39;d-bbva&#39;,&#39;d-bbva-result&#39;)">Guardar BBVA PP</button>
+      <button class="btn-datos-save" onclick="saveDatosSimple('bbva','d-bbva','d-bbva-result')">Guardar BBVA PP</button>
     </div>
   </div>
 
@@ -527,12 +527,12 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="datos-grid">
       <div class="datos-field">
         <label>Valor de mercado</label>
-        <input type="number" id="d-myinvestor" placeholder="ej: 3383.24" step="0.01">
+        <input type="number" id="d-myinvestor" placeholder="ej: 3383.24" step="0.01" />
       </div>
     </div>
     <div class="datos-result" id="d-my-result"></div>
     <div style="margin-top:14px">
-      <button class="btn-datos-save" onclick="saveDatosSimple(&#39;myinvestor&#39;,&#39;d-myinvestor&#39;,&#39;d-my-result&#39;)">Guardar MyInvestor</button>
+      <button class="btn-datos-save" onclick="saveDatosSimple('myinvestor','d-myinvestor','d-my-result')">Guardar MyInvestor</button>
     </div>
   </div>
 
@@ -551,7 +551,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 </div>
 
 
-<div id="page-dashboard" class="page">
+<div id="page-dashboard" class="page active">
   <div class="section-title">Dashboard Global</div>
   <div class="section-sub">Vista consolidada de toda tu cartera · actualiza los valores actuales aquí abajo</div>
 
@@ -559,175 +559,33 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="update-form">
     <div class="update-form-title">Actualizar valores actuales</div>
     <div class="update-form-sub">Introduce el valor de mercado actual de cada posición. Los cambios se guardan automáticamente y se reflejan en toda la app.</div>
-    <div class="form-grid" id="update-form-grid"><div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-bottom: 2px; margin-top: 4px;">
-    <span style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Bestinver · Valor Liquidativo (NAV)</span>
-    <div style="flex:1;height:1px;background:var(--border)"></div>
-    <span style="font-size:10px;color:var(--muted)">Cópialo directamente de tu web Bestinver</span></div><div class="form-group">
-      <label style="color:var(--accent)">NAV Bestinfond F.I.</label>
-      <input type="number" id="inp-nav_bestinfond" value="337.196531" step="0.000001" min="0" placeholder="ej: 337,196531" style="border-color:rgba(200,181,255,0.3)" class="private"></div><div class="form-group">
-      <label style="color:var(--accent)">NAV Bestinver Mixto F.I.</label>
-      <input type="number" id="inp-nav_mixto" value="45.211524" step="0.000001" min="0" placeholder="ej: 45,211524" style="border-color:rgba(200,181,255,0.3)" class="private"></div><div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-top: 10px; margin-bottom: 2px;"><span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Otras plataformas · Valor actual total</span><div style="flex:1;height:1px;background:var(--border)"></div></div><div class="form-group">
-    <label>BESTINVER</label>
-    <input id="best-total-val" type="text" value="104.773,40" readonly="" class="private" style="cursor:default; opacity:0.7;" title="Calculado automáticamente desde los NAVs"></div><div class="form-group">
-      <label>INMUEBLES</label>
-      <input type="number" id="inp-inmuebles" value="206704.00" step="0.01" min="0" placeholder="206704" class="private"></div><div class="form-group">
-      <label>BBVA PP</label>
-      <input type="number" id="inp-bbva" value="23167.68" step="0.01" min="0" placeholder="23167.68" class="private"></div><div class="form-group">
-      <label>INDEXA CAPITAL</label>
-      <input type="number" id="inp-indexa" value="15191.68" step="0.01" min="0" placeholder="15191.68" class="private"></div><div class="form-group">
-      <label>BOLSA</label>
-      <input type="number" id="inp-bolsa" value="9312.18" step="0.01" min="0" placeholder="9312.18" class="private"></div><div class="form-group">
-      <label>URBANITAE</label>
-      <input type="number" id="inp-urbanitae" value="5547.76" step="0.01" min="0" placeholder="5547.76" class="private"></div><div class="form-group">
-      <label>MYINVESTOR</label>
-      <input type="number" id="inp-myinvestor" value="3214.69" step="0.01" min="0" placeholder="3214.69" class="private"></div><div id="nav-preview" style="grid-column: 1 / -1; background: var(--card2); border: 1px solid rgba(200, 181, 255, 0.2); border-radius: 12px; padding: 14px 16px; display: block;">
-    <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
-      Vista previa Bestinver
-      <span style="margin-left:12px;font-size:13px;color:var(--text)">Total: <span class="private">104.773 €</span></span>
-      <span style="margin-left:8px;font-size:13px;color:var(--green)"><span class="private">+32.282 €</span> (+44.53%)</span>
-    </div>
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr>
-        <th style="font-size:10px;color:var(--muted);text-align:left;padding:4px 8px">Fondo</th>
-        <th style="font-size:10px;color:var(--muted);text-align:left;padding:4px 8px">Titular</th>
-        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Participaciones</th>
-        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Valor actual</th>
-        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Ganancia €</th>
-        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Rent. %</th>
-      </tr></thead>
-      <tbody><tr>
-      <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
-      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">C y R</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right">169.320881</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">57.094 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+17.344 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+43.63%</td>
-    </tr><tr>
-      <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinver Mixto</td>
-      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">C y R</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right">1030.581112</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">46.594 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+14.908 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+47.05%</td>
-    </tr><tr>
-      <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
-      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">Carmen</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right">1.691143</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">570 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+15 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+2.75%</td>
-    </tr><tr>
-      <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
-      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">Marta</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right">1.526110</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">515 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+15 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+2.92%</td>
-    </tr></tbody>
-    </table></div></div>
+    <div class="form-grid" id="update-form-grid"></div>
     <div class="form-actions">
       <button class="btn-save" onclick="saveValues()">Guardar y recalcular</button>
       <button class="btn-reset" onclick="resetValues()">Restablecer originales</button>
       <span class="save-msg" id="save-msg">✓ Guardado correctamente</span>
     </div>
-    <div class="last-update" id="last-update-label">Usando valores originales del archivo</div>
+    <div class="last-update" id="last-update-label"></div>
   </div>
 
   <!-- KPIs GLOBALES -->
-  <div class="stats-row" id="global-kpis">
-    <div class="stat-card" style="--accent-line:var(--muted)">
-      <div class="stat-label">Total invertido</div>
-      <div class="stat-value"><span class="private">287.769 €</span></div>
-    </div>
-    <div class="stat-card" style="--accent-line:var(--green)">
-      <div class="stat-label">Valor actual</div>
-      <div class="stat-value pos"><span class="private">367.911 €</span></div>
-    </div>
-    <div class="stat-card" style="--accent-line:var(--yellow)">
-      <div class="stat-label">Ganancia total</div>
-      <div class="stat-value pos"><span class="private">+80.142 €</span></div>
-    </div>
-    <div class="stat-card" style="--accent-line:var(--blue)">
-      <div class="stat-label">Rentabilidad</div>
-      <div class="stat-value pos">+27.8%</div>
-    </div>
-    <div class="stat-card" style="--accent-line:var(--accent)">
-      <div class="stat-label">Plataformas</div>
-      <div class="stat-value" style="color:var(--accent)">7</div>
-    </div>
-  </div>
+  <div class="stats-row" id="global-kpis"></div>
 
   <!-- CHARTS FILA 1 -->
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Distribución actual</div>
       <div class="chart-wrap donut" style="position:relative">
-        <canvas id="chart-donut" width="834" height="455" style="display: block; box-sizing: border-box; height: 260px; width: 476px;"></canvas>
+        <canvas id="chart-donut"></canvas>
         <div class="donut-center">
-          <div class="big" id="donut-total">367.911 €</div>
+          <div class="big" id="donut-total">—</div>
           <div class="small">total</div>
         </div>
       </div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Ranking por rentabilidad %</div>
-      <div id="ranking-list">
-      <div class="rank-item">
-        <span class="rank-num">1</span>
-        <span class="rank-name">Bestinver</span>
-        <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:100.0%;background:var(--green)"></div></div>
-        </div>
-        <span class="rank-pct" style="color:var(--green)">+44.5%</span>
-      </div>
-      <div class="rank-item">
-        <span class="rank-num">2</span>
-        <span class="rank-name">Inmuebles</span>
-        <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:59.8%;background:var(--green)"></div></div>
-        </div>
-        <span class="rank-pct" style="color:var(--green)">+26.6%</span>
-      </div>
-      <div class="rank-item">
-        <span class="rank-num">3</span>
-        <span class="rank-name">Bolsa</span>
-        <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:23.3%;background:var(--green)"></div></div>
-        </div>
-        <span class="rank-pct" style="color:var(--green)">+10.4%</span>
-      </div>
-      <div class="rank-item">
-        <span class="rank-num">4</span>
-        <span class="rank-name">Indexa Capital</span>
-        <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:21.8%;background:var(--green)"></div></div>
-        </div>
-        <span class="rank-pct" style="color:var(--green)">+9.7%</span>
-      </div>
-      <div class="rank-item">
-        <span class="rank-num">5</span>
-        <span class="rank-name">BBVA PP</span>
-        <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:20.3%;background:var(--green)"></div></div>
-        </div>
-        <span class="rank-pct" style="color:var(--green)">+9.0%</span>
-      </div>
-      <div class="rank-item">
-        <span class="rank-num">6</span>
-        <span class="rank-name">MyInvestor</span>
-        <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:15.1%;background:var(--green)"></div></div>
-        </div>
-        <span class="rank-pct" style="color:var(--green)">+6.7%</span>
-      </div>
-      <div class="rank-item">
-        <span class="rank-num">7</span>
-        <span class="rank-name">Urbanitae</span>
-        <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:1.9%;background:var(--green)"></div></div>
-        </div>
-        <span class="rank-pct" style="color:var(--green)">+0.9%</span>
-      </div></div>
+      <div id="ranking-list"></div>
     </div>
   </div>
 
@@ -735,17 +593,17 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual por plataforma</div>
-      <div class="chart-wrap tall"><canvas id="chart-compare" width="834" height="490" style="display: block; box-sizing: border-box; height: 280px; width: 476px;"></canvas></div>
+      <div class="chart-wrap tall"><canvas id="chart-compare"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Ganancia € por plataforma</div>
-      <div class="chart-wrap tall"><canvas id="chart-ganancia" width="834" height="490" style="display: block; box-sizing: border-box; height: 280px; width: 476px;"></canvas></div>
+      <div class="chart-wrap tall"><canvas id="chart-ganancia"></canvas></div>
     </div>
   </div>
 </div>
 
 <!-- ═══════════════════ INMUEBLES ═══════════════════ -->
-<div id="page-inmuebles" class="page active">
+<div id="page-inmuebles" class="page">
   <div class="section-title">Inmuebles</div>
   <div class="section-sub">2 propiedades físicas en España · patrimonio inmobiliario directo</div>
 
@@ -771,7 +629,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-inm-compare" height="385" style="display: block; box-sizing: border-box; height: 220px; width: 476px;" width="834"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-inm-compare"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Cashflow mensual neto</div>
@@ -796,31 +654,21 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="chart-card">
       <div class="chart-title">Capital recuperado vía rentas</div>
       <div id="inm-progress" style="padding-top:8px">
-      <div class="progress-wrap">
-        <div class="progress-label">
-          <span style="font-size:15px;font-weight:700">Galdós</span>
-          <span class="private" style="font-size:14px;font-weight:700;color:var(--green)">13.804 € / <span class="private">81.350 €</span></span>
+        <div class="progress-wrap">
+          <div class="progress-label"><span style="font-size:15px;font-weight:700">Galdós</span><span class="private" style="font-size:14px;font-weight:700;color:var(--green)"><span class="private">13.287€</span> / <span class="private">81.350€</span></span></div>
+          <div class="progress-bar" style="height:12px"><div class="progress-fill" style="width:16.3%;background:var(--accent)"></div></div>
+          <div style="font-size:14px;font-weight:700;color:var(--green);margin-top:5px">+16.3% recuperado</div>
         </div>
-        <div class="progress-bar" style="height:12px">
-          <div class="progress-fill" style="width:17.0%;background:var(--accent)"></div>
+        <div class="progress-wrap" style="margin-top:16px">
+          <div class="progress-label"><span style="font-size:15px;font-weight:700">Mesías</span><span class="private" style="font-size:14px;font-weight:700;color:var(--green)"><span class="private">8.338€</span> / <span class="private">81.880€</span></span></div>
+          <div class="progress-bar" style="height:12px"><div class="progress-fill" style="width:10.2%;background:var(--blue)"></div></div>
+          <div style="font-size:14px;font-weight:700;color:var(--green);margin-top:5px">+10.2% recuperado</div>
         </div>
-        <div style="font-size:14px;font-weight:700;color:var(--green);margin-top:5px">+17.0% recuperado</div>
       </div>
-      <div class="progress-wrap" style="margin-top:16px">
-        <div class="progress-label">
-          <span style="font-size:15px;font-weight:700">Mesías</span>
-          <span class="private" style="font-size:14px;font-weight:700;color:var(--green)">9177 € / <span class="private">81.880 €</span></span>
-        </div>
-        <div class="progress-bar" style="height:12px">
-          <div class="progress-fill" style="width:11.2%;background:var(--blue)"></div>
-        </div>
-        <div style="font-size:14px;font-weight:700;color:var(--green);margin-top:5px">+11.2% recuperado</div>
-      </div>
-    </div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Rentabilidad por inmueble</div>
-      <div class="chart-wrap"><canvas id="chart-inm-rent" height="385" style="display: block; box-sizing: border-box; height: 220px; width: 476px;" width="834"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-inm-rent"></canvas></div>
     </div>
   </div>
 
@@ -844,30 +692,30 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="stats-row">
     <div class="stat-card" style="--accent-line:var(--accent)">
       <div class="stat-label">Total invertido</div>
-      <div class="stat-value" id="best-inv"><span class="private">72.492 €</span></div>
+      <div class="stat-value" id="best-inv"><span class="private">72.186 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value pos" id="best-act"><span class="private">104.773 €</span></div>
+      <div class="stat-value pos" id="best-act"><span class="private">104.000 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia total</div>
-      <div class="stat-value pos" id="best-gan"><span class="private">+32.282 €</span></div>
+      <div class="stat-value pos" id="best-gan"><span class="private">+31.814 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
-      <div class="stat-value pos" id="best-rent">+44.5%</div>
+      <div class="stat-value pos" id="best-rent">+44.1%</div>
     </div>
   </div>
 
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Saldo por fondo</div>
-      <div class="chart-wrap"><canvas id="chart-best-fondos" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-best-fondos"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Reembolsos realizados</div>
-      <div class="chart-wrap"><canvas id="chart-best-reemb" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-best-reemb"></canvas></div>
     </div>
   </div>
 
@@ -875,39 +723,12 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="chart-title">Detalle de posiciones · valores calculados con NAV actual</div>
     <table class="inv-table">
       <thead><tr><th>Fondo</th><th>Titular</th><th>Invertido</th><th>Saldo actual</th><th>Ganancia €</th><th>Rent. %</th><th>NAV actual</th></tr></thead>
-      <tbody id="best-tabla-body"><tr>
-        <td>Bestinfond F.I.</td>
-        <td style="text-align:right">C y R</td>
-        <td style="text-align:right"><span class="private">39.750 €</span></td>
-        <td style="text-align:right"><span class="private">57.094 €</span></td>
-        <td class="pos" style="text-align:right"><span class="private">+17.344 €</span></td>
-        <td style="text-align:right"><span class="badge pos">+43.63%</span></td>
-        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
-      </tr><tr>
-        <td>Bestinver Mixto F.I.</td>
-        <td style="text-align:right">C y R</td>
-        <td style="text-align:right"><span class="private">31.686 €</span></td>
-        <td style="text-align:right"><span class="private">46.594 €</span></td>
-        <td class="pos" style="text-align:right"><span class="private">+14.908 €</span></td>
-        <td style="text-align:right"><span class="badge pos">+47.05%</span></td>
-        <td style="text-align:right;color:var(--muted);font-size:12px">45.211524</td>
-      </tr><tr>
-        <td>Bestinfond F.I.</td>
-        <td style="text-align:right">Carmen</td>
-        <td style="text-align:right"><span class="private">555 €</span></td>
-        <td style="text-align:right"><span class="private">570 €</span></td>
-        <td class="pos" style="text-align:right"><span class="private">+15 €</span></td>
-        <td style="text-align:right"><span class="badge pos">+2.75%</span></td>
-        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
-      </tr><tr>
-        <td>Bestinfond F.I.</td>
-        <td style="text-align:right">Marta</td>
-        <td style="text-align:right"><span class="private">500 €</span></td>
-        <td style="text-align:right"><span class="private">515 €</span></td>
-        <td class="pos" style="text-align:right"><span class="private">+15 €</span></td>
-        <td style="text-align:right"><span class="badge pos">+2.92%</span></td>
-        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
-      </tr></tbody>
+      <tbody id="best-tabla-body">
+        <tr><td>Bestinfond F.I.</td><td style="text-align:right">C y R</td><td style="text-align:right"><span class="private">39.750 €</span></td><td style="text-align:right"><span class="private">57.094 €</span></td><td class="pos" style="text-align:right"><span class="private">+17.344 €</span></td><td style="text-align:right"><span class="badge pos">+43.6%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
+        <tr><td>Bestinver Mixto F.I.</td><td style="text-align:right">C y R</td><td style="text-align:right"><span class="private">31.686 €</span></td><td style="text-align:right"><span class="private">46.594 €</span></td><td class="pos" style="text-align:right"><span class="private">+14.908 €</span></td><td style="text-align:right"><span class="badge pos">+47.1%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">45,211524</td></tr>
+        <tr><td>Bestinfond F.I.</td><td style="text-align:right">Carmen</td><td style="text-align:right"><span class="private">555 €</span></td><td style="text-align:right"><span class="private">570 €</span></td><td class="pos" style="text-align:right"><span class="private">+15 €</span></td><td style="text-align:right"><span class="badge pos">+2.7%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
+        <tr><td>Bestinfond F.I.</td><td style="text-align:right">Marta</td><td style="text-align:right"><span class="private">500 €</span></td><td style="text-align:right"><span class="private">515 €</span></td><td class="pos" style="text-align:right"><span class="private">+15 €</span></td><td style="text-align:right"><span class="badge pos">+2.9%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
+      </tbody>
     </table>
   </div>
 </div>
@@ -920,11 +741,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="stats-row">
     <div class="stat-card" style="--accent-line:var(--accent)">
       <div class="stat-label">Total invertido</div>
-      <div class="stat-value" id="bol-inv"><span class="private">8438 €</span></div>
+      <div class="stat-value" id="bol-inv"><span class="private">8.438 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value" id="bol-act"><span class="private">9312 €</span></div>
+      <div class="stat-value" id="bol-act"><span class="private">9.313 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">P/G total</div>
@@ -939,12 +760,12 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Actual por valor</div>
-      <div class="chart-wrap"><canvas id="chart-bol-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-bol-compare"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Distribución por sector</div>
       <div class="chart-wrap donut" style="position:relative">
-        <canvas id="chart-bol-sector" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas>
+        <canvas id="chart-bol-sector"></canvas>
         <div class="donut-center">
           <div class="small">sectores</div>
         </div>
@@ -990,7 +811,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia</div>
-      <div class="stat-value pos" id="idx-gan"><span class="private">+1342 €</span></div>
+      <div class="stat-value pos" id="idx-gan"><span class="private">+1.342 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
@@ -1001,7 +822,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-idx-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-idx-compare"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Características</div>
@@ -1083,7 +904,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 
   <div class="chart-card">
     <div class="chart-title">Inversión por proyecto</div>
-    <div class="chart-wrap"><canvas id="chart-urb" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+    <div class="chart-wrap"><canvas id="chart-urb"></canvas></div>
   </div>
 </div>
 
@@ -1103,7 +924,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia</div>
-      <div class="stat-value pos" id="bbva-gan"><span class="private">+1920 €</span></div>
+      <div class="stat-value pos" id="bbva-gan"><span class="private">+1.920 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
@@ -1114,7 +935,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Aportado vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-bbva-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-bbva-compare"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Características del plan</div>
@@ -1147,11 +968,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="stats-row">
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Invertido</div>
-      <div class="stat-value" id="my-inv"><span class="private">3012 €</span></div>
+      <div class="stat-value" id="my-inv"><span class="private">3.012 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--accent)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value pos" id="my-act"><span class="private">3215 €</span></div>
+      <div class="stat-value pos" id="my-act"><span class="private">3.215 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia</div>
@@ -1166,7 +987,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-my-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-my-compare"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Características</div>
@@ -2245,6 +2066,5 @@ function showDatosSaved(msg) {
   checkAutoRentas();
 })();
 </script>
-
-
-</body></html>
+</body>
+</html>
