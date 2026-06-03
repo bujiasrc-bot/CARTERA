@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/akapr/Downloads/index_16.html -->
+<!-- saved from url=(0046)file:///C:/Users/akapr/Downloads/index_20.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -410,8 +410,8 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 <nav class="nav">
   <div class="nav-brand">📊 Mi Cartera</div>
   <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()" title="Modo privado">👁</button>
-  <button class="nav-btn" onclick="showPage(&#39;dashboard&#39;)">Dashboard</button>
-  <button class="nav-btn active" onclick="showPage(&#39;inmuebles&#39;)">Inmuebles</button>
+  <button class="nav-btn active" onclick="showPage(&#39;dashboard&#39;)">Dashboard</button>
+  <button class="nav-btn" onclick="showPage(&#39;inmuebles&#39;)">Inmuebles</button>
   <button class="nav-btn" onclick="showPage(&#39;bestinver&#39;)">Bestinver</button>
   <button class="nav-btn" onclick="showPage(&#39;bolsa&#39;)">Bolsa</button>
   <button class="nav-btn" onclick="showPage(&#39;indexa&#39;)">Indexa</button>
@@ -603,7 +603,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 </div>
 
 
-<div id="page-dashboard" class="page">
+<div id="page-dashboard" class="page active">
   <div class="section-title">Dashboard Global</div>
   <div class="section-sub">Vista consolidada de toda tu cartera · actualiza los valores actuales aquí abajo</div>
 
@@ -797,7 +797,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 </div>
 
 <!-- ═══════════════════ INMUEBLES ═══════════════════ -->
-<div id="page-inmuebles" class="page active">
+<div id="page-inmuebles" class="page">
   <div class="section-title">Inmuebles</div>
   <div class="section-sub">2 propiedades físicas en España · patrimonio inmobiliario directo</div>
 
@@ -816,29 +816,29 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Renta neta / mes</div>
-      <div class="stat-value" style="color:var(--blue)"><span class="private">+881 €</span></div>
+      <div class="stat-value" style="color:var(--blue)"><span class="private">+882 €</span></div>
     </div>
   </div>
 
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-inm-compare" height="385" style="display: block; box-sizing: border-box; height: 220px; width: 476px;" width="834"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-inm-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Cashflow mensual neto</div>
       <div style="padding-top:8px">
         <div class="cashflow-row">
           <div><div class="cf-name">🏠 Galdós</div><div class="cf-detail"><span class="private">Ingresos 515€ · Gastos 70€</span></div></div>
-          <div class="cf-amount pos euro-val">+444 €/mes</div>
+          <div class="cf-amount pos euro-val"><span class="private">+445 €/mes</span></div>
         </div>
         <div class="cashflow-row">
           <div><div class="cf-name">🏠 Mesías</div><div class="cf-detail"><span class="private">Ingresos 500€ · Gastos 63€</span></div></div>
-          <div class="cf-amount pos euro-val">+437 €/mes</div>
+          <div class="cf-amount pos euro-val"><span class="private">+437 €/mes</span></div>
         </div>
         <div class="cashflow-row">
           <div><div class="cf-name" style="color:var(--accent)">TOTAL NETO</div></div>
-          <div class="cf-amount euro-val" style="color:var(--accent);font-size:20px">+881 €/mes</div>
+          <div class="cf-amount euro-val" style="color:var(--accent);font-size:20px"><span class="private">+882 €/mes</span></div>
         </div>
       </div>
     </div>
@@ -851,13 +851,13 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <div class="progress-wrap">
         <div class="progress-label">
           <span style="font-size:15px;font-weight:700">Galdós</span>
-          <span style="font-size:14px;font-weight:700;color:var(--green)" class="private">13.804 € / <span class="private">81.350 €</span></span>
+          <span style="font-size:14px;font-weight:700;color:var(--green)" class="private">13.805 € / <span class="private">81.350 €</span></span>
         </div>
         <div class="progress-bar" style="height:12px">
           <div class="progress-fill" style="width:17%;background:var(--accent)"></div>
         </div>
         <div style="font-size:13px;color:var(--muted);margin-top:3px">
-          Rentas: <span class="private" style="color:var(--green)">+13.804 €</span>
+          Rentas: <span class="private" style="color:var(--green)">+13.805 €</span>
           
         </div>
         <div style="font-size:14px;font-weight:700;color:var(--green);margin-top:5px">+17.0% recuperado neto</div>
@@ -880,7 +880,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="chart-card">
       <div class="chart-title">Rentabilidad por inmueble</div>
-      <div class="chart-wrap"><canvas id="chart-inm-rent" height="385" style="display: block; box-sizing: border-box; height: 220px; width: 476px;" width="834"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-inm-rent" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
     </div>
   </div>
 
@@ -2040,7 +2040,7 @@ function loadRentas() {
 // ── Acumulación automática de rentas (comprueba si toca cobrar este mes)
 function checkAutoRentas() {
   const today = new Date();
-  const month = today.getMonth(); // 0-11
+  const month = today.getMonth();
   const year  = today.getFullYear();
   const day   = today.getDate();
   const rentas = loadRentas();
@@ -2049,9 +2049,15 @@ function checkAutoRentas() {
     if (day >= cfg.rentaDia) {
       const alreadyAdded = rentas.some(r => r.key === key && r.month === month && r.year === year);
       if (!alreadyAdded) {
+        // Calcular neto correcto según mes/año
+        let neto = cfg.rentaNeta;
+        if (key === 'galdos') {
+          // Nuevo inquilino desde abril 2026: 515€ - 70€ = 445€
+          neto = (year === 2026 && month >= 3) ? 445 : 430;
+        }
         rentas.push({
           key, month, year,
-          importe: cfg.rentaNeta,
+          importe: neto,
           nombre: cfg.nombre,
           auto: true,
           fecha: `${cfg.rentaDia}/${month+1}/${year}`
