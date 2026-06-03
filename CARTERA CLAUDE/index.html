@@ -1,11 +1,28 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0046)file:///C:/Users/akapr/Downloads/index_15.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi Cartera</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="./index_files/css2" rel="stylesheet">
+<script src="./index_files/chart.umd.min.js.descarga"></script>
+<script>
+if (typeof Chart === 'undefined') {
+  var s = document.createElement('script');
+  s.src = 'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js';
+  document.head.appendChild(s);
+}
+</script>
+
+<!-- PWA -->
+<link rel="manifest" href="file:///C:/Users/akapr/Downloads/manifest.json">
+<meta name="theme-color" content="#0c0c10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Cartera">
+<link rel="apple-touch-icon" href="file:///C:/Users/akapr/Downloads/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="file:///C:/Users/akapr/Downloads/icon-192.png">
 <style>
 :root {
   --bg: #0c0c10;
@@ -239,7 +256,6 @@ body {
 
 /* PRIVACY MODE */
 .btn-privacy {
-  margin-left: auto;
   background: none; border: 1px solid var(--border); border-radius: 8px;
   color: var(--muted); cursor: pointer;
   font-size: 16px; padding: 6px 10px;
@@ -298,25 +314,296 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 .rank-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
 .rank-fill { height: 100%; border-radius: 3px; }
 .rank-pct { font-size: 13px; font-weight: 700; width: 52px; text-align: right; }
+/* DATOS PAGE */
+.datos-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+}
+.datos-section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.datos-section-icon { font-size: 20px; }
+.datos-section-title { font-family: 'Lora', serif; font-size: 17px; }
+.datos-section-sub { font-size: 11px; color: var(--muted); margin-left: auto; }
+.datos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px; margin-bottom: 14px;
+}
+.datos-field label {
+  display: block; font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+}
+.datos-field input {
+  width: 100%; background: var(--card2);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-family: 'Syne', sans-serif;
+  font-size: 14px; font-weight: 600;
+  padding: 10px 14px; outline: none;
+  transition: border-color 0.2s;
+}
+.datos-field input:focus { border-color: var(--accent); }
+.datos-field input.nav-input { border-color: rgba(200,181,255,0.3); }
+.btn-datos-save {
+  background: var(--accent); color: #0c0c10;
+  border: none; border-radius: 10px; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  padding: 10px 22px; transition: opacity 0.2s;
+}
+.btn-datos-save:hover { opacity: 0.85; }
+.datos-result {
+  background: var(--card2); border-radius: 12px;
+  padding: 14px 16px; margin-top: 12px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.datos-result-item { text-align: center; }
+.datos-result-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.datos-result-val { font-size: 16px; font-weight: 700; }
+
+/* Rent tracker inmuebles */
+.rent-tracker { margin-top: 14px; }
+.rent-tracker-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.rent-month-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;
+  background: var(--card2);
+}
+.rent-month-name { font-size: 12px; font-weight: 600; }
+.rent-month-vals { display: flex; gap: 12px; font-size: 12px; }
+.rent-month-vals span { color: var(--muted); }
+.rent-month-vals b { color: var(--green); }
+.auto-badge {
+  font-size: 10px; background: rgba(126,255,212,0.12);
+  color: var(--green); padding: 2px 7px; border-radius: 20px;
+  font-weight: 700;
+}
+.gasto-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;
+  background: var(--card2);
+}
+.gasto-row .gasto-info { flex: 1; }
+.gasto-row .gasto-nombre { font-size: 12px; font-weight: 600; }
+.gasto-row .gasto-fecha { font-size: 11px; color: var(--muted); }
+.gasto-row .gasto-importe { font-size: 13px; font-weight: 700; color: var(--red); }
+.gasto-row .btn-del-gasto {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 14px; padding: 4px 8px;
+  transition: color 0.2s;
+}
+.gasto-row .btn-del-gasto:hover { color: var(--red); }
+.gastos-tracker { margin-top: 14px; }
+.gastos-tracker-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.gastos-separador {
+  height: 1px; background: var(--border);
+  margin: 16px 0; grid-column: 1/-1;
+}
 </style>
 </head>
 <body>
 
 <nav class="nav">
   <div class="nav-brand">📊 Mi Cartera</div>
-  <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
-  <button class="nav-btn" onclick="showPage('inmuebles')">Inmuebles</button>
-  <button class="nav-btn" onclick="showPage('bestinver')">Bestinver</button>
-  <button class="nav-btn" onclick="showPage('bolsa')">Bolsa</button>
-  <button class="nav-btn" onclick="showPage('indexa')">Indexa</button>
-  <button class="nav-btn" onclick="showPage('urbanitae')">Urbanitae</button>
-  <button class="nav-btn" onclick="showPage('bbva')">BBVA PP</button>
-  <button class="nav-btn" onclick="showPage('myinvestor')">MyInvestor</button>
   <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()" title="Modo privado">👁</button>
+  <button class="nav-btn" onclick="showPage(&#39;dashboard&#39;)">Dashboard</button>
+  <button class="nav-btn active" onclick="showPage(&#39;inmuebles&#39;)">Inmuebles</button>
+  <button class="nav-btn" onclick="showPage(&#39;bestinver&#39;)">Bestinver</button>
+  <button class="nav-btn" onclick="showPage(&#39;bolsa&#39;)">Bolsa</button>
+  <button class="nav-btn" onclick="showPage(&#39;indexa&#39;)">Indexa</button>
+  <button class="nav-btn" onclick="showPage(&#39;urbanitae&#39;)">Urbanitae</button>
+  <button class="nav-btn" onclick="showPage(&#39;bbva&#39;)">BBVA PP</button>
+  <button class="nav-btn" onclick="showPage(&#39;myinvestor&#39;)">MyInvestor</button>
+  <button class="nav-btn" style="color:var(--accent);border-bottom:2px solid transparent" onclick="showPage(&#39;datos&#39;)">✏️ Datos</button>
 </nav>
 
-<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
-<div id="page-dashboard" class="page active">
+<!-- ═══════════════════ DATOS ═══════════════════ -->
+<div id="page-datos" class="page">
+  <div class="section-title">✏️ Actualizar Datos</div>
+  <div class="section-sub">Introduce aquí los datos de cada inversión · se actualizan todas las pestañas y el Dashboard al guardar</div>
+
+  <!-- INMUEBLES -->
+  <div class="datos-section">
+    <div class="datos-section-header">
+      <span class="datos-section-icon">🏠</span>
+      <span class="datos-section-title">Inmuebles</span>
+      <span class="datos-section-sub">Las rentas se acumulan automáticamente cada mes</span>
+    </div>
+    <div class="datos-grid">
+      <div class="datos-field">
+        <label>Valor actual Galdós</label>
+        <input type="number" id="d-inm-galdos" placeholder="ej: 100000" step="100">
+      </div>
+      <div class="datos-field">
+        <label>Valor actual Mesías</label>
+        <input type="number" id="d-inm-mesias" placeholder="ej: 106704" step="100">
+      </div>
+    </div>
+    <div class="datos-result" id="d-inm-result"></div>
+    <div class="rent-tracker" id="rent-tracker"></div>
+
+    <!-- GASTOS EXTRAORDINARIOS -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px">🔧 Gastos extraordinarios</div>
+      <div class="datos-grid">
+        <div class="datos-field">
+          <label>Piso</label>
+          <select id="g-piso" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:&#39;Syne&#39;,sans-serif;font-size:14px;font-weight:600;padding:10px 14px;outline:none;">
+            <option value="galdos">Galdós</option>
+            <option value="mesias">Mesías</option>
+          </select>
+        </div>
+        <div class="datos-field">
+          <label>Concepto</label>
+          <input type="text" id="g-concepto" placeholder="ej: Reforma baño" style="font-weight:400">
+        </div>
+        <div class="datos-field">
+          <label>Importe (€)</label>
+          <input type="number" id="g-importe" placeholder="ej: 350" step="0.01" min="0">
+        </div>
+        <div class="datos-field">
+          <label>Fecha</label>
+          <input type="date" id="g-fecha">
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn-datos-save" style="background:var(--red)" onclick="addGastoExtraordinario()">+ Añadir gasto</button>
+      </div>
+      <div class="gastos-tracker" id="gastos-tracker"></div>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn-datos-save" onclick="saveDatosInmuebles()">Guardar inmuebles</button>
+    </div>
+  </div>
+
+  <!-- BESTINVER -->
+  <div class="datos-section">
+    <div class="datos-section-header">
+      <span class="datos-section-icon">📈</span>
+      <span class="datos-section-title">Bestinver</span>
+      <span class="datos-section-sub">Copia el Valor Liquidativo de tu web Bestinver</span>
+    </div>
+    <div class="datos-grid">
+      <div class="datos-field">
+        <label>NAV Bestinfond F.I.</label>
+        <input type="number" id="d-nav-bestinfond" placeholder="ej: 337.196531" step="0.000001" class="nav-input">
+      </div>
+      <div class="datos-field">
+        <label>NAV Bestinver Mixto F.I.</label>
+        <input type="number" id="d-nav-mixto" placeholder="ej: 45.211524" step="0.000001" class="nav-input">
+      </div>
+    </div>
+    <div class="datos-result" id="d-best-result"></div>
+    <div style="margin-top:14px">
+      <button class="btn-datos-save" onclick="saveDatosBestinver()">Guardar Bestinver</button>
+    </div>
+  </div>
+
+  <!-- BOLSA -->
+  <div class="datos-section">
+    <div class="datos-section-header">
+      <span class="datos-section-icon">📉</span>
+      <span class="datos-section-title">Bolsa</span>
+      <span class="datos-section-sub">Precio actual de cada acción en BME</span>
+    </div>
+    <div class="datos-grid">
+      <div class="datos-field">
+        <label>SCYR · Sacyr (€/acción)</label>
+        <input type="number" id="d-scyr" placeholder="ej: 4.56" step="0.01">
+      </div>
+      <div class="datos-field">
+        <label>SAN · Santander (€/acción)</label>
+        <input type="number" id="d-san" placeholder="ej: 10.62" step="0.01">
+      </div>
+      <div class="datos-field">
+        <label>IAG (€/acción)</label>
+        <input type="number" id="d-iag" placeholder="ej: 4.58" step="0.01">
+      </div>
+    </div>
+    <div class="datos-result" id="d-bol-result"></div>
+    <div style="margin-top:14px">
+      <button class="btn-datos-save" onclick="saveDatosBolsa()">Guardar Bolsa</button>
+    </div>
+  </div>
+
+  <!-- INDEXA -->
+  <div class="datos-section">
+    <div class="datos-section-header">
+      <span class="datos-section-icon">🤖</span>
+      <span class="datos-section-title">Indexa Capital</span>
+      <span class="datos-section-sub">Valor total de tu cartera</span>
+    </div>
+    <div class="datos-grid">
+      <div class="datos-field">
+        <label>Valor actual total</label>
+        <input type="number" id="d-indexa" placeholder="ej: 15191.68" step="0.01">
+      </div>
+    </div>
+    <div class="datos-result" id="d-idx-result"></div>
+    <div style="margin-top:14px">
+      <button class="btn-datos-save" onclick="saveDatosSimple(&#39;indexa&#39;,&#39;d-indexa&#39;,&#39;d-idx-result&#39;)">Guardar Indexa</button>
+    </div>
+  </div>
+
+  <!-- BBVA PP -->
+  <div class="datos-section">
+    <div class="datos-section-header">
+      <span class="datos-section-icon">🏦</span>
+      <span class="datos-section-title">BBVA Plan de Pensiones</span>
+      <span class="datos-section-sub">Valor actual del plan PP 2040</span>
+    </div>
+    <div class="datos-grid">
+      <div class="datos-field">
+        <label>Valor actual total</label>
+        <input type="number" id="d-bbva" placeholder="ej: 23167.68" step="0.01">
+      </div>
+    </div>
+    <div class="datos-result" id="d-bbva-result"></div>
+    <div style="margin-top:14px">
+      <button class="btn-datos-save" onclick="saveDatosSimple(&#39;bbva&#39;,&#39;d-bbva&#39;,&#39;d-bbva-result&#39;)">Guardar BBVA PP</button>
+    </div>
+  </div>
+
+  <!-- MYINVESTOR -->
+  <div class="datos-section">
+    <div class="datos-section-header">
+      <span class="datos-section-icon">🌱</span>
+      <span class="datos-section-title">MyInvestor · Sego Renovables</span>
+      <span class="datos-section-sub">Valor de mercado de tu cartera</span>
+    </div>
+    <div class="datos-grid">
+      <div class="datos-field">
+        <label>Valor de mercado</label>
+        <input type="number" id="d-myinvestor" placeholder="ej: 3383.24" step="0.01">
+      </div>
+    </div>
+    <div class="datos-result" id="d-my-result"></div>
+    <div style="margin-top:14px">
+      <button class="btn-datos-save" onclick="saveDatosSimple(&#39;myinvestor&#39;,&#39;d-myinvestor&#39;,&#39;d-my-result&#39;)">Guardar MyInvestor</button>
+    </div>
+  </div>
+
+  <!-- URBANITAE -->
+  <div class="datos-section">
+    <div class="datos-section-header">
+      <span class="datos-section-icon">🏗️</span>
+      <span class="datos-section-title">Urbanitae</span>
+      <span class="datos-section-sub">Sin cambios frecuentes · actualiza solo cuando haya retorno</span>
+    </div>
+    <div style="color:var(--muted);font-size:13px;padding:8px 0">
+      Los proyectos de Urbanitae no requieren actualización mensual. Cuando recibas un retorno en algún proyecto avísame y lo actualizamos juntos.
+    </div>
+  </div>
+
+</div>
+
+
+<div id="page-dashboard" class="page">
   <div class="section-title">Dashboard Global</div>
   <div class="section-sub">Vista consolidada de toda tu cartera · actualiza los valores actuales aquí abajo</div>
 
@@ -324,33 +611,175 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="update-form">
     <div class="update-form-title">Actualizar valores actuales</div>
     <div class="update-form-sub">Introduce el valor de mercado actual de cada posición. Los cambios se guardan automáticamente y se reflejan en toda la app.</div>
-    <div class="form-grid" id="update-form-grid"></div>
+    <div class="form-grid" id="update-form-grid"><div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-bottom: 2px; margin-top: 4px;">
+    <span style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Bestinver · Valor Liquidativo (NAV)</span>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    <span style="font-size:10px;color:var(--muted)">Cópialo directamente de tu web Bestinver</span></div><div class="form-group">
+      <label style="color:var(--accent)">NAV Bestinfond F.I.</label>
+      <input type="number" id="inp-nav_bestinfond" value="337.196531" step="0.000001" min="0" placeholder="ej: 337,196531" style="border-color:rgba(200,181,255,0.3)" class="private"></div><div class="form-group">
+      <label style="color:var(--accent)">NAV Bestinver Mixto F.I.</label>
+      <input type="number" id="inp-nav_mixto" value="45.211524" step="0.000001" min="0" placeholder="ej: 45,211524" style="border-color:rgba(200,181,255,0.3)" class="private"></div><div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-top: 10px; margin-bottom: 2px;"><span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Otras plataformas · Valor actual total</span><div style="flex:1;height:1px;background:var(--border)"></div></div><div class="form-group">
+    <label>BESTINVER</label>
+    <input id="best-total-val" type="text" value="104.773,40" readonly="" class="private" style="cursor:default; opacity:0.7;" title="Calculado automáticamente desde los NAVs"></div><div class="form-group">
+      <label>INMUEBLES</label>
+      <input type="number" id="inp-inmuebles" value="206704.00" step="0.01" min="0" placeholder="206704" class="private"></div><div class="form-group">
+      <label>BBVA PP</label>
+      <input type="number" id="inp-bbva" value="23167.68" step="0.01" min="0" placeholder="23167.68" class="private"></div><div class="form-group">
+      <label>INDEXA CAPITAL</label>
+      <input type="number" id="inp-indexa" value="15191.68" step="0.01" min="0" placeholder="15191.68" class="private"></div><div class="form-group">
+      <label>BOLSA</label>
+      <input type="number" id="inp-bolsa" value="9312.18" step="0.01" min="0" placeholder="9312.18" class="private"></div><div class="form-group">
+      <label>URBANITAE</label>
+      <input type="number" id="inp-urbanitae" value="5547.76" step="0.01" min="0" placeholder="5547.76" class="private"></div><div class="form-group">
+      <label>MYINVESTOR</label>
+      <input type="number" id="inp-myinvestor" value="3214.69" step="0.01" min="0" placeholder="3214.69" class="private"></div><div id="nav-preview" style="grid-column: 1 / -1; background: var(--card2); border: 1px solid rgba(200, 181, 255, 0.2); border-radius: 12px; padding: 14px 16px; display: block;">
+    <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
+      Vista previa Bestinver
+      <span style="margin-left:12px;font-size:13px;color:var(--text)">Total: <span class="private">104.773 €</span></span>
+      <span style="margin-left:8px;font-size:13px;color:var(--green)"><span class="private">+32.282 €</span> (+44.53%)</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="font-size:10px;color:var(--muted);text-align:left;padding:4px 8px">Fondo</th>
+        <th style="font-size:10px;color:var(--muted);text-align:left;padding:4px 8px">Titular</th>
+        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Participaciones</th>
+        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Valor actual</th>
+        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Ganancia €</th>
+        <th style="font-size:10px;color:var(--muted);text-align:right;padding:4px 8px">Rent. %</th>
+      </tr></thead>
+      <tbody><tr>
+      <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">C y R</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right">169.320881</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">57.094 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+17.344 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+43.63%</td>
+    </tr><tr>
+      <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinver Mixto</td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">C y R</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right">1030.581112</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">46.594 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+14.908 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+47.05%</td>
+    </tr><tr>
+      <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">Carmen</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right">1.691143</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">570 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+15 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+2.75%</td>
+    </tr><tr>
+      <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--muted)">Marta</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right">1.526110</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">515 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+15 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+2.92%</td>
+    </tr></tbody>
+    </table></div></div>
     <div class="form-actions">
       <button class="btn-save" onclick="saveValues()">Guardar y recalcular</button>
       <button class="btn-reset" onclick="resetValues()">Restablecer originales</button>
       <span class="save-msg" id="save-msg">✓ Guardado correctamente</span>
     </div>
-    <div class="last-update" id="last-update-label"></div>
+    <div class="last-update" id="last-update-label">Usando valores originales del archivo</div>
   </div>
 
   <!-- KPIs GLOBALES -->
-  <div class="stats-row" id="global-kpis"></div>
+  <div class="stats-row" id="global-kpis">
+    <div class="stat-card" style="--accent-line:var(--muted)">
+      <div class="stat-label">Total invertido</div>
+      <div class="stat-value"><span class="private">287.769 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Valor actual</div>
+      <div class="stat-value pos"><span class="private">367.911 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--yellow)">
+      <div class="stat-label">Ganancia total</div>
+      <div class="stat-value pos"><span class="private">+80.142 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Rentabilidad</div>
+      <div class="stat-value pos">+27.8%</div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Plataformas</div>
+      <div class="stat-value" style="color:var(--accent)">7</div>
+    </div>
+  </div>
 
   <!-- CHARTS FILA 1 -->
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Distribución actual</div>
       <div class="chart-wrap donut" style="position:relative">
-        <canvas id="chart-donut"></canvas>
+        <canvas id="chart-donut" width="834" height="455" style="display: block; box-sizing: border-box; height: 260px; width: 476px;"></canvas>
         <div class="donut-center">
-          <div class="big" id="donut-total">—</div>
+          <div class="big" id="donut-total">367.911 €</div>
           <div class="small">total</div>
         </div>
       </div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Ranking por rentabilidad %</div>
-      <div id="ranking-list"></div>
+      <div id="ranking-list">
+      <div class="rank-item">
+        <span class="rank-num">1</span>
+        <span class="rank-name">Bestinver</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"><div class="rank-fill" style="width:100.0%;background:var(--green)"></div></div>
+        </div>
+        <span class="rank-pct" style="color:var(--green)">+44.5%</span>
+      </div>
+      <div class="rank-item">
+        <span class="rank-num">2</span>
+        <span class="rank-name">Inmuebles</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"><div class="rank-fill" style="width:59.8%;background:var(--green)"></div></div>
+        </div>
+        <span class="rank-pct" style="color:var(--green)">+26.6%</span>
+      </div>
+      <div class="rank-item">
+        <span class="rank-num">3</span>
+        <span class="rank-name">Bolsa</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"><div class="rank-fill" style="width:23.3%;background:var(--green)"></div></div>
+        </div>
+        <span class="rank-pct" style="color:var(--green)">+10.4%</span>
+      </div>
+      <div class="rank-item">
+        <span class="rank-num">4</span>
+        <span class="rank-name">Indexa Capital</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"><div class="rank-fill" style="width:21.8%;background:var(--green)"></div></div>
+        </div>
+        <span class="rank-pct" style="color:var(--green)">+9.7%</span>
+      </div>
+      <div class="rank-item">
+        <span class="rank-num">5</span>
+        <span class="rank-name">BBVA PP</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"><div class="rank-fill" style="width:20.3%;background:var(--green)"></div></div>
+        </div>
+        <span class="rank-pct" style="color:var(--green)">+9.0%</span>
+      </div>
+      <div class="rank-item">
+        <span class="rank-num">6</span>
+        <span class="rank-name">MyInvestor</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"><div class="rank-fill" style="width:15.1%;background:var(--green)"></div></div>
+        </div>
+        <span class="rank-pct" style="color:var(--green)">+6.7%</span>
+      </div>
+      <div class="rank-item">
+        <span class="rank-num">7</span>
+        <span class="rank-name">Urbanitae</span>
+        <div class="rank-bar-wrap">
+          <div class="rank-bar"><div class="rank-fill" style="width:1.9%;background:var(--green)"></div></div>
+        </div>
+        <span class="rank-pct" style="color:var(--green)">+0.9%</span>
+      </div></div>
     </div>
   </div>
 
@@ -358,17 +787,17 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual por plataforma</div>
-      <div class="chart-wrap tall"><canvas id="chart-compare"></canvas></div>
+      <div class="chart-wrap tall"><canvas id="chart-compare" width="834" height="490" style="display: block; box-sizing: border-box; height: 280px; width: 476px;"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Ganancia € por plataforma</div>
-      <div class="chart-wrap tall"><canvas id="chart-ganancia"></canvas></div>
+      <div class="chart-wrap tall"><canvas id="chart-ganancia" width="834" height="490" style="display: block; box-sizing: border-box; height: 280px; width: 476px;"></canvas></div>
     </div>
   </div>
 </div>
 
 <!-- ═══════════════════ INMUEBLES ═══════════════════ -->
-<div id="page-inmuebles" class="page">
+<div id="page-inmuebles" class="page active">
   <div class="section-title">Inmuebles</div>
   <div class="section-sub">2 propiedades físicas en España · patrimonio inmobiliario directo</div>
 
@@ -387,14 +816,14 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Renta neta / mes</div>
-      <div class="stat-value" style="color:var(--blue)"><span class="private">~881 €</span></div>
+      <div class="stat-value" style="color:var(--blue)"><span class="private">+881 €</span></div>
     </div>
   </div>
 
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-inm-compare"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-inm-compare" height="385" style="display: block; box-sizing: border-box; height: 220px; width: 476px;" width="834"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Cashflow mensual neto</div>
@@ -418,22 +847,40 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Capital recuperado vía rentas</div>
-      <div style="padding-top:8px">
-        <div class="progress-wrap">
-          <div class="progress-label"><span>Galdós</span><span><span class="private">13.287€ / 81.350€</span></span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:16.3%;background:var(--accent)"></div></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px">16.3% recuperado</div>
+      <div id="inm-progress" style="padding-top:8px">
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span style="font-size:15px;font-weight:700">Galdós</span>
+          <span style="font-size:14px;font-weight:700;color:var(--green)" class="private">13.804 € / <span class="private">81.350 €</span></span>
         </div>
-        <div class="progress-wrap">
-          <div class="progress-label"><span>Mesías</span><span><span class="private">8.338€ / 81.880€</span></span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:10.2%;background:var(--blue)"></div></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px">10.2% recuperado</div>
+        <div class="progress-bar" style="height:12px">
+          <div class="progress-fill" style="width:17%;background:var(--accent)"></div>
         </div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">
+          Rentas: <span class="private" style="color:var(--green)">+13.804 €</span>
+          
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--green);margin-top:5px">+17.0% recuperado neto</div>
       </div>
+      <div class="progress-wrap" style="margin-top:16px">
+        <div class="progress-label">
+          <span style="font-size:15px;font-weight:700">Mesías</span>
+          <span style="font-size:14px;font-weight:700;color:var(--green)" class="private">9177 € / <span class="private">81.880 €</span></span>
+        </div>
+        <div class="progress-bar" style="height:12px">
+          <div class="progress-fill" style="width:11.2%;background:var(--blue)"></div>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">
+          Rentas: <span class="private" style="color:var(--green)">+9177 €</span>
+          
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--green);margin-top:5px">+11.2% recuperado neto</div>
+      </div>
+    </div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Rentabilidad por inmueble</div>
-      <div class="chart-wrap"><canvas id="chart-inm-rent"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-inm-rent" height="385" style="display: block; box-sizing: border-box; height: 220px; width: 476px;" width="834"></canvas></div>
     </div>
   </div>
 
@@ -457,30 +904,30 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="stats-row">
     <div class="stat-card" style="--accent-line:var(--accent)">
       <div class="stat-label">Total invertido</div>
-      <div class="stat-value" id="best-inv"><span class="private">72.186 €</span></div>
+      <div class="stat-value" id="best-inv"><span class="private">72.492 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value pos" id="best-act"><span class="private">104.000 €</span></div>
+      <div class="stat-value pos" id="best-act"><span class="private">104.773 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia total</div>
-      <div class="stat-value pos" id="best-gan"><span class="private">+31.814 €</span></div>
+      <div class="stat-value pos" id="best-gan"><span class="private">+32.282 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
-      <div class="stat-value pos" id="best-rent">+44.1%</div>
+      <div class="stat-value pos" id="best-rent">+44.5%</div>
     </div>
   </div>
 
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Saldo por fondo</div>
-      <div class="chart-wrap"><canvas id="chart-best-fondos"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-best-fondos" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Reembolsos realizados</div>
-      <div class="chart-wrap"><canvas id="chart-best-reemb"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-best-reemb" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
     </div>
   </div>
 
@@ -488,12 +935,39 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="chart-title">Detalle de posiciones · valores calculados con NAV actual</div>
     <table class="inv-table">
       <thead><tr><th>Fondo</th><th>Titular</th><th>Invertido</th><th>Saldo actual</th><th>Ganancia €</th><th>Rent. %</th><th>NAV actual</th></tr></thead>
-      <tbody id="best-tabla-body">
-        <tr><td>Bestinfond F.I.</td><td style="text-align:right">C y R</td><td style="text-align:right"><span class="private">39.750 €</span></td><td style="text-align:right"><span class="private">57.094 €</span></td><td class="pos" style="text-align:right"><span class="private">+17.344 €</span></td><td style="text-align:right"><span class="badge pos">+43.6%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
-        <tr><td>Bestinver Mixto F.I.</td><td style="text-align:right">C y R</td><td style="text-align:right"><span class="private">31.686 €</span></td><td style="text-align:right"><span class="private">46.594 €</span></td><td class="pos" style="text-align:right"><span class="private">+14.908 €</span></td><td style="text-align:right"><span class="badge pos">+47.1%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">45,211524</td></tr>
-        <tr><td>Bestinfond F.I.</td><td style="text-align:right">Carmen</td><td style="text-align:right"><span class="private">555 €</span></td><td style="text-align:right"><span class="private">570 €</span></td><td class="pos" style="text-align:right"><span class="private">+15 €</span></td><td style="text-align:right"><span class="badge pos">+2.7%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
-        <tr><td>Bestinfond F.I.</td><td style="text-align:right">Marta</td><td style="text-align:right"><span class="private">500 €</span></td><td style="text-align:right"><span class="private">515 €</span></td><td class="pos" style="text-align:right"><span class="private">+15 €</span></td><td style="text-align:right"><span class="badge pos">+2.9%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
-      </tbody>
+      <tbody id="best-tabla-body"><tr>
+        <td>Bestinfond F.I.</td>
+        <td style="text-align:right">C y R</td>
+        <td style="text-align:right"><span class="private">39.750 €</span></td>
+        <td style="text-align:right"><span class="private">57.094 €</span></td>
+        <td class="pos" style="text-align:right"><span class="private">+17.344 €</span></td>
+        <td style="text-align:right"><span class="badge pos">+43.63%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
+      </tr><tr>
+        <td>Bestinver Mixto F.I.</td>
+        <td style="text-align:right">C y R</td>
+        <td style="text-align:right"><span class="private">31.686 €</span></td>
+        <td style="text-align:right"><span class="private">46.594 €</span></td>
+        <td class="pos" style="text-align:right"><span class="private">+14.908 €</span></td>
+        <td style="text-align:right"><span class="badge pos">+47.05%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">45.211524</td>
+      </tr><tr>
+        <td>Bestinfond F.I.</td>
+        <td style="text-align:right">Carmen</td>
+        <td style="text-align:right"><span class="private">555 €</span></td>
+        <td style="text-align:right"><span class="private">570 €</span></td>
+        <td class="pos" style="text-align:right"><span class="private">+15 €</span></td>
+        <td style="text-align:right"><span class="badge pos">+2.75%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
+      </tr><tr>
+        <td>Bestinfond F.I.</td>
+        <td style="text-align:right">Marta</td>
+        <td style="text-align:right"><span class="private">500 €</span></td>
+        <td style="text-align:right"><span class="private">515 €</span></td>
+        <td class="pos" style="text-align:right"><span class="private">+15 €</span></td>
+        <td style="text-align:right"><span class="badge pos">+2.92%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
+      </tr></tbody>
     </table>
   </div>
 </div>
@@ -506,11 +980,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="stats-row">
     <div class="stat-card" style="--accent-line:var(--accent)">
       <div class="stat-label">Total invertido</div>
-      <div class="stat-value" id="bol-inv"><span class="private">8.438 €</span></div>
+      <div class="stat-value" id="bol-inv"><span class="private">8438 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value" id="bol-act"><span class="private">9.313 €</span></div>
+      <div class="stat-value" id="bol-act"><span class="private">9312 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">P/G total</div>
@@ -525,12 +999,12 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Actual por valor</div>
-      <div class="chart-wrap"><canvas id="chart-bol-compare"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-bol-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Distribución por sector</div>
       <div class="chart-wrap donut" style="position:relative">
-        <canvas id="chart-bol-sector"></canvas>
+        <canvas id="chart-bol-sector" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas>
         <div class="donut-center">
           <div class="small">sectores</div>
         </div>
@@ -576,7 +1050,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia</div>
-      <div class="stat-value pos" id="idx-gan"><span class="private">+1.342 €</span></div>
+      <div class="stat-value pos" id="idx-gan"><span class="private">+1342 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
@@ -587,7 +1061,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-idx-compare"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-idx-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Características</div>
@@ -669,7 +1143,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 
   <div class="chart-card">
     <div class="chart-title">Inversión por proyecto</div>
-    <div class="chart-wrap"><canvas id="chart-urb"></canvas></div>
+    <div class="chart-wrap"><canvas id="chart-urb" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
   </div>
 </div>
 
@@ -689,7 +1163,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia</div>
-      <div class="stat-value pos" id="bbva-gan"><span class="private">+1.920 €</span></div>
+      <div class="stat-value pos" id="bbva-gan"><span class="private">+1920 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
@@ -700,7 +1174,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Aportado vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-bbva-compare"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-bbva-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Características del plan</div>
@@ -733,11 +1207,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="stats-row">
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Invertido</div>
-      <div class="stat-value" id="my-inv"><span class="private">3.012 €</span></div>
+      <div class="stat-value" id="my-inv"><span class="private">3012 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--accent)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value pos" id="my-act"><span class="private">3.215 €</span></div>
+      <div class="stat-value pos" id="my-act"><span class="private">3215 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia</div>
@@ -752,7 +1226,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual</div>
-      <div class="chart-wrap"><canvas id="chart-my-compare"></canvas></div>
+      <div class="chart-wrap"><canvas id="chart-my-compare" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Características</div>
@@ -855,6 +1329,7 @@ function showPage(id) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   event.currentTarget.classList.add('active');
+  if (id === 'datos') initDatosPage();
 }
 
 // ─── FORMULARIO DE ACTUALIZACIÓN ────────────────────────────────────────────
@@ -1191,19 +1666,84 @@ function renderInmuebles() {
   document.getElementById('inm-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
   document.getElementById('inm-plus').innerHTML = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
 
+  const galdosAct = state.inmuebles * 100000/206704;
+  const mesiasAct = state.inmuebles * 106704/206704;
+
   makeChart('chart-inm-compare', 'bar', {
     labels: ['Galdós', 'Mesías'],
     datasets: [
-      { label: 'Invertido', data: [81350, 81880], backgroundColor: 'rgba(107,108,133,0.6)', borderRadius: 6 },
-      { label: 'Actual',    data: [state.inmuebles * 100000/206704, state.inmuebles * 106704/206704], backgroundColor: ['#c8b5ffcc','#a8ff78cc'], borderRadius: 6 }
+      { label: 'Invertido', data: [81350, 81880],          backgroundColor: 'rgba(107,108,133,0.6)', borderRadius: 6 },
+      { label: 'Actual',    data: [galdosAct, mesiasAct],  backgroundColor: ['#c8b5ffcc','#a8ff78cc'], borderRadius: 6 }
     ]
-  }, { plugins: { legend: { display:true, labels: { color:'#9e9eb0', font:{family:'Syne'} } } },
-       scales: { x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'}}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>(v/1000).toFixed(0)+'k€'}} } });
+  }, {
+    plugins: {
+      legend: { display:true, labels: { color:'#9e9eb0', font:{family:'Syne'} } },
+      datalabels: {
+        display: true,
+        color: '#fff',
+        font: { family:'Syne', size:11, weight:'700' },
+        anchor: 'center', align: 'center',
+        formatter: v => (v/1000).toFixed(0) + 'k€'
+      }
+    },
+    scales: {
+      x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'}}},
+      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>(v/1000).toFixed(0)+'k€'}}
+    }
+  });
 
   makeChart('chart-inm-rent', 'bar', {
     labels: ['Galdós\n(plusvalía)', 'Galdós\n(renta)', 'Mesías\n(plusvalía)', 'Mesías\n(renta)'],
     datasets: [{ data: [22.9, 6.6, 23.2, 6.4], backgroundColor: ['#c8b5ffcc','#7effd4cc','#c8b5ffcc','#7effd4cc'], borderRadius: 6 }]
   }, { scales: { x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:10}}}, y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'%'}} } });
+
+  // Actualizar progress bars con colores y tamaños más grandes
+  let rentaGaldos = 0, rentaMesias = 0;
+  try {
+    const rentas = JSON.parse(localStorage.getItem('cartera_rentas_v1')) || [];
+    rentaGaldos = rentas.filter(r => r.key === 'galdos').reduce((s,r) => s + r.importe, 0);
+    rentaMesias = rentas.filter(r => r.key === 'mesias').reduce((s,r) => s + r.importe, 0);
+  } catch(e) {}
+  const gastosG = totalGastosPiso('galdos');
+  const gastosM = totalGastosPiso('mesias');
+  const netoG = rentaGaldos - gastosG;
+  const netoM = rentaMesias - gastosM;
+  const pctG = (netoG / 81350 * 100).toFixed(1);
+  const pctM = (netoM / 81880 * 100).toFixed(1);
+
+  const progContainer = document.getElementById('inm-progress');
+  if (progContainer) {
+    progContainer.innerHTML = `
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span style="font-size:15px;font-weight:700">Galdós</span>
+          <span style="font-size:14px;font-weight:700;color:var(--green)" class="private">${fmt(netoG)} / <span class="private">${fmt(81350)}</span></span>
+        </div>
+        <div class="progress-bar" style="height:12px">
+          <div class="progress-fill" style="width:${Math.max(0,pctG)}%;background:var(--accent)"></div>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">
+          Rentas: <span class="private" style="color:var(--green)">+${fmt(rentaGaldos)}</span>
+          ${gastosG > 0 ? `· Gastos ext: <span class="private" style="color:var(--red)">-${fmt(gastosG)}</span>` : ''}
+        </div>
+        <div style="font-size:14px;font-weight:700;color:${netoG>=0?'var(--green)':'var(--red)'};margin-top:5px">${netoG>=0?'+':''}${pctG}% recuperado neto</div>
+      </div>
+      <div class="progress-wrap" style="margin-top:16px">
+        <div class="progress-label">
+          <span style="font-size:15px;font-weight:700">Mesías</span>
+          <span style="font-size:14px;font-weight:700;color:var(--green)" class="private">${fmt(netoM)} / <span class="private">${fmt(81880)}</span></span>
+        </div>
+        <div class="progress-bar" style="height:12px">
+          <div class="progress-fill" style="width:${Math.max(0,pctM)}%;background:var(--blue)"></div>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">
+          Rentas: <span class="private" style="color:var(--green)">+${fmt(rentaMesias)}</span>
+          ${gastosM > 0 ? `· Gastos ext: <span class="private" style="color:var(--red)">-${fmt(gastosM)}</span>` : ''}
+        </div>
+        <div style="font-size:14px;font-weight:700;color:${netoM>=0?'var(--green)':'var(--red)'};margin-top:5px">${netoM>=0?'+':''}${pctM}% recuperado neto</div>
+      </div>
+    `;
+  }
 }
 
 // ── BESTINVER ────────────────────────────────────────────────────────────────
@@ -1381,8 +1921,493 @@ function applyPrivacy() {
   });
 }
 
-// Aplicar estado guardado al cargar
-applyPrivacy();
+// ─── GASTOS EXTRAORDINARIOS ──────────────────────────────────────────────────
+const GASTOS_KEY = 'cartera_gastos_ext_v1';
+
+function loadGastos() {
+  try { return JSON.parse(localStorage.getItem(GASTOS_KEY)) || []; } catch(e) { return []; }
+}
+
+function totalGastosPiso(key) {
+  return loadGastos().filter(g => g.piso === key).reduce((s, g) => s + g.importe, 0);
+}
+
+function addGastoExtraordinario() {
+  const piso     = document.getElementById('g-piso').value;
+  const concepto = document.getElementById('g-concepto').value.trim();
+  const importe  = parseFloat(document.getElementById('g-importe').value);
+  const fecha    = document.getElementById('g-fecha').value;
+
+  if (!concepto) { showDatosSaved('⚠️ Escribe un concepto'); return; }
+  if (isNaN(importe) || importe <= 0) { showDatosSaved('⚠️ Importe no válido'); return; }
+  if (!fecha) { showDatosSaved('⚠️ Selecciona una fecha'); return; }
+
+  const gastos = loadGastos();
+  gastos.push({ id: Date.now(), piso, concepto, importe, fecha });
+  localStorage.setItem(GASTOS_KEY, JSON.stringify(gastos));
+
+  // Limpiar campos
+  document.getElementById('g-concepto').value = '';
+  document.getElementById('g-importe').value  = '';
+  document.getElementById('g-fecha').value    = '';
+
+  renderGastosTracker();
+  renderDatosInmResult();
+  renderAll();
+  showDatosSaved('Gasto añadido ✓');
+}
+
+function deleteGasto(id) {
+  const gastos = loadGastos().filter(g => g.id !== id);
+  localStorage.setItem(GASTOS_KEY, JSON.stringify(gastos));
+  renderGastosTracker();
+  renderDatosInmResult();
+  renderAll();
+}
+
+function renderGastosTracker() {
+  const el = document.getElementById('gastos-tracker');
+  if (!el) return;
+  const gastos = loadGastos();
+  if (!gastos.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0">No hay gastos extraordinarios registrados</div>';
+    return;
+  }
+  const sorted = [...gastos].sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+  const totalG = gastos.filter(g => g.piso === 'galdos').reduce((s,g) => s+g.importe, 0);
+  const totalM = gastos.filter(g => g.piso === 'mesias').reduce((s,g) => s+g.importe, 0);
+
+  el.innerHTML = `
+    <div class="gastos-tracker-title">Historial de gastos extraordinarios</div>
+    <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:12px">🏠 Galdós: <b style="color:var(--red)" class="private">-${fmt(totalG)}</b></span>
+      <span style="font-size:12px">🏠 Mesías: <b style="color:var(--red)" class="private">-${fmt(totalM)}</b></span>
+      <span style="font-size:12px">Total: <b style="color:var(--red)" class="private">-${fmt(totalG+totalM)}</b></span>
+    </div>
+    ${sorted.map(g => `
+      <div class="gasto-row">
+        <div class="gasto-info">
+          <div class="gasto-nombre">${g.piso === 'galdos' ? '🏠 Galdós' : '🏠 Mesías'} · ${g.concepto}</div>
+          <div class="gasto-fecha">${g.fecha}</div>
+        </div>
+        <span class="gasto-importe private">-${fmt(g.importe)}</span>
+        <button class="btn-del-gasto" onclick="deleteGasto(${g.id})" title="Eliminar">🗑️</button>
+      </div>`).join('')}
+  `;
+}
+
+// Inmueble config
+const INMUEBLES_CONFIG = {
+  galdos:  { coste: 81350,  rentaDia: 1,  rentaNeta: 444, nombre: 'Galdós'  },
+  mesias:  { coste: 81880,  rentaDia: 20, rentaNeta: 437, nombre: 'Mesías'  },
+};
+
+// Storage keys
+const RENT_KEY   = 'cartera_rentas_v1';
+const BOLSA_KEY  = 'cartera_bolsa_precios_v1';
+const INM_KEY    = 'cartera_inm_valores_v1';
+
+// Bolsa: acciones fijas
+const BOLSA_ACCIONES = [
+  { ticker: 'SCYR', nombre: 'Sacyr',     acciones: 715,  coste: 2695.55, key: 'scyr' },
+  { ticker: 'SAN',  nombre: 'Santander', acciones: 229,  coste: 2430.04, key: 'san'  },
+  { ticker: 'IAG',  nombre: 'IAG',       acciones: 350,  coste: 1407.00, key: 'iag'  },
+  { ticker: 'SAN',  nombre: 'Santander', acciones: 190,  coste: 1905.70, key: 'san2' },
+];
+
+// ── Cargar precios de bolsa guardados
+function loadBolsaPrecios() {
+  try { return JSON.parse(localStorage.getItem(BOLSA_KEY)) || {}; } catch(e) { return {}; }
+}
+
+// ── Cargar valores inmuebles guardados
+function loadInmValores() {
+  try { return JSON.parse(localStorage.getItem(INM_KEY)) || { galdos: 100000, mesias: 106704 }; } catch(e) { return { galdos: 100000, mesias: 106704 }; }
+}
+
+// ── Cargar historial de rentas
+function loadRentas() {
+  try { return JSON.parse(localStorage.getItem(RENT_KEY)) || []; } catch(e) { return []; }
+}
+
+// ── Acumulación automática de rentas (comprueba si toca cobrar este mes)
+function checkAutoRentas() {
+  const today = new Date();
+  const month = today.getMonth(); // 0-11
+  const year  = today.getFullYear();
+  const day   = today.getDate();
+  const rentas = loadRentas();
+
+  for (const [key, cfg] of Object.entries(INMUEBLES_CONFIG)) {
+    if (day >= cfg.rentaDia) {
+      const alreadyAdded = rentas.some(r => r.key === key && r.month === month && r.year === year);
+      if (!alreadyAdded) {
+        rentas.push({
+          key, month, year,
+          importe: cfg.rentaNeta,
+          nombre: cfg.nombre,
+          auto: true,
+          fecha: `${cfg.rentaDia}/${month+1}/${year}`
+        });
+      }
+    }
+  }
+  localStorage.setItem(RENT_KEY, JSON.stringify(rentas));
+  return rentas;
+}
+
+// ── Calcular total rentas cobradas por inmueble
+function totalRentasCobradas(key) {
+  return loadRentas().filter(r => r.key === key).reduce((s, r) => s + r.importe, 0);
+}
+
+// ── Inicializar página Datos con valores guardados
+function initDatosPage() {
+  checkAutoRentas();
+
+  // Inmuebles
+  const inmVals = loadInmValores();
+  if (inmVals.galdos)  document.getElementById('d-inm-galdos').value  = inmVals.galdos;
+  if (inmVals.mesias)  document.getElementById('d-inm-mesias').value  = inmVals.mesias;
+  renderDatosInmResult();
+  renderRentTracker();
+  renderGastosTracker();
+
+  // Bestinver
+  document.getElementById('d-nav-bestinfond').value = state.nav_bestinfond || 337.196531;
+  document.getElementById('d-nav-mixto').value      = state.nav_mixto      || 45.211524;
+  renderDatosBestResult();
+
+  // Bolsa
+  const bp = loadBolsaPrecios();
+  if (bp.scyr) document.getElementById('d-scyr').value = bp.scyr;
+  if (bp.san)  document.getElementById('d-san').value  = bp.san;
+  if (bp.iag)  document.getElementById('d-iag').value  = bp.iag;
+  renderDatosBolsaResult();
+
+  // Simples
+  const idx   = document.getElementById('d-indexa');
+  const bbva  = document.getElementById('d-bbva');
+  const myin  = document.getElementById('d-myinvestor');
+  if (idx)  idx.value  = state.indexa    || 15191.68;
+  if (bbva) bbva.value = state.bbva      || 23167.68;
+  if (myin) myin.value = state.myinvestor|| 3214.69;
+  renderDatosSimpleResult('indexa',    'idx-result',  state.indexa    || 15191.68, 13850);
+  renderDatosSimpleResult('bbva-pp',   'bbva-result', state.bbva      || 23167.68, 21247.53);
+  renderDatosSimpleResult('myinvestor','my-result',   state.myinvestor|| 3214.69,  3011.60);
+
+  // Live previews on input change
+  document.getElementById('d-inm-galdos').addEventListener('input', renderDatosInmResult);
+  document.getElementById('d-inm-mesias').addEventListener('input', renderDatosInmResult);
+  document.getElementById('d-nav-bestinfond').addEventListener('input', renderDatosBestResult);
+  document.getElementById('d-nav-mixto').addEventListener('input', renderDatosBestResult);
+  document.getElementById('d-scyr').addEventListener('input', renderDatosBolsaResult);
+  document.getElementById('d-san').addEventListener('input',  renderDatosBolsaResult);
+  document.getElementById('d-iag').addEventListener('input',  renderDatosBolsaResult);
+  document.getElementById('d-indexa').addEventListener('input',    () => renderDatosSimpleResult('indexa',    'd-idx-result',  parseFloat(document.getElementById('d-indexa').value)||0, 13850));
+  document.getElementById('d-bbva').addEventListener('input',      () => renderDatosSimpleResult('bbva-pp',   'd-bbva-result', parseFloat(document.getElementById('d-bbva').value)||0,   21247.53));
+  document.getElementById('d-myinvestor').addEventListener('input',() => renderDatosSimpleResult('myinvestor','d-my-result',  parseFloat(document.getElementById('d-myinvestor').value)||0, 3011.60));
+}
+
+// ── Render resultados inmuebles
+function renderDatosInmResult() {
+  const galdos = parseFloat(document.getElementById('d-inm-galdos').value) || 100000;
+  const mesias = parseFloat(document.getElementById('d-inm-mesias').value) || 106704;
+  const total  = galdos + mesias;
+  const inv    = 163230;
+  const g      = total - inv;
+  const rentaG = totalRentasCobradas('galdos');
+  const rentaM = totalRentasCobradas('mesias');
+  const gastosG = totalGastosPiso('galdos');
+  const gastosM = totalGastosPiso('mesias');
+  const rentaNetaG = rentaG - gastosG;
+  const rentaNetaM = rentaM - gastosM;
+  const totalRecuperado = rentaNetaG + rentaNetaM;
+
+  document.getElementById('d-inm-result').innerHTML = `
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total actual</div>
+      <div class="datos-result-val private">${fmt(total)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Plusvalía</div>
+      <div class="datos-result-val ${g>=0?'pos':'neg'} private">${g>=0?'+':''}${fmt(g)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rent. plusvalía</div>
+      <div class="datos-result-val ${g>=0?'pos':'neg'}">${fmtPct(g/inv)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rentas Galdós</div>
+      <div class="datos-result-val pos private">${fmt(rentaG)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Gastos Galdós</div>
+      <div class="datos-result-val neg private">${gastosG > 0 ? '-'+fmt(gastosG) : '0 €'}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rentas Mesías</div>
+      <div class="datos-result-val pos private">${fmt(rentaM)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Gastos Mesías</div>
+      <div class="datos-result-val neg private">${gastosM > 0 ? '-'+fmt(gastosM) : '0 €'}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Neto recuperado</div>
+      <div class="datos-result-val ${totalRecuperado>=0?'pos':'neg'} private">${totalRecuperado>=0?'+':''}${fmt(totalRecuperado)}</div>
+    </div>
+  `;
+}
+
+// ── Render rent tracker
+function renderRentTracker() {
+  const rentas = loadRentas();
+  if (!rentas.length) return;
+  const sorted = [...rentas].sort((a,b) => b.year - a.year || b.month - a.month);
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const rows = sorted.slice(0, 12).map(r => `
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">${r.nombre}</div>
+        <div style="font-size:11px;color:var(--muted)">${meses[r.month]} ${r.year} · día ${r.fecha.split('/')[0]}</div>
+      </div>
+      <div class="rent-month-vals">
+        ${r.auto ? '<span class="auto-badge">AUTO</span>' : ''}
+        <b class="private">+${r.importe} €</b>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('rent-tracker').innerHTML = `
+    <div class="rent-tracker-title">Historial de rentas cobradas (últimos 12 registros)</div>
+    ${rows}
+  `;
+}
+
+// ── Render resultados Bestinver
+function renderDatosBestResult() {
+  const nav_f = parseFloat(document.getElementById('d-nav-bestinfond').value) || state.nav_bestinfond;
+  const nav_m = parseFloat(document.getElementById('d-nav-mixto').value)      || state.nav_mixto;
+  const tempSt = { nav_bestinfond: nav_f, nav_mixto: nav_m };
+  const total = bestActual(tempSt);
+  const g = total - BEST_INV_TOTAL;
+  document.getElementById('d-best-result').innerHTML = `
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total actual</div>
+      <div class="datos-result-val private">${fmt(total)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Ganancia</div>
+      <div class="datos-result-val pos private">${g>=0?'+':''}${fmt(g)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rentabilidad</div>
+      <div class="datos-result-val pos">${fmtPct(g/BEST_INV_TOTAL)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">NAV Bestinfond</div>
+      <div class="datos-result-val" style="font-size:13px;color:var(--muted)">${nav_f.toFixed(6)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">NAV Mixto</div>
+      <div class="datos-result-val" style="font-size:13px;color:var(--muted)">${nav_m.toFixed(6)}</div>
+    </div>
+  `;
+}
+
+// ── Render resultados Bolsa
+function renderDatosBolsaResult() {
+  const precios = {
+    scyr: parseFloat(document.getElementById('d-scyr').value) || 4.56,
+    san:  parseFloat(document.getElementById('d-san').value)  || 10.62,
+    iag:  parseFloat(document.getElementById('d-iag').value)  || 4.58,
+  };
+  let totalAct = 0, totalInv = 0;
+  BOLSA_ACCIONES.forEach(a => {
+    const p = precios[a.key === 'san2' ? 'san' : a.key] || 0;
+    totalAct += p * a.acciones;
+    totalInv += a.coste;
+  });
+  const g = totalAct - totalInv;
+  document.getElementById('d-bol-result').innerHTML = `
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total actual</div>
+      <div class="datos-result-val private">${fmt(totalAct)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total invertido</div>
+      <div class="datos-result-val private">${fmt(totalInv)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">P/G €</div>
+      <div class="datos-result-val ${g>=0?'pos':'neg'} private">${g>=0?'+':''}${fmt(g)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">P/G %</div>
+      <div class="datos-result-val ${g>=0?'pos':'neg'}">${fmtPct(g/totalInv)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">SCYR · ${715} acc.</div>
+      <div class="datos-result-val" style="font-size:13px">${precios.scyr}€/acc</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">SAN · ${229+190} acc.</div>
+      <div class="datos-result-val" style="font-size:13px">${precios.san}€/acc</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">IAG · ${350} acc.</div>
+      <div class="datos-result-val" style="font-size:13px">${precios.iag}€/acc</div>
+    </div>
+  `;
+}
+
+// ── Render resultado simple (Indexa, BBVA, MyInvestor)
+function renderDatosSimpleResult(label, resultId, act, inv) {
+  const g = act - inv;
+  const el = document.getElementById(resultId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="datos-result-item">
+      <div class="datos-result-label">Valor actual</div>
+      <div class="datos-result-val private">${fmt(act)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Invertido</div>
+      <div class="datos-result-val private">${fmt(inv)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Ganancia €</div>
+      <div class="datos-result-val ${g>=0?'pos':'neg'} private">${g>=0?'+':''}${fmt(g)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rentabilidad</div>
+      <div class="datos-result-val ${g>=0?'pos':'neg'}">${fmtPct(g/inv)}</div>
+    </div>
+  `;
+}
+
+// ── GUARDAR Inmuebles
+function saveDatosInmuebles() {
+  const galdos = parseFloat(document.getElementById('d-inm-galdos').value);
+  const mesias = parseFloat(document.getElementById('d-inm-mesias').value);
+  if (!isNaN(galdos) && !isNaN(mesias)) {
+    localStorage.setItem(INM_KEY, JSON.stringify({ galdos, mesias }));
+    state.inmuebles = galdos + mesias;
+    saveState();
+    renderAll();
+    showDatosSaved('Inmuebles guardado ✓');
+    renderDatosInmResult();
+    renderRentTracker();
+  }
+}
+
+// ── GUARDAR Bestinver
+function saveDatosBestinver() {
+  const nav_f = parseFloat(document.getElementById('d-nav-bestinfond').value);
+  const nav_m = parseFloat(document.getElementById('d-nav-mixto').value);
+  if (!isNaN(nav_f) && !isNaN(nav_m)) {
+    state.nav_bestinfond = nav_f;
+    state.nav_mixto      = nav_m;
+    saveState();
+    renderAll();
+    updateBestTotal();
+    showDatosSaved('Bestinver guardado ✓');
+  }
+}
+
+// ── GUARDAR Bolsa
+function saveDatosBolsa() {
+  const bp = {
+    scyr: parseFloat(document.getElementById('d-scyr').value) || 0,
+    san:  parseFloat(document.getElementById('d-san').value)  || 0,
+    iag:  parseFloat(document.getElementById('d-iag').value)  || 0,
+  };
+  localStorage.setItem(BOLSA_KEY, JSON.stringify(bp));
+  // Recalcular total bolsa
+  let total = 0;
+  BOLSA_ACCIONES.forEach(a => {
+    const p = bp[a.key === 'san2' ? 'san' : a.key] || 0;
+    total += p * a.acciones;
+  });
+  state.bolsa = total;
+  saveState();
+  renderAll();
+  renderDatosBolsaResult();
+  showDatosSaved('Bolsa guardada ✓');
+}
+
+// ── GUARDAR simple
+function saveDatosSimple(stateKey, inputId, resultId) {
+  const val = parseFloat(document.getElementById(inputId).value);
+  const invMap = { indexa: 13850, bbva: 21247.53, myinvestor: 3011.60 };
+  if (!isNaN(val) && val > 0) {
+    state[stateKey] = val;
+    saveState();
+    renderAll();
+    renderDatosSimpleResult(stateKey, resultId, val, invMap[stateKey] || 0);
+    showDatosSaved('Guardado ✓');
+  }
+}
+
+// ── Toast de confirmación
+function showDatosSaved(msg) {
+  let toast = document.getElementById('datos-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'datos-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#0c0c10;font-weight:700;font-size:13px;padding:10px 22px;border-radius:20px;z-index:999;transition:opacity 0.3s;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+}
+
+// Cargar precios de bolsa guardados al arrancar
+(function loadSavedBolsa() {
+  const bp = loadBolsaPrecios();
+  if (bp.scyr || bp.san || bp.iag) {
+    let total = 0;
+    BOLSA_ACCIONES.forEach(a => {
+      const p = bp[a.key === 'san2' ? 'san' : a.key] || 0;
+      total += p * a.acciones;
+    });
+    if (total > 0) state.bolsa = total;
+  }
+  const inmVals = loadInmValores();
+  if (inmVals.galdos && inmVals.mesias) {
+    state.inmuebles = inmVals.galdos + inmVals.mesias;
+  }
+
+  // ── Inyectar historial de rentas SIEMPRE (sobreescribe datos incorrectos) ──
+  // Borrar cualquier clave anterior de rentas
+  localStorage.removeItem('cartera_rentas_v1');
+  localStorage.removeItem('cartera_rentas_v2');
+  localStorage.removeItem('cartera_rentas');
+  const rentas = [];
+
+  // GALDÓS: nov 2023 → jun 2026 (31 meses)
+  // Nov2023-Mar2026 = 28 meses × 430€ neto (500-70)
+  // Abr-Jun 2026 = 3 meses × 445€ neto (515-70)
+  let gy = 2023, gm = 10; // nov 2023
+  for (let i = 0; i < 31; i++) {
+    const isNuevoInquilino = (gy === 2026 && gm >= 3);
+    const neto = isNuevoInquilino ? 445 : 430;
+    rentas.push({ key:'galdos', month:gm, year:gy, importe:neto, nombre:'Galdós', auto:false, fecha:`1/${gm+1}/${gy}` });
+    gm++; if (gm > 11) { gm = 0; gy++; }
+  }
+
+  // MESÍAS: sep 2024 → may 2026 (21 meses)
+  let my = 2024, mm = 8; // sep 2024
+  for (let i = 0; i < 21; i++) {
+    rentas.push({ key:'mesias', month:mm, year:my, importe:437, nombre:'Mesías', auto:false, fecha:`20/${mm+1}/${my}` });
+    mm++; if (mm > 11) { mm = 0; my++; }
+  }
+
+  localStorage.setItem(RENT_KEY, JSON.stringify(rentas));
+  checkAutoRentas();
+})();
 </script>
-</body>
-</html>
+
+
+</body></html>
