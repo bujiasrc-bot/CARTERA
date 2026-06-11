@@ -300,6 +300,19 @@ body.privacy td.euro-cell { filter: blur(5px); user-select:none; pointer-events:
 body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 
 /* Last update label */
+.btn-auto-precio {
+  background: linear-gradient(135deg, rgba(126,255,212,0.15), rgba(107,207,255,0.15));
+  border: 1px solid rgba(126,255,212,0.4);
+  border-radius: 10px; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--green); padding: 10px 18px;
+  transition: all 0.2s;
+}
+.btn-auto-precio:hover { background: rgba(126,255,212,0.25); }
+.btn-auto-precio:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-auto-precio.loading { animation: pulse-btn 1s infinite; }
+@keyframes pulse-btn { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
 .last-update { font-size: 11px; color: var(--muted); margin-top: 8px; text-align: right; }
 
 /* RANKING */
@@ -511,6 +524,12 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <span class="datos-section-title">Bolsa</span>
       <span class="datos-section-sub">Precio actual de cada acción en BME</span>
     </div>
+    <div style="margin-bottom:14px">
+      <button class="btn-auto-precio" id="btn-auto-bolsa" onclick="fetchPreciosBolsa()">
+        🔄 Actualizar precios automáticamente
+      </button>
+      <span id="bolsa-auto-status" style="font-size:11px;color:var(--muted);margin-left:12px"></span>
+    </div>
     <div class="datos-grid">
       <div class="datos-field">
         <label>SCYR · Sacyr (€/acción)</label>
@@ -674,7 +693,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Renta neta / mes</div>
-      <div class="stat-value" style="color:var(--blue)"><span class="private">+881 €</span></div>
+      <div class="stat-value" style="color:var(--blue)"><span class="private">+882 €</span></div>
     </div>
   </div>
 
@@ -688,15 +707,15 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <div style="padding-top:8px">
         <div class="cashflow-row">
           <div><div class="cf-name">🏠 Galdós</div><div class="cf-detail"><span class="private">Ingresos 515€ · Gastos 70€</span></div></div>
-          <div class="cf-amount pos euro-val">+444 €/mes</div>
+          <div class="cf-amount pos euro-val"><span class="private">+445 €/mes</span></div>
         </div>
         <div class="cashflow-row">
           <div><div class="cf-name">🏠 Mesías</div><div class="cf-detail"><span class="private">Ingresos 500€ · Gastos 63€</span></div></div>
-          <div class="cf-amount pos euro-val">+437 €/mes</div>
+          <div class="cf-amount pos euro-val"><span class="private">+437 €/mes</span></div>
         </div>
         <div class="cashflow-row">
           <div><div class="cf-name" style="color:var(--accent)">TOTAL NETO</div></div>
-          <div class="cf-amount euro-val" style="color:var(--accent);font-size:20px">+881 €/mes</div>
+          <div class="cf-amount euro-val" style="color:var(--accent);font-size:20px"><span class="private">+882 €/mes</span></div>
         </div>
       </div>
     </div>
@@ -1741,6 +1760,106 @@ function applyPrivacy() {
   });
 }
 
+// ─── AUTO PRECIOS BOLSA ──────────────────────────────────────────────────────
+async function fetchPreciosBolsa() {
+  const btn = document.getElementById('btn-auto-bolsa');
+  const status = document.getElementById('bolsa-auto-status');
+
+  if (btn) { btn.disabled = true; btn.classList.add('loading'); btn.textContent = '⏳ Obteniendo precios...'; }
+  if (status) status.textContent = '';
+
+  const tickers = { scyr: 'SCYR.MC', san: 'SAN.MC', iag: 'IAG.MC' };
+
+  try {
+    const precios = {};
+    const errores = [];
+
+    const proxies = [
+      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
+    ];
+
+    for (const [key, ticker] of Object.entries(tickers)) {
+      let got = false;
+      for (const makeProxy of proxies) {
+        try {
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+          const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(5000) });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+          if (price) {
+            precios[key] = Math.round(price * 100) / 100;
+            got = true;
+            break;
+          }
+        } catch(e) { continue; }
+      }
+      if (!got) errores.push(ticker);
+    }
+
+    // Guardar y propagar si se obtuvieron precios
+    if (Object.keys(precios).length > 0) {
+      const bp = loadBolsaPrecios();
+      const nuevos = { ...bp, ...precios };
+      localStorage.setItem(BOLSA_KEY, JSON.stringify(nuevos));
+      localStorage.setItem('cartera_bolsa_ts', Date.now());
+
+      // Recalcular total bolsa
+      let total = 0;
+      BOLSA_ACCIONES.forEach(a => {
+        const p = nuevos[a.key === 'san2' ? 'san' : a.key] || 0;
+        total += p * a.acciones;
+      });
+      if (total > 0) { state.bolsa = total; saveState(); }
+
+      // Actualizar inputs si la página de datos está visible
+      const scyrInp = document.getElementById('d-scyr');
+      if (scyrInp) {
+        if (nuevos.scyr) scyrInp.value = nuevos.scyr;
+        if (nuevos.san)  document.getElementById('d-san').value = nuevos.san;
+        if (nuevos.iag)  document.getElementById('d-iag').value = nuevos.iag;
+        renderDatosBolsaResult();
+      }
+
+      renderAll();
+
+      const hora = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+      const msg = errores.length === 0
+        ? `✓ Bolsa actualizada · ${hora}`
+        : `⚠ Parcial · ${hora}`;
+
+      if (status) { status.style.color = errores.length === 0 ? 'var(--green)' : 'var(--yellow)'; status.textContent = msg; }
+
+      // Mostrar toast si fue actualización automática (sin botón visible)
+      if (!btn || btn.style.display === 'none') showDatosSaved(`📈 Bolsa actualizada · ${hora}`);
+    }
+  } catch(e) {
+    if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ Sin conexión'; }
+  }
+
+  if (btn) { btn.disabled = false; btn.classList.remove('loading'); btn.textContent = '🔄 Actualizar precios automáticamente'; }
+}
+
+// Actualizar precios al abrir la app si han pasado más de 30 min
+async function autoUpdateBolsaOnLoad() {
+  const lastTs = parseInt(localStorage.getItem('cartera_bolsa_ts') || '0');
+  const minutos = (Date.now() - lastTs) / 1000 / 60;
+  if (minutos > 30) {
+    await fetchPreciosBolsa();
+  }
+}
+
+// Actualizar cuando el usuario vuelve a la pestaña/app
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    const lastTs = parseInt(localStorage.getItem('cartera_bolsa_ts') || '0');
+    const minutos = (Date.now() - lastTs) / 1000 / 60;
+    if (minutos > 30) fetchPreciosBolsa();
+  }
+});
+
 // ─── GASTOS EXTRAORDINARIOS ──────────────────────────────────────────────────
 const GASTOS_KEY = 'cartera_gastos_ext_v1';
 
@@ -1853,7 +1972,7 @@ function loadRentas() {
 // ── Acumulación automática de rentas (comprueba si toca cobrar este mes)
 function checkAutoRentas() {
   const today = new Date();
-  const month = today.getMonth(); // 0-11
+  const month = today.getMonth();
   const year  = today.getFullYear();
   const day   = today.getDate();
   const rentas = loadRentas();
@@ -1862,9 +1981,15 @@ function checkAutoRentas() {
     if (day >= cfg.rentaDia) {
       const alreadyAdded = rentas.some(r => r.key === key && r.month === month && r.year === year);
       if (!alreadyAdded) {
+        // Calcular neto correcto según mes/año
+        let neto = cfg.rentaNeta;
+        if (key === 'galdos') {
+          // Nuevo inquilino desde abril 2026: 515€ - 70€ = 445€
+          neto = (year === 2026 && month >= 3) ? 445 : 430;
+        }
         rentas.push({
           key, month, year,
-          importe: cfg.rentaNeta,
+          importe: neto,
           nombre: cfg.nombre,
           auto: true,
           fecha: `${cfg.rentaDia}/${month+1}/${year}`
@@ -2227,6 +2352,10 @@ function showDatosSaved(msg) {
   localStorage.setItem(RENT_KEY, JSON.stringify(rentas));
   checkAutoRentas();
 })();
+
+// Auto actualizar precios de bolsa al abrir la app
+autoUpdateBolsaOnLoad();
+
 </script>
 </body>
 </html>
