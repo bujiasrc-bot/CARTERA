@@ -2174,53 +2174,34 @@ function renderDatosBolsaResult() {
     totalInv += a.coste;
   });
   const g = totalAct - totalInv;
-
   document.getElementById('d-bol-result').innerHTML = `
-    <div style="width:100%">
-
-      <!-- FILA 1: ACCIONES -->
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding:0 4px">Precios por acción</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SCYR · 715 acc.</div>
-          <div style="font-size:16px;font-weight:700">${precios.scyr}€</div>
-        </div>
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SAN · 419 acc.</div>
-          <div style="font-size:16px;font-weight:700">${precios.san}€</div>
-        </div>
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">IAG · 350 acc.</div>
-          <div style="font-size:16px;font-weight:700">${precios.iag}€</div>
-        </div>
-      </div>
-
-      <!-- FILA 2: TOTALES -->
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding:0 4px">Totales</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Total invertido</div>
-          <div class="private" style="font-size:18px;font-weight:700">${fmt(totalInv)}</div>
-        </div>
-        <div style="background:var(--card);border:1px solid rgba(126,255,212,0.3);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Valor actual</div>
-          <div class="private" style="font-size:18px;font-weight:700;color:var(--green)">${fmt(totalAct)}</div>
-        </div>
-      </div>
-
-      <!-- FILA 3: P/G -->
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding:0 4px">Resultado</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:var(--card);border:1px solid ${g>=0?'rgba(126,255,212,0.3)':'rgba(255,107,107,0.3)'};border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">P/G €</div>
-          <div class="private" style="font-size:18px;font-weight:700;color:${g>=0?'var(--green)':'var(--red)'}">${g>=0?'+':''}${fmt(g)}</div>
-        </div>
-        <div style="background:var(--card);border:1px solid ${g>=0?'rgba(126,255,212,0.3)':'rgba(255,107,107,0.3)'};border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">P/G %</div>
-          <div style="font-size:18px;font-weight:700;color:${g>=0?'var(--green)':'var(--red)'}">${fmtPct(g/totalInv)}</div>
-        </div>
-      </div>
-
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total actual</div>
+      <div class="datos-result-val private">${fmt(totalAct)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total invertido</div>
+      <div class="datos-result-val private">${fmt(totalInv)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">P/G €</div>
+      <div class="datos-result-val ${g>=0?'pos':'neg'} private">${g>=0?'+':''}${fmt(g)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">P/G %</div>
+      <div class="datos-result-val ${g>=0?'pos':'neg'}">${fmtPct(g/totalInv)}</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">SCYR · ${715} acc.</div>
+      <div class="datos-result-val" style="font-size:13px">${precios.scyr}€/acc</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">SAN · ${229+190} acc.</div>
+      <div class="datos-result-val" style="font-size:13px">${precios.san}€/acc</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">IAG · ${350} acc.</div>
+      <div class="datos-result-val" style="font-size:13px">${precios.iag}€/acc</div>
     </div>
   `;
 }
