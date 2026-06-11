@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/akapr/Downloads/index_20.html -->
+<!-- saved from url=(0046)file:///C:/Users/akapr/Downloads/index_24.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -300,6 +300,19 @@ body.privacy td.euro-cell { filter: blur(5px); user-select:none; pointer-events:
 body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 
 /* Last update label */
+.btn-auto-precio {
+  background: linear-gradient(135deg, rgba(126,255,212,0.15), rgba(107,207,255,0.15));
+  border: 1px solid rgba(126,255,212,0.4);
+  border-radius: 10px; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--green); padding: 10px 18px;
+  transition: all 0.2s;
+}
+.btn-auto-precio:hover { background: rgba(126,255,212,0.25); }
+.btn-auto-precio:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-auto-precio.loading { animation: pulse-btn 1s infinite; }
+@keyframes pulse-btn { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
 .last-update { font-size: 11px; color: var(--muted); margin-top: 8px; text-align: right; }
 
 /* RANKING */
@@ -410,7 +423,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 <nav class="nav">
   <div class="nav-brand">📊 Mi Cartera</div>
   <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()" title="Modo privado">👁</button>
-  <button class="nav-btn active" onclick="showPage(&#39;dashboard&#39;)">Dashboard</button>
+  <button class="nav-btn" onclick="showPage(&#39;dashboard&#39;)">Dashboard</button>
   <button class="nav-btn" onclick="showPage(&#39;inmuebles&#39;)">Inmuebles</button>
   <button class="nav-btn" onclick="showPage(&#39;bestinver&#39;)">Bestinver</button>
   <button class="nav-btn" onclick="showPage(&#39;bolsa&#39;)">Bolsa</button>
@@ -418,11 +431,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <button class="nav-btn" onclick="showPage(&#39;urbanitae&#39;)">Urbanitae</button>
   <button class="nav-btn" onclick="showPage(&#39;bbva&#39;)">BBVA PP</button>
   <button class="nav-btn" onclick="showPage(&#39;myinvestor&#39;)">MyInvestor</button>
-  <button class="nav-btn" style="color:var(--accent);border-bottom:2px solid transparent" onclick="showPage(&#39;datos&#39;)">✏️ Datos</button>
+  <button class="nav-btn active" style="color:var(--accent);border-bottom:2px solid transparent" onclick="showPage(&#39;datos&#39;)">✏️ Datos</button>
 </nav>
 
 <!-- ═══════════════════ DATOS ═══════════════════ -->
-<div id="page-datos" class="page">
+<div id="page-datos" class="page active">
   <div class="section-title">✏️ Actualizar Datos</div>
   <div class="section-sub">Introduce aquí los datos de cada inversión · se actualizan todas las pestañas y el Dashboard al guardar</div>
 
@@ -443,8 +456,164 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <input type="number" id="d-inm-mesias" placeholder="ej: 106704" step="100">
       </div>
     </div>
-    <div class="datos-result" id="d-inm-result"></div>
-    <div class="rent-tracker" id="rent-tracker"></div>
+    <div class="datos-result" id="d-inm-result">
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total actual</div>
+      <div class="datos-result-val private">206.704 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Plusvalía</div>
+      <div class="datos-result-val pos private">+43.474 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rent. plusvalía</div>
+      <div class="datos-result-val pos">+26.6%</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rentas Galdós</div>
+      <div class="datos-result-val pos private">13.805 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Gastos Galdós</div>
+      <div class="datos-result-val neg private">0 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rentas Mesías</div>
+      <div class="datos-result-val pos private">9.177 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Gastos Mesías</div>
+      <div class="datos-result-val neg private">0 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Neto recuperado</div>
+      <div class="datos-result-val pos private">+22.982 €</div>
+    </div>
+  </div>
+    <div class="rent-tracker" id="rent-tracker">
+    <div class="rent-tracker-title">Historial de rentas cobradas (últimos 12 registros)</div>
+    
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Galdós</div>
+        <div style="font-size:11px;color:var(--muted)">Jun 2026 · día 1</div>
+      </div>
+      <div class="rent-month-vals">
+        <span class="auto-badge">AUTO</span>
+        <b class="private">+445 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Galdós</div>
+        <div style="font-size:11px;color:var(--muted)">May 2026 · día 1</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+445 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Mesías</div>
+        <div style="font-size:11px;color:var(--muted)">May 2026 · día 20</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+437 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Galdós</div>
+        <div style="font-size:11px;color:var(--muted)">Abr 2026 · día 1</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+445 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Mesías</div>
+        <div style="font-size:11px;color:var(--muted)">Abr 2026 · día 20</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+437 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Galdós</div>
+        <div style="font-size:11px;color:var(--muted)">Mar 2026 · día 1</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+430 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Mesías</div>
+        <div style="font-size:11px;color:var(--muted)">Mar 2026 · día 20</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+437 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Galdós</div>
+        <div style="font-size:11px;color:var(--muted)">Feb 2026 · día 1</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+430 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Mesías</div>
+        <div style="font-size:11px;color:var(--muted)">Feb 2026 · día 20</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+437 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Galdós</div>
+        <div style="font-size:11px;color:var(--muted)">Ene 2026 · día 1</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+430 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Mesías</div>
+        <div style="font-size:11px;color:var(--muted)">Ene 2026 · día 20</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+437 €</b>
+      </div>
+    </div>
+    <div class="rent-month-row">
+      <div>
+        <div class="rent-month-name">Galdós</div>
+        <div style="font-size:11px;color:var(--muted)">Dic 2025 · día 1</div>
+      </div>
+      <div class="rent-month-vals">
+        
+        <b class="private">+430 €</b>
+      </div>
+    </div>
+  </div>
 
     <!-- GASTOS EXTRAORDINARIOS -->
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
@@ -473,7 +642,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <div style="margin-top:10px">
         <button class="btn-datos-save" style="background:var(--red)" onclick="addGastoExtraordinario()">+ Añadir gasto</button>
       </div>
-      <div class="gastos-tracker" id="gastos-tracker"></div>
+      <div class="gastos-tracker" id="gastos-tracker"><div style="font-size:12px;color:var(--muted);padding:8px 0">No hay gastos extraordinarios registrados</div></div>
     </div>
 
     <div style="margin-top:14px">
@@ -498,7 +667,28 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <input type="number" id="d-nav-mixto" placeholder="ej: 45.211524" step="0.000001" class="nav-input">
       </div>
     </div>
-    <div class="datos-result" id="d-best-result"></div>
+    <div class="datos-result" id="d-best-result">
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total actual</div>
+      <div class="datos-result-val private">109.029 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Ganancia</div>
+      <div class="datos-result-val pos private">+36.537 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Rentabilidad</div>
+      <div class="datos-result-val pos">+50.4%</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">NAV Bestinfond</div>
+      <div class="datos-result-val" style="font-size:13px;color:var(--muted)">352.447579</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">NAV Mixto</div>
+      <div class="datos-result-val" style="font-size:13px;color:var(--muted)">46.787383</div>
+    </div>
+  </div>
     <div style="margin-top:14px">
       <button class="btn-datos-save" onclick="saveDatosBestinver()">Guardar Bestinver</button>
     </div>
@@ -510,6 +700,10 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <span class="datos-section-icon">📉</span>
       <span class="datos-section-title">Bolsa</span>
       <span class="datos-section-sub">Precio actual de cada acción en BME</span>
+    </div>
+    <div style="margin-bottom:14px">
+      <button class="btn-auto-precio" id="btn-auto-bolsa" onclick="fetchPreciosBolsa()">🔄 Actualizar precios automáticamente</button>
+      <span id="bolsa-auto-status" style="font-size:11px;color:var(--muted);margin-left:12px"></span>
     </div>
     <div class="datos-grid">
       <div class="datos-field">
@@ -525,7 +719,36 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <input type="number" id="d-iag" placeholder="ej: 4.58" step="0.01">
       </div>
     </div>
-    <div class="datos-result" id="d-bol-result"></div>
+    <div class="datos-result" id="d-bol-result">
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total actual</div>
+      <div class="datos-result-val private">9.313 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">Total invertido</div>
+      <div class="datos-result-val private">8.438 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">P/G €</div>
+      <div class="datos-result-val pos private">+875 €</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">P/G %</div>
+      <div class="datos-result-val pos">+10.4%</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">SCYR · 715 acc.</div>
+      <div class="datos-result-val" style="font-size:13px">4.56€/acc</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">SAN · 419 acc.</div>
+      <div class="datos-result-val" style="font-size:13px">10.62€/acc</div>
+    </div>
+    <div class="datos-result-item">
+      <div class="datos-result-label">IAG · 350 acc.</div>
+      <div class="datos-result-val" style="font-size:13px">4.58€/acc</div>
+    </div>
+  </div>
     <div style="margin-top:14px">
       <button class="btn-datos-save" onclick="saveDatosBolsa()">Guardar Bolsa</button>
     </div>
@@ -603,7 +826,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 </div>
 
 
-<div id="page-dashboard" class="page active">
+<div id="page-dashboard" class="page">
   <div class="section-title">Dashboard Global</div>
   <div class="section-sub">Vista consolidada de toda tu cartera · actualiza los valores actuales aquí abajo</div>
 
@@ -616,11 +839,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div style="flex:1;height:1px;background:var(--border)"></div>
     <span style="font-size:10px;color:var(--muted)">Cópialo directamente de tu web Bestinver</span></div><div class="form-group">
       <label style="color:var(--accent)">NAV Bestinfond F.I.</label>
-      <input type="number" id="inp-nav_bestinfond" value="337.196531" step="0.000001" min="0" placeholder="ej: 337,196531" style="border-color:rgba(200,181,255,0.3)" class="private"></div><div class="form-group">
+      <input type="number" id="inp-nav_bestinfond" value="352.447579" step="0.000001" min="0" placeholder="ej: 337,196531" style="border-color:rgba(200,181,255,0.3)" class="private"></div><div class="form-group">
       <label style="color:var(--accent)">NAV Bestinver Mixto F.I.</label>
-      <input type="number" id="inp-nav_mixto" value="45.211524" step="0.000001" min="0" placeholder="ej: 45,211524" style="border-color:rgba(200,181,255,0.3)" class="private"></div><div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-top: 10px; margin-bottom: 2px;"><span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Otras plataformas · Valor actual total</span><div style="flex:1;height:1px;background:var(--border)"></div></div><div class="form-group">
+      <input type="number" id="inp-nav_mixto" value="46.787383" step="0.000001" min="0" placeholder="ej: 45,211524" style="border-color:rgba(200,181,255,0.3)" class="private"></div><div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-top: 10px; margin-bottom: 2px;"><span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">Otras plataformas · Valor actual total</span><div style="flex:1;height:1px;background:var(--border)"></div></div><div class="form-group">
     <label>BESTINVER</label>
-    <input id="best-total-val" type="text" value="104.773,40" readonly="" class="private" style="cursor:default; opacity:0.7;" title="Calculado automáticamente desde los NAVs"></div><div class="form-group">
+    <input id="best-total-val" type="text" value="109.028,84" readonly="" class="private" style="cursor:default; opacity:0.7;" title="Calculado automáticamente desde los NAVs"></div><div class="form-group">
       <label>INMUEBLES</label>
       <input type="number" id="inp-inmuebles" value="206704.00" step="0.01" min="0" placeholder="206704" class="private"></div><div class="form-group">
       <label>BBVA PP</label>
@@ -635,8 +858,8 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <input type="number" id="inp-myinvestor" value="3214.69" step="0.01" min="0" placeholder="3214.69" class="private"></div><div id="nav-preview" style="grid-column: 1 / -1; background: var(--card2); border: 1px solid rgba(200, 181, 255, 0.2); border-radius: 12px; padding: 14px 16px; display: block;">
     <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">
       Vista previa Bestinver
-      <span style="margin-left:12px;font-size:13px;color:var(--text)">Total: <span class="private">104.773 €</span></span>
-      <span style="margin-left:8px;font-size:13px;color:var(--green)"><span class="private">+32.282 €</span> (+44.53%)</span>
+      <span style="margin-left:12px;font-size:13px;color:var(--text)">Total: <span class="private">109.029 €</span></span>
+      <span style="margin-left:8px;font-size:13px;color:var(--green)"><span class="private">+36.537 €</span> (+50.40%)</span>
     </div>
     <table style="width:100%;border-collapse:collapse">
       <thead><tr>
@@ -651,30 +874,30 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
       <td style="padding:5px 8px;font-size:11px;color:var(--muted)">C y R</td>
       <td style="padding:5px 8px;font-size:12px;text-align:right">169.320881</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">57.094 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+17.344 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+43.63%</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">59.677 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+19.926 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+50.13%</td>
     </tr><tr>
       <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinver Mixto</td>
       <td style="padding:5px 8px;font-size:11px;color:var(--muted)">C y R</td>
       <td style="padding:5px 8px;font-size:12px;text-align:right">1030.581112</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">46.594 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+14.908 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+47.05%</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">48.218 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+16.532 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+52.17%</td>
     </tr><tr>
       <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
       <td style="padding:5px 8px;font-size:11px;color:var(--muted)">Carmen</td>
       <td style="padding:5px 8px;font-size:12px;text-align:right">1.691143</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">570 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+15 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+2.75%</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">596 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+41 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+7.39%</td>
     </tr><tr>
       <td style="padding:5px 8px;font-size:12px;font-weight:600">Bestinfond</td>
       <td style="padding:5px 8px;font-size:11px;color:var(--muted)">Marta</td>
       <td style="padding:5px 8px;font-size:12px;text-align:right">1.526110</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">515 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+15 €</span></td>
-      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+2.92%</td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;font-weight:600"><span class="private">538 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green);font-weight:700"><span class="private">+38 €</span></td>
+      <td style="padding:5px 8px;font-size:12px;text-align:right;color:var(--green)">+7.57%</td>
     </tr></tbody>
     </table></div></div>
     <div class="form-actions">
@@ -682,7 +905,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <button class="btn-reset" onclick="resetValues()">Restablecer originales</button>
       <span class="save-msg" id="save-msg">✓ Guardado correctamente</span>
     </div>
-    <div class="last-update" id="last-update-label">Usando valores originales del archivo</div>
+    <div class="last-update" id="last-update-label">Última actualización: 9/6/2026, 21:45:06</div>
   </div>
 
   <!-- KPIs GLOBALES -->
@@ -693,15 +916,15 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value pos"><span class="private">367.911 €</span></div>
+      <div class="stat-value pos"><span class="private">372.167 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia total</div>
-      <div class="stat-value pos"><span class="private">+80.142 €</span></div>
+      <div class="stat-value pos"><span class="private">+84.398 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
-      <div class="stat-value pos">+27.8%</div>
+      <div class="stat-value pos">+29.3%</div>
     </div>
     <div class="stat-card" style="--accent-line:var(--accent)">
       <div class="stat-label">Plataformas</div>
@@ -714,9 +937,9 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="chart-card">
       <div class="chart-title">Distribución actual</div>
       <div class="chart-wrap donut" style="position:relative">
-        <canvas id="chart-donut" width="834" height="455" style="display: block; box-sizing: border-box; height: 260px; width: 476px;"></canvas>
+        <canvas id="chart-donut" width="0" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;"></canvas>
         <div class="donut-center">
-          <div class="big" id="donut-total">367.911 €</div>
+          <div class="big" id="donut-total">372.167 €</div>
           <div class="small">total</div>
         </div>
       </div>
@@ -730,13 +953,13 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <div class="rank-bar-wrap">
           <div class="rank-bar"><div class="rank-fill" style="width:100.0%;background:var(--green)"></div></div>
         </div>
-        <span class="rank-pct" style="color:var(--green)">+44.5%</span>
+        <span class="rank-pct" style="color:var(--green)">+50.4%</span>
       </div>
       <div class="rank-item">
         <span class="rank-num">2</span>
         <span class="rank-name">Inmuebles</span>
         <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:59.8%;background:var(--green)"></div></div>
+          <div class="rank-bar"><div class="rank-fill" style="width:52.8%;background:var(--green)"></div></div>
         </div>
         <span class="rank-pct" style="color:var(--green)">+26.6%</span>
       </div>
@@ -744,7 +967,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <span class="rank-num">3</span>
         <span class="rank-name">Bolsa</span>
         <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:23.3%;background:var(--green)"></div></div>
+          <div class="rank-bar"><div class="rank-fill" style="width:20.5%;background:var(--green)"></div></div>
         </div>
         <span class="rank-pct" style="color:var(--green)">+10.4%</span>
       </div>
@@ -752,7 +975,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <span class="rank-num">4</span>
         <span class="rank-name">Indexa Capital</span>
         <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:21.8%;background:var(--green)"></div></div>
+          <div class="rank-bar"><div class="rank-fill" style="width:19.2%;background:var(--green)"></div></div>
         </div>
         <span class="rank-pct" style="color:var(--green)">+9.7%</span>
       </div>
@@ -760,7 +983,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <span class="rank-num">5</span>
         <span class="rank-name">BBVA PP</span>
         <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:20.3%;background:var(--green)"></div></div>
+          <div class="rank-bar"><div class="rank-fill" style="width:17.9%;background:var(--green)"></div></div>
         </div>
         <span class="rank-pct" style="color:var(--green)">+9.0%</span>
       </div>
@@ -768,7 +991,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <span class="rank-num">6</span>
         <span class="rank-name">MyInvestor</span>
         <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:15.1%;background:var(--green)"></div></div>
+          <div class="rank-bar"><div class="rank-fill" style="width:13.4%;background:var(--green)"></div></div>
         </div>
         <span class="rank-pct" style="color:var(--green)">+6.7%</span>
       </div>
@@ -776,7 +999,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <span class="rank-num">7</span>
         <span class="rank-name">Urbanitae</span>
         <div class="rank-bar-wrap">
-          <div class="rank-bar"><div class="rank-fill" style="width:1.9%;background:var(--green)"></div></div>
+          <div class="rank-bar"><div class="rank-fill" style="width:1.7%;background:var(--green)"></div></div>
         </div>
         <span class="rank-pct" style="color:var(--green)">+0.9%</span>
       </div></div>
@@ -787,11 +1010,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Invertido vs Valor actual por plataforma</div>
-      <div class="chart-wrap tall"><canvas id="chart-compare" width="834" height="490" style="display: block; box-sizing: border-box; height: 280px; width: 476px;"></canvas></div>
+      <div class="chart-wrap tall"><canvas id="chart-compare" width="0" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Ganancia € por plataforma</div>
-      <div class="chart-wrap tall"><canvas id="chart-ganancia" width="834" height="490" style="display: block; box-sizing: border-box; height: 280px; width: 476px;"></canvas></div>
+      <div class="chart-wrap tall"><canvas id="chart-ganancia" width="0" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;"></canvas></div>
     </div>
   </div>
 </div>
@@ -908,15 +1131,15 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value pos" id="best-act"><span class="private">104.773 €</span></div>
+      <div class="stat-value pos" id="best-act"><span class="private">109.029 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Ganancia total</div>
-      <div class="stat-value pos" id="best-gan"><span class="private">+32.282 €</span></div>
+      <div class="stat-value pos" id="best-gan"><span class="private">+36.537 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
-      <div class="stat-value pos" id="best-rent">+44.5%</div>
+      <div class="stat-value pos" id="best-rent">+50.4%</div>
     </div>
   </div>
 
@@ -939,34 +1162,34 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <td>Bestinfond F.I.</td>
         <td style="text-align:right">C y R</td>
         <td style="text-align:right"><span class="private">39.750 €</span></td>
-        <td style="text-align:right"><span class="private">57.094 €</span></td>
-        <td class="pos" style="text-align:right"><span class="private">+17.344 €</span></td>
-        <td style="text-align:right"><span class="badge pos">+43.63%</span></td>
-        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
+        <td style="text-align:right"><span class="private">59.677 €</span></td>
+        <td class="pos" style="text-align:right"><span class="private">+19.926 €</span></td>
+        <td style="text-align:right"><span class="badge pos">+50.13%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">352.447579</td>
       </tr><tr>
         <td>Bestinver Mixto F.I.</td>
         <td style="text-align:right">C y R</td>
         <td style="text-align:right"><span class="private">31.686 €</span></td>
-        <td style="text-align:right"><span class="private">46.594 €</span></td>
-        <td class="pos" style="text-align:right"><span class="private">+14.908 €</span></td>
-        <td style="text-align:right"><span class="badge pos">+47.05%</span></td>
-        <td style="text-align:right;color:var(--muted);font-size:12px">45.211524</td>
+        <td style="text-align:right"><span class="private">48.218 €</span></td>
+        <td class="pos" style="text-align:right"><span class="private">+16.532 €</span></td>
+        <td style="text-align:right"><span class="badge pos">+52.17%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">46.787383</td>
       </tr><tr>
         <td>Bestinfond F.I.</td>
         <td style="text-align:right">Carmen</td>
         <td style="text-align:right"><span class="private">555 €</span></td>
-        <td style="text-align:right"><span class="private">570 €</span></td>
-        <td class="pos" style="text-align:right"><span class="private">+15 €</span></td>
-        <td style="text-align:right"><span class="badge pos">+2.75%</span></td>
-        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
+        <td style="text-align:right"><span class="private">596 €</span></td>
+        <td class="pos" style="text-align:right"><span class="private">+41 €</span></td>
+        <td style="text-align:right"><span class="badge pos">+7.39%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">352.447579</td>
       </tr><tr>
         <td>Bestinfond F.I.</td>
         <td style="text-align:right">Marta</td>
         <td style="text-align:right"><span class="private">500 €</span></td>
-        <td style="text-align:right"><span class="private">515 €</span></td>
-        <td class="pos" style="text-align:right"><span class="private">+15 €</span></td>
-        <td style="text-align:right"><span class="badge pos">+2.92%</span></td>
-        <td style="text-align:right;color:var(--muted);font-size:12px">337.196531</td>
+        <td style="text-align:right"><span class="private">538 €</span></td>
+        <td class="pos" style="text-align:right"><span class="private">+38 €</span></td>
+        <td style="text-align:right"><span class="badge pos">+7.57%</span></td>
+        <td style="text-align:right;color:var(--muted);font-size:12px">352.447579</td>
       </tr></tbody>
     </table>
   </div>
@@ -1928,6 +2151,106 @@ function applyPrivacy() {
   });
 }
 
+// ─── AUTO PRECIOS BOLSA ──────────────────────────────────────────────────────
+async function fetchPreciosBolsa() {
+  const btn = document.getElementById('btn-auto-bolsa');
+  const status = document.getElementById('bolsa-auto-status');
+
+  if (btn) { btn.disabled = true; btn.classList.add('loading'); btn.textContent = '⏳ Obteniendo precios...'; }
+  if (status) status.textContent = '';
+
+  const tickers = { scyr: 'SCYR.MC', san: 'SAN.MC', iag: 'IAG.MC' };
+
+  try {
+    const precios = {};
+    const errores = [];
+
+    const proxies = [
+      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
+    ];
+
+    for (const [key, ticker] of Object.entries(tickers)) {
+      let got = false;
+      for (const makeProxy of proxies) {
+        try {
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+          const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(5000) });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+          if (price) {
+            precios[key] = Math.round(price * 100) / 100;
+            got = true;
+            break;
+          }
+        } catch(e) { continue; }
+      }
+      if (!got) errores.push(ticker);
+    }
+
+    // Guardar y propagar si se obtuvieron precios
+    if (Object.keys(precios).length > 0) {
+      const bp = loadBolsaPrecios();
+      const nuevos = { ...bp, ...precios };
+      localStorage.setItem(BOLSA_KEY, JSON.stringify(nuevos));
+      localStorage.setItem('cartera_bolsa_ts', Date.now());
+
+      // Recalcular total bolsa
+      let total = 0;
+      BOLSA_ACCIONES.forEach(a => {
+        const p = nuevos[a.key === 'san2' ? 'san' : a.key] || 0;
+        total += p * a.acciones;
+      });
+      if (total > 0) { state.bolsa = total; saveState(); }
+
+      // Actualizar inputs si la página de datos está visible
+      const scyrInp = document.getElementById('d-scyr');
+      if (scyrInp) {
+        if (nuevos.scyr) scyrInp.value = nuevos.scyr;
+        if (nuevos.san)  document.getElementById('d-san').value = nuevos.san;
+        if (nuevos.iag)  document.getElementById('d-iag').value = nuevos.iag;
+        renderDatosBolsaResult();
+      }
+
+      renderAll();
+
+      const hora = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+      const msg = errores.length === 0
+        ? `✓ Bolsa actualizada · ${hora}`
+        : `⚠ Parcial · ${hora}`;
+
+      if (status) { status.style.color = errores.length === 0 ? 'var(--green)' : 'var(--yellow)'; status.textContent = msg; }
+
+      // Mostrar toast si fue actualización automática (sin botón visible)
+      if (!btn || btn.style.display === 'none') showDatosSaved(`📈 Bolsa actualizada · ${hora}`);
+    }
+  } catch(e) {
+    if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ Sin conexión'; }
+  }
+
+  if (btn) { btn.disabled = false; btn.classList.remove('loading'); btn.textContent = '🔄 Actualizar precios automáticamente'; }
+}
+
+// Actualizar precios al abrir la app si han pasado más de 30 min
+async function autoUpdateBolsaOnLoad() {
+  const lastTs = parseInt(localStorage.getItem('cartera_bolsa_ts') || '0');
+  const minutos = (Date.now() - lastTs) / 1000 / 60;
+  if (minutos > 30) {
+    await fetchPreciosBolsa();
+  }
+}
+
+// Actualizar cuando el usuario vuelve a la pestaña/app
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    const lastTs = parseInt(localStorage.getItem('cartera_bolsa_ts') || '0');
+    const minutos = (Date.now() - lastTs) / 1000 / 60;
+    if (minutos > 30) fetchPreciosBolsa();
+  }
+});
+
 // ─── GASTOS EXTRAORDINARIOS ──────────────────────────────────────────────────
 const GASTOS_KEY = 'cartera_gastos_ext_v1';
 
@@ -2420,6 +2743,10 @@ function showDatosSaved(msg) {
   localStorage.setItem(RENT_KEY, JSON.stringify(rentas));
   checkAutoRentas();
 })();
+
+// Auto actualizar precios de bolsa al abrir la app
+autoUpdateBolsaOnLoad();
+
 </script>
 
 
