@@ -848,7 +848,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="chart-title">Posiciones en cartera</div>
     <table class="inv-table">
       <thead><tr><th>Ticker</th><th>Nombre</th><th>Sector</th><th>Acciones</th><th>P. Compra</th><th>P. Actual</th><th>Total inv.</th><th>Saldo act.</th><th>P/G €</th><th>P/G %</th></tr></thead>
-      <tbody>
+      <tbody id="bol-tabla-body">
         <tr><td>SCYR</td><td>Sacyr</td><td>Infraes.</td><td>715</td><td><span class="private">3,77€</span></td><td><span class="private">4,56€</span></td><td><span class="private">2.696€</span></td><td><span class="private">3.260€</span></td><td class="pos"><span class="private">+565€</span></td><td><span class="badge pos">+20.9%</span></td></tr>
         <tr><td>SAN</td><td>Santander</td><td>Banca</td><td>229</td><td><span class="private">10,61€</span></td><td><span class="private">10,62€</span></td><td><span class="private">2.430€</span></td><td><span class="private">2.432€</span></td><td class="pos"><span class="private">+2€</span></td><td><span class="badge neu">+0.1%</span></td></tr>
         <tr><td>IAG</td><td>IAG</td><td>Aerolíneas</td><td>350</td><td><span class="private">4,02€</span></td><td><span class="private">4,58€</span></td><td><span class="private">1.407€</span></td><td><span class="private">1.603€</span></td><td class="pos"><span class="private">+196€</span></td><td><span class="badge pos">+13.9%</span></td></tr>
@@ -1644,20 +1644,60 @@ function renderBolsa() {
   document.getElementById('bol-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
   document.getElementById('bol-rent').textContent = fmtPct(g / inv);
 
-  const ratio = act / 9312.18;
+  // Usar precios reales guardados
+  const bp = loadBolsaPrecios();
+  const pScyr = bp.scyr || 4.56;
+  const pSan  = bp.san  || 10.62;
+  const pIag  = bp.iag  || 4.58;
+
+  const actScyr  = pScyr * 715;
+  const actSan1  = pSan  * 229;
+  const actIag   = pIag  * 350;
+  const actSan2  = pSan  * 190;
+
   makeChart('chart-bol-compare', 'bar', {
     labels: ['SCYR', 'SAN (x229)', 'IAG', 'SAN (x190)'],
     datasets: [
-      { label:'Invertido', data:[2695.55,2430.04,1407,1905.7], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
-      { label:'Actual',    data:[3260.4*ratio,2431.98*ratio,1603*ratio,2017.8*ratio], backgroundColor:'#6bcfffcc', borderRadius:6 }
+      { label:'Invertido', data:[2695.55, 2430.04, 1407, 1905.7], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
+      { label:'Actual',    data:[actScyr, actSan1, actIag, actSan2], backgroundColor:'#6bcfffcc', borderRadius:6 }
     ]
   }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
 
   makeChart('chart-bol-sector', 'doughnut', {
     labels: ['Infraestructuras','Banca','Aerolíneas'],
-    datasets:[{ data:[2695.55,4347.74+1905.7,1407], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc'], borderColor:'#0c0c10', borderWidth:3 }]
+    datasets:[{ data:[actScyr, actSan1+actSan2, actIag], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc'], borderColor:'#0c0c10', borderWidth:3 }]
   }, { cutout:'60%', plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}} });
+
+  // Actualizar tabla de posiciones
+  const tbody = document.getElementById('bol-tabla-body');
+  if (tbody) {
+    const rows = [
+      { ticker:'SCYR', nombre:'Sacyr',     sector:'Infraes.',    acc:715, coste:2695.55, precio:pScyr },
+      { ticker:'SAN',  nombre:'Santander', sector:'Banca',       acc:229, coste:2430.04, precio:pSan  },
+      { ticker:'IAG',  nombre:'IAG',       sector:'Aerolíneas',  acc:350, coste:1407.00, precio:pIag  },
+      { ticker:'SAN',  nombre:'Santander', sector:'Banca',       acc:190, coste:1905.70, precio:pSan  },
+    ];
+    tbody.innerHTML = rows.map(r => {
+      const actVal = r.precio * r.acc;
+      const pg = actVal - r.coste;
+      const pgPct = (pg / r.coste * 100).toFixed(1);
+      const color = pg >= 0 ? 'pos' : 'neg';
+      const badge = pg >= 0 ? 'pos' : 'neg';
+      return `<tr>
+        <td>${r.ticker}</td>
+        <td>${r.nombre}</td>
+        <td>${r.sector}</td>
+        <td>${r.acc}</td>
+        <td><span class="private">${r.coste.toFixed(2).replace('.',',')}€</span></td>
+        <td>${r.precio}€</td>
+        <td><span class="private">${fmt(actVal)}</span></td>
+        <td><span class="private">${fmt(actVal)}</span></td>
+        <td class="${color}"><span class="private">${pg>=0?'+':''}${fmt(pg)}</span></td>
+        <td><span class="badge ${badge}">${pg>=0?'+':''}${pgPct}%</span></td>
+      </tr>`;
+    }).join('');
+  }
 }
 
 // ── INDEXA ───────────────────────────────────────────────────────────────────
