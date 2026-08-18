@@ -2409,7 +2409,8 @@ function showDatosSaved(msg) {
   }
 
   localStorage.setItem(RENT_KEY, JSON.stringify(rentas));
-  checkAutoRentas();
+    checkAutoRentas();
+  renderAll();
 })();
 
 // Auto actualizar precios de bolsa al abrir la app
