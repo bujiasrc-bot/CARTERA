@@ -542,6 +542,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <div class="datos-field">
         <label>IAG (€/acción)</label>
         <input type="number" id="d-iag" placeholder="ej: 4.58" step="0.01" />
+      <div class="datos-field"><label>TSM · Taiwan Semi. (€/acción)</label><input type="number" id="d-tsm" placeholder="ej: 357.14" step="0.01" /></div>
       </div>
     </div>
     <div class="datos-result" id="d-bol-result"></div>
@@ -1649,11 +1650,13 @@ function renderBolsa() {
   const pScyr = bp.scyr || 4.56;
   const pSan  = bp.san  || 10.62;
   const pIag  = bp.iag  || 4.58;
+    const pTsm  = bp.tsm  || 357.14;
 
   const actScyr  = pScyr * 715;
   const actSan1  = pSan  * 229;
   const actIag   = pIag  * 350;
   const actSan2  = pSan  * 190;
+    const actTsm   = pTsm  * 4;
 
   makeChart('chart-bol-compare', 'bar', {
     labels: ['SCYR', 'SAN (x229)', 'IAG', 'SAN (x190)'],
@@ -1665,8 +1668,8 @@ function renderBolsa() {
        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
 
   makeChart('chart-bol-sector', 'doughnut', {
-    labels: ['Infraestructuras','Banca','Aerolíneas'],
-    datasets:[{ data:[actScyr, actSan1+actSan2, actIag], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc'], borderColor:'#0c0c10', borderWidth:3 }]
+   labels:['Infraestructuras','Banca','Aerolíneas','Semiconductores']
+     datasets:[{ data:[actScyr, actSan1+actSan2, actIag, actTsm], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc'], borderColor:'#0c0c10', borderWidth:3 }]
   }, { cutout:'60%', plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}} });
 
   // Actualizar tabla de posiciones
@@ -1677,6 +1680,7 @@ function renderBolsa() {
       { ticker:'SAN',  nombre:'Santander', sector:'Banca',       acc:229, coste:2430.04, precio:pSan  },
       { ticker:'IAG',  nombre:'IAG',       sector:'Aerolíneas',  acc:350, coste:1407.00, precio:pIag  },
       { ticker:'SAN',  nombre:'Santander', sector:'Banca',       acc:190, coste:1905.70, precio:pSan  },
+            { ticker:'TSM',  nombre:'Taiwan Semi.', sector:'Semiconductores', acc:4,   coste:1473.47, precio:pTsm, usd:true },
     ];
     tbody.innerHTML = rows.map(r => {
       const actVal = r.precio * r.acc;
@@ -1690,7 +1694,7 @@ function renderBolsa() {
         <td>${r.sector}</td>
         <td>${r.acc}</td>
         <td><span class="private">${r.coste.toFixed(2).replace('.',',')}€</span></td>
-        <td>${r.precio}€</td>
+        ${r.precio}€${r.usd?' <span style="font-size:10px;color:var(--muted)">(USD→€)</span>':''}
         <td><span class="private">${fmt(actVal)}</span></td>
         <td><span class="private">${fmt(actVal)}</span></td>
         <td class="${color}"><span class="private">${pg>=0?'+':''}${fmt(pg)}</span></td>
@@ -1808,7 +1812,7 @@ async function fetchPreciosBolsa() {
   if (btn) { btn.disabled = true; btn.classList.add('loading'); btn.textContent = '⏳ Obteniendo precios...'; }
   if (status) status.textContent = '';
 
-  const tickers = { scyr: 'SCYR.MC', san: 'SAN.MC', iag: 'IAG.MC' };
+ const tickers = { scyr: 'SCYR.MC', san: 'SAN.MC', iag: 'IAG.MC', tsm: 'TSM' };
 
   try {
     const precios = {};
@@ -1829,8 +1833,25 @@ async function fetchPreciosBolsa() {
           if (!res.ok) continue;
           const data = await res.json();
           const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-          if (price) {
-            precios[key] = Math.round(price * 100) / 100;
+                   if (price) {
+            let priceEur = Math.round(price * 100) / 100;
+            if (key === 'tsm') {
+              let fxRate = 0.8639;
+              try {
+                const fxUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X?interval=1d&range=1d';
+                for (const mkP2 of proxies) {
+                  try {
+                    const fxRes = await fetch(mkP2(fxUrl), {signal: AbortSignal.timeout(5000)});
+                    if (!fxRes.ok) continue;
+                    const fxData = await fxRes.json();
+                    const fx = fxData?.chart?.result?.[0]?.meta?.regularMarketPrice;
+                    if (fx) { fxRate = 1/fx; break; }
+                  } catch(e) { continue; }
+                }
+              } catch(e) {}
+              priceEur = Math.round(price * fxRate * 100) / 100;
+            }
+            precios[key] = priceEur;
             got = true;
             break;
           }
@@ -1992,6 +2013,7 @@ const BOLSA_ACCIONES = [
   { ticker: 'SAN',  nombre: 'Santander', acciones: 229,  coste: 2430.04, key: 'san'  },
   { ticker: 'IAG',  nombre: 'IAG',       acciones: 350,  coste: 1407.00, key: 'iag'  },
   { ticker: 'SAN',  nombre: 'Santander', acciones: 190,  coste: 1905.70, key: 'san2' },
+    { ticker: 'TSM',  nombre: 'Taiwan Semi.', acciones: 4,   coste: 1473.47, key: 'tsm', usd: true },
 ];
 
 // ── Cargar precios de bolsa guardados
@@ -2068,6 +2090,7 @@ function initDatosPage() {
   if (bp.scyr) document.getElementById('d-scyr').value = bp.scyr;
   if (bp.san)  document.getElementById('d-san').value  = bp.san;
   if (bp.iag)  document.getElementById('d-iag').value  = bp.iag;
+  if (bp.tsm) document.getElementById('d-tsm').value  = bp.tsm;
   renderDatosBolsaResult();
 
   // Simples
@@ -2206,7 +2229,7 @@ function renderDatosBolsaResult() {
     scyr: parseFloat(document.getElementById('d-scyr').value) || 4.56,
     san:  parseFloat(document.getElementById('d-san').value)  || 10.62,
     iag:  parseFloat(document.getElementById('d-iag').value)  || 4.58,
-  };
+    tsm: parseFloat(document.getElementById('d-tsm').value)  || 357.14, };
   let totalAct = 0, totalInv = 0;
   BOLSA_ACCIONES.forEach(a => {
     const p = precios[a.key === 'san2' ? 'san' : a.key] || 0;
