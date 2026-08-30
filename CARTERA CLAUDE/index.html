@@ -542,7 +542,10 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <div class="datos-field">
         <label>IAG (€/acción)</label>
         <input type="number" id="d-iag" placeholder="ej: 4.58" step="0.01" />
-      <div class="datos-field"><label>TSM · Taiwan Semi. (€/acción)</label><input type="number" id="d-tsm" placeholder="ej: 357.14" step="0.01" /></div>
+      </div>
+      <div class="datos-field">
+        <label>TSM · Taiwan Semi. (USD/acción)</label>
+        <input type="number" id="d-tsm" placeholder="ej: 426.37" step="0.01" />
       </div>
     </div>
     <div class="datos-result" id="d-bol-result"></div>
@@ -1087,7 +1090,7 @@ const BASE = {
   inmuebles:  { inv: 163230,    act: 206704   },
   bbva:       { inv: 21247.53,  act: 23167.68 },
   indexa:     { inv: 13850,     act: 15191.68 },
-  bolsa:      { inv: 8438.29,   act: 9312.18  },
+  bolsa:      { inv: 9911.41,   act: 10785.65 },
   urbanitae:  { inv: 5500,      act: 5547.76  },
   myinvestor: { inv: 3011.6,    act: 3214.69  },
 };
@@ -1645,60 +1648,65 @@ function renderBolsa() {
   document.getElementById('bol-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
   document.getElementById('bol-rent').textContent = fmtPct(g / inv);
 
-  // Usar precios reales guardados
+  // Usar precios reales guardados (SCYR/SAN/IAG en €, TSM en USD + tipo de cambio USD→€)
   const bp = loadBolsaPrecios();
-  const pScyr = bp.scyr || 4.56;
-  const pSan  = bp.san  || 10.62;
-  const pIag  = bp.iag  || 4.58;
-    const pTsm  = bp.tsm  || 357.14;
+  const pScyr   = bp.scyr || 4.56;
+  const pSan    = bp.san  || 10.62;
+  const pIag    = bp.iag  || 4.58;
+  const pTsmUsd = bp.tsm  || 426.37;          // precio TSM en USD
+  const usdEur  = bp.usdeur || 0.8639;        // tipo de cambio USD→€
+  const pTsmEur = pTsmUsd * usdEur;           // precio TSM convertido a € (para totales)
 
-  const actScyr  = pScyr * 715;
-  const actSan1  = pSan  * 229;
-  const actIag   = pIag  * 350;
-  const actSan2  = pSan  * 190;
-    const actTsm   = pTsm  * 4;
+  const actScyr  = pScyr  * 715;
+  const actSan1  = pSan   * 229;
+  const actIag   = pIag   * 350;
+  const actSan2  = pSan   * 190;
+  const actTsm   = pTsmEur * 4;               // valor TSM en €
 
   makeChart('chart-bol-compare', 'bar', {
-    labels: ['SCYR', 'SAN (x229)', 'IAG', 'SAN (x190)'],
+    labels: ['SCYR', 'SAN (x229)', 'IAG', 'SAN (x190)', 'TSM (x4)'],
     datasets: [
-      { label:'Invertido', data:[2695.55, 2430.04, 1407, 1905.7], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
-      { label:'Actual',    data:[actScyr, actSan1, actIag, actSan2], backgroundColor:'#6bcfffcc', borderRadius:6 }
+      { label:'Invertido', data:[2695.55, 2429.69, 1407, 1905.7, 1473.47], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
+      { label:'Actual',    data:[actScyr, actSan1, actIag, actSan2, actTsm], backgroundColor:'#6bcfffcc', borderRadius:6 }
     ]
   }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
 
   makeChart('chart-bol-sector', 'doughnut', {
-   labels:['Infraestructuras','Banca','Aerolíneas','Semiconductores']
-     datasets:[{ data:[actScyr, actSan1+actSan2, actIag, actTsm], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc'], borderColor:'#0c0c10', borderWidth:3 }]
+    labels:['Infraestructuras','Banca','Aerolíneas','Semiconductores'],
+    datasets:[{ data:[actScyr, actSan1+actSan2, actIag, actTsm], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc'], borderColor:'#0c0c10', borderWidth:3 }]
   }, { cutout:'60%', plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}} });
 
   // Actualizar tabla de posiciones
   const tbody = document.getElementById('bol-tabla-body');
   if (tbody) {
+    // invEur = precio compra × nº acciones (coste original en €); actEur = valor de mercado en €
     const rows = [
-      { ticker:'SCYR', nombre:'Sacyr',     sector:'Infraes.',    acc:715, coste:2695.55, precio:pScyr },
-      { ticker:'SAN',  nombre:'Santander', sector:'Banca',       acc:229, coste:2430.04, precio:pSan  },
-      { ticker:'IAG',  nombre:'IAG',       sector:'Aerolíneas',  acc:350, coste:1407.00, precio:pIag  },
-      { ticker:'SAN',  nombre:'Santander', sector:'Banca',       acc:190, coste:1905.70, precio:pSan  },
-            { ticker:'TSM',  nombre:'Taiwan Semi.', sector:'Semiconductores', acc:4,   coste:1473.47, precio:pTsm, usd:true },
+      { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:715, pComp:3.77,   precio:pScyr,   invEur:3.77*715,   actEur:actScyr },
+      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:229, pComp:10.61,  precio:pSan,    invEur:10.61*229,  actEur:actSan1 },
+      { ticker:'IAG',  nombre:'IAG',          sector:'Aerolíneas',      acc:350, pComp:4.02,   precio:pIag,    invEur:4.02*350,   actEur:actIag  },
+      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:190, pComp:10.03,  precio:pSan,    invEur:10.03*190,  actEur:actSan2 },
+      { ticker:'TSM',  nombre:'Taiwan Semi.', sector:'Semiconductores', acc:4,   pComp:426.37, precio:pTsmUsd, invEur:1473.47,    actEur:actTsm, usd:true },
     ];
     tbody.innerHTML = rows.map(r => {
-      const actVal = r.precio * r.acc;
-      const pg = actVal - r.coste;
-      const pgPct = (pg / r.coste * 100).toFixed(1);
+      const pg    = r.actEur - r.invEur;
+      const pgPct = (pg / r.invEur * 100).toFixed(1);
       const color = pg >= 0 ? 'pos' : 'neg';
-      const badge = pg >= 0 ? 'pos' : 'neg';
+      const cur   = r.usd ? '$' : '€';
+      const pComp = r.pComp.toFixed(2).replace('.', ',') + ' ' + cur;
+      const pAct  = r.precio.toFixed(2).replace('.', ',') + ' ' + cur
+                  + (r.usd ? ' <span style="font-size:10px;color:var(--muted)">USD</span>' : '');
       return `<tr>
         <td>${r.ticker}</td>
         <td>${r.nombre}</td>
         <td>${r.sector}</td>
         <td>${r.acc}</td>
-        <td><span class="private">${r.coste.toFixed(2).replace('.',',')}€</span></td>
-        ${r.precio}€${r.usd?' <span style="font-size:10px;color:var(--muted)">(USD→€)</span>':''}
-        <td><span class="private">${fmt(actVal)}</span></td>
-        <td><span class="private">${fmt(actVal)}</span></td>
+        <td><span class="private">${pComp}</span></td>
+        <td><span class="private">${pAct}</span></td>
+        <td><span class="private">${fmt(r.invEur)}</span></td>
+        <td><span class="private">${fmt(r.actEur)}</span></td>
         <td class="${color}"><span class="private">${pg>=0?'+':''}${fmt(pg)}</span></td>
-        <td><span class="badge ${badge}">${pg>=0?'+':''}${pgPct}%</span></td>
+        <td><span class="badge ${color}">${pg>=0?'+':''}${pgPct}%</span></td>
       </tr>`;
     }).join('');
   }
@@ -1804,7 +1812,7 @@ function applyPrivacy() {
   });
 }
 
-// ─── AUTO PRECIOS BOLSA ──────────────────────────────────────────────────────
+// ─── AUTO PRECIOS BOLSA (Google Finance con respaldo en Yahoo Finance) ───────
 async function fetchPreciosBolsa() {
   const btn = document.getElementById('btn-auto-bolsa');
   const status = document.getElementById('bolsa-auto-status');
@@ -1812,67 +1820,102 @@ async function fetchPreciosBolsa() {
   if (btn) { btn.disabled = true; btn.classList.add('loading'); btn.textContent = '⏳ Obteniendo precios...'; }
   if (status) status.textContent = '';
 
- const tickers = { scyr: 'SCYR.MC', san: 'SAN.MC', iag: 'IAG.MC', tsm: 'TSM' };
+  // Cada valor con su símbolo en Google Finance (gf) y en Yahoo Finance (yf, respaldo).
+  const tickers = {
+    scyr: { gf: 'SCYR:BME', yf: 'SCYR.MC' },
+    san:  { gf: 'SAN:BME',  yf: 'SAN.MC'  },
+    iag:  { gf: 'IAG:BME',  yf: 'IAG.MC'  },
+    tsm:  { gf: 'TSM:NYSE', yf: 'TSM'     },   // TSM cotiza en USD
+  };
+
+  // Intermediarios CORS (se prueban en orden hasta que uno devuelva datos válidos).
+  // codetabs es el más tolerante; allorigins como respaldo. NOTA: desde un archivo
+  // local (file://) casi ninguno funciona; hace falta servir la app por http/https.
+  const proxies = [
+    { url: (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`,    unwrap: false },
+    { url: (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,          unwrap: false },
+    { url: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,          unwrap: 'contents' },
+  ];
+
+  // Descarga una URL por los intermediarios y devuelve el primer resultado que
+  // parse() consiga interpretar (así un proxy que responde basura no bloquea al resto)
+  async function fetchParsed(targetUrl, parse) {
+    for (const p of proxies) {
+      try {
+        const res = await fetch(p.url(targetUrl), { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) continue;
+        let txt = await res.text();
+        if (p.unwrap === 'contents') {
+          try { txt = JSON.parse(txt).contents; } catch (e) { continue; }
+        }
+        if (!txt) continue;
+        const val = parse(txt);
+        if (val != null) return val;
+      } catch (e) { continue; }
+    }
+    return null;
+  }
+
+  // Extrae el precio del HTML de una página de Google Finance
+  function parseGoogle(html) {
+    if (!html) return null;
+    let m = html.match(/data-last-price="([\d.]+)"/);
+    if (m) return parseFloat(m[1]);
+    m = html.match(/class="YMlKec fxKbKc"[^>]*>\s*[^\d<]*([\d.,]+)/);
+    if (m) { const n = parseFloat(m[1].replace(/,/g, '')); if (!isNaN(n)) return n; }
+    return null;
+  }
+
+  // Extrae regularMarketPrice del JSON de Yahoo Finance
+  function parseYahoo(txt) {
+    if (!txt) return null;
+    try {
+      const p = JSON.parse(txt)?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (typeof p === 'number' && p > 0) return p;
+    } catch (e) {}
+    const m = txt.match(/"regularMarketPrice"\s*:\s*([\d.]+)/);
+    return m ? parseFloat(m[1]) : null;
+  }
+
+  // Precio de un símbolo: primero Google Finance, si falla Yahoo Finance
+  async function getPrice(gf, yf) {
+    let p = await fetchParsed(`https://www.google.com/finance/quote/${gf}`, parseGoogle);
+    if (p != null) return { price: p, src: 'Google' };
+    p = await fetchParsed(`https://query1.finance.yahoo.com/v8/finance/chart/${yf}?interval=1d&range=1d`, parseYahoo);
+    return p != null ? { price: p, src: 'Yahoo' } : null;
+  }
 
   try {
     const precios = {};
     const errores = [];
+    const fuentes = new Set();
 
-    const proxies = [
-      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-      (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
-    ];
+    // Tipo de cambio USD→€ : Google → Yahoo (USDEUR=X) → Yahoo (EURUSD=X invertido)
+    let usdEur = await fetchParsed('https://www.google.com/finance/quote/USD-EUR', parseGoogle);
+    if (usdEur == null) usdEur = await fetchParsed('https://query1.finance.yahoo.com/v8/finance/chart/USDEUR=X?interval=1d&range=1d', parseYahoo);
+    if (usdEur == null) {
+      const eurUsd = await fetchParsed('https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X?interval=1d&range=1d', parseYahoo);
+      if (eurUsd) usdEur = 1 / eurUsd;
+    }
+    if (usdEur) precios.usdeur = Math.round(usdEur * 10000) / 10000;
 
-    for (const [key, ticker] of Object.entries(tickers)) {
-      let got = false;
-      for (const makeProxy of proxies) {
-        try {
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
-          const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(5000) });
-          if (!res.ok) continue;
-          const data = await res.json();
-          const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-                   if (price) {
-            let priceEur = Math.round(price * 100) / 100;
-            if (key === 'tsm') {
-              let fxRate = 0.8639;
-              try {
-                const fxUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X?interval=1d&range=1d';
-                for (const mkP2 of proxies) {
-                  try {
-                    const fxRes = await fetch(mkP2(fxUrl), {signal: AbortSignal.timeout(5000)});
-                    if (!fxRes.ok) continue;
-                    const fxData = await fxRes.json();
-                    const fx = fxData?.chart?.result?.[0]?.meta?.regularMarketPrice;
-                    if (fx) { fxRate = 1/fx; break; }
-                  } catch(e) { continue; }
-                }
-              } catch(e) {}
-              priceEur = Math.round(price * fxRate * 100) / 100;
-            }
-            precios[key] = priceEur;
-            got = true;
-            break;
-          }
-        } catch(e) { continue; }
-      }
-      if (!got) errores.push(ticker);
+    for (const [key, sym] of Object.entries(tickers)) {
+      const r = await getPrice(sym.gf, sym.yf);
+      if (!r) { errores.push(key.toUpperCase()); continue; }
+      // SCYR/SAN/IAG en €, TSM en USD (se convierte a € en los totales)
+      precios[key] = Math.round(r.price * 100) / 100;
+      fuentes.add(r.src);
     }
 
-    // Guardar y propagar si se obtuvieron precios
-    if (Object.keys(precios).length > 0) {
+    // Guardar y propagar si se obtuvo al menos un precio de acción
+    if (Object.keys(precios).some(k => k !== 'usdeur')) {
       const bp = loadBolsaPrecios();
       const nuevos = { ...bp, ...precios };
       localStorage.setItem(BOLSA_KEY, JSON.stringify(nuevos));
       localStorage.setItem('cartera_bolsa_ts', Date.now());
 
-      // Recalcular total bolsa
-      let total = 0;
-      BOLSA_ACCIONES.forEach(a => {
-        const p = nuevos[a.key === 'san2' ? 'san' : a.key] || 0;
-        total += p * a.acciones;
-      });
+      // Recalcular total bolsa en € (TSM convertido USD→€ con el tipo guardado)
+      const total = bolsaTotalEUR(nuevos);
       if (total > 0) { state.bolsa = total; saveState(); }
 
       // Actualizar inputs si la página de datos está visible
@@ -1881,20 +1924,24 @@ async function fetchPreciosBolsa() {
         if (nuevos.scyr) scyrInp.value = nuevos.scyr;
         if (nuevos.san)  document.getElementById('d-san').value = nuevos.san;
         if (nuevos.iag)  document.getElementById('d-iag').value = nuevos.iag;
+        if (nuevos.tsm)  document.getElementById('d-tsm').value = nuevos.tsm;
         renderDatosBolsaResult();
       }
 
       renderAll();
 
       const hora = new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+      const fuenteTxt = [...fuentes].join(' + ') || '—';
       const msg = errores.length === 0
-        ? `✓ Bolsa actualizada · ${hora}`
-        : `⚠ Parcial · ${hora}`;
+        ? `✓ Bolsa actualizada (${fuenteTxt}) · ${hora}`
+        : `⚠ Parcial (falta ${errores.join(', ')}) · ${hora}`;
 
       if (status) { status.style.color = errores.length === 0 ? 'var(--green)' : 'var(--yellow)'; status.textContent = msg; }
 
       // Mostrar toast si fue actualización automática (sin botón visible)
       if (!btn || btn.style.display === 'none') showDatosSaved(`📈 Bolsa actualizada · ${hora}`);
+    } else {
+      if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ No se pudieron obtener precios (Google y Yahoo fallaron)'; }
     }
   } catch(e) {
     if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ Sin conexión'; }
@@ -2010,11 +2057,21 @@ const INM_KEY    = 'cartera_inm_valores_v1';
 // Bolsa: acciones fijas
 const BOLSA_ACCIONES = [
   { ticker: 'SCYR', nombre: 'Sacyr',     acciones: 715,  coste: 2695.55, key: 'scyr' },
-  { ticker: 'SAN',  nombre: 'Santander', acciones: 229,  coste: 2430.04, key: 'san'  },
+  { ticker: 'SAN',  nombre: 'Santander', acciones: 229,  coste: 2429.69, key: 'san'  },
   { ticker: 'IAG',  nombre: 'IAG',       acciones: 350,  coste: 1407.00, key: 'iag'  },
   { ticker: 'SAN',  nombre: 'Santander', acciones: 190,  coste: 1905.70, key: 'san2' },
-    { ticker: 'TSM',  nombre: 'Taiwan Semi.', acciones: 4,   coste: 1473.47, key: 'tsm', usd: true },
+  { ticker: 'TSM',  nombre: 'Taiwan Semi.', acciones: 4, coste: 1473.47, key: 'tsm', usd: true },
 ];
+
+// Valor de mercado total de Bolsa en € (convierte TSM de USD a € con el tipo guardado)
+function bolsaTotalEUR(precios) {
+  const fx = precios.usdeur || 0.8639;
+  return BOLSA_ACCIONES.reduce((total, a) => {
+    let p = precios[a.key === 'san2' ? 'san' : a.key] || 0;
+    if (a.usd) p = p * fx;
+    return total + p * a.acciones;
+  }, 0);
+}
 
 // ── Cargar precios de bolsa guardados
 function loadBolsaPrecios() {
@@ -2112,6 +2169,7 @@ function initDatosPage() {
   document.getElementById('d-scyr').addEventListener('input', renderDatosBolsaResult);
   document.getElementById('d-san').addEventListener('input',  renderDatosBolsaResult);
   document.getElementById('d-iag').addEventListener('input',  renderDatosBolsaResult);
+  document.getElementById('d-tsm').addEventListener('input',  renderDatosBolsaResult);
   document.getElementById('d-indexa').addEventListener('input',    () => renderDatosSimpleResult('indexa',    'd-idx-result',  parseFloat(document.getElementById('d-indexa').value)||0, 13850));
   document.getElementById('d-bbva').addEventListener('input',      () => renderDatosSimpleResult('bbva-pp',   'd-bbva-result', parseFloat(document.getElementById('d-bbva').value)||0,   21247.53));
   document.getElementById('d-myinvestor').addEventListener('input',() => renderDatosSimpleResult('myinvestor','d-my-result',  parseFloat(document.getElementById('d-myinvestor').value)||0, 3011.60));
@@ -2225,17 +2283,16 @@ function renderDatosBestResult() {
 
 // ── Render resultados Bolsa
 function renderDatosBolsaResult() {
+  const bpFx = loadBolsaPrecios();
   const precios = {
     scyr: parseFloat(document.getElementById('d-scyr').value) || 4.56,
     san:  parseFloat(document.getElementById('d-san').value)  || 10.62,
     iag:  parseFloat(document.getElementById('d-iag').value)  || 4.58,
-    tsm: parseFloat(document.getElementById('d-tsm').value)  || 357.14, };
-  let totalAct = 0, totalInv = 0;
-  BOLSA_ACCIONES.forEach(a => {
-    const p = precios[a.key === 'san2' ? 'san' : a.key] || 0;
-    totalAct += p * a.acciones;
-    totalInv += a.coste;
-  });
+    tsm:  parseFloat(document.getElementById('d-tsm').value)  || 426.37,   // TSM en USD
+    usdeur: bpFx.usdeur || 0.8639,
+  };
+  const totalAct = bolsaTotalEUR(precios);                                 // € (TSM convertido)
+  const totalInv = BOLSA_ACCIONES.reduce((s, a) => s + a.coste, 0);
   const g = totalAct - totalInv;
 
   document.getElementById('d-bol-result').innerHTML = `
@@ -2243,7 +2300,7 @@ function renderDatosBolsaResult() {
 
       <!-- FILA 1: ACCIONES -->
       <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding:0 4px">Precios por acción</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SCYR · 715 acc.</div>
           <div style="font-size:16px;font-weight:700">${precios.scyr}€</div>
@@ -2255,6 +2312,11 @@ function renderDatosBolsaResult() {
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
           <div style="font-size:10px;color:var(--muted);margin-bottom:4px">IAG · 350 acc.</div>
           <div style="font-size:16px;font-weight:700">${precios.iag}€</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">TSM · 4 acc.</div>
+          <div style="font-size:16px;font-weight:700">${precios.tsm} $</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">≈ ${(precios.tsm*precios.usdeur).toFixed(2)}€ · USD/€ ${precios.usdeur}</div>
         </div>
       </div>
 
@@ -2344,19 +2406,15 @@ function saveDatosBestinver() {
 
 // ── GUARDAR Bolsa
 function saveDatosBolsa() {
-  const bp = {
-    scyr: parseFloat(document.getElementById('d-scyr').value) || 0,
-    san:  parseFloat(document.getElementById('d-san').value)  || 0,
-    iag:  parseFloat(document.getElementById('d-iag').value)  || 0,
-  };
+  const bp = loadBolsaPrecios();               // conserva usdeur y demás campos guardados
+  bp.scyr = parseFloat(document.getElementById('d-scyr').value) || bp.scyr || 0;
+  bp.san  = parseFloat(document.getElementById('d-san').value)  || bp.san  || 0;
+  bp.iag  = parseFloat(document.getElementById('d-iag').value)  || bp.iag  || 0;
+  bp.tsm  = parseFloat(document.getElementById('d-tsm').value)  || bp.tsm  || 0;   // TSM en USD
   localStorage.setItem(BOLSA_KEY, JSON.stringify(bp));
-  // Recalcular total bolsa
-  let total = 0;
-  BOLSA_ACCIONES.forEach(a => {
-    const p = bp[a.key === 'san2' ? 'san' : a.key] || 0;
-    total += p * a.acciones;
-  });
-  state.bolsa = total;
+  // Recalcular total bolsa en € (TSM convertido USD→€)
+  const total = bolsaTotalEUR(bp);
+  if (total > 0) state.bolsa = total;
   saveState();
   renderAll();
   renderDatosBolsaResult();
@@ -2393,12 +2451,8 @@ function showDatosSaved(msg) {
 // Cargar precios de bolsa guardados al arrancar
 (function loadSavedBolsa() {
   const bp = loadBolsaPrecios();
-  if (bp.scyr || bp.san || bp.iag) {
-    let total = 0;
-    BOLSA_ACCIONES.forEach(a => {
-      const p = bp[a.key === 'san2' ? 'san' : a.key] || 0;
-      total += p * a.acciones;
-    });
+  if (bp.scyr || bp.san || bp.iag || bp.tsm) {
+    const total = bolsaTotalEUR(bp);
     if (total > 0) state.bolsa = total;
   }
   const inmVals = loadInmValores();
