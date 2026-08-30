@@ -1812,7 +1812,19 @@ function applyPrivacy() {
   });
 }
 
-// ─── AUTO PRECIOS BOLSA (Google Finance con respaldo en Yahoo Finance) ───────
+// ─── AUTO PRECIOS BOLSA ─────────────────────────────────────────────────────
+// Fuente principal: Twelve Data (pide una clave GRATUITA, sin tarjeta).
+// Respaldo automático: Google Finance y Yahoo Finance vía intermediarios CORS
+// (poco fiables últimamente: allorigins/codetabs fallan a menudo).
+//
+// CÓMO CONSEGUIR LA CLAVE (1 minuto):
+//   1. Entra en https://twelvedata.com/register y crea la cuenta (plan Basic, gratis).
+//   2. En el panel "API Keys" copia tu clave.
+//   3. Pégala abajo entre las comillas de TWELVEDATA_APIKEY,
+//      O ejecútalo una sola vez en la consola (F12):
+//         localStorage.setItem('td_apikey', 'TU_CLAVE_AQUI')
+const TWELVEDATA_APIKEY = localStorage.getItem('td_apikey') || '';
+
 async function fetchPreciosBolsa() {
   const btn = document.getElementById('btn-auto-bolsa');
   const status = document.getElementById('bolsa-auto-status');
@@ -1820,29 +1832,41 @@ async function fetchPreciosBolsa() {
   if (btn) { btn.disabled = true; btn.classList.add('loading'); btn.textContent = '⏳ Obteniendo precios...'; }
   if (status) status.textContent = '';
 
-  // Cada valor con su símbolo en Google Finance (gf) y en Yahoo Finance (yf, respaldo).
+  // td = símbolo Twelve Data · tdEx = mercado (BME = bolsa española)
+  // gf = símbolo Google Finance · yf = símbolo Yahoo Finance
   const tickers = {
-    scyr: { gf: 'SCYR:BME', yf: 'SCYR.MC' },
-    san:  { gf: 'SAN:BME',  yf: 'SAN.MC'  },
-    iag:  { gf: 'IAG:BME',  yf: 'IAG.MC'  },
-    tsm:  { gf: 'TSM:NYSE', yf: 'TSM'     },   // TSM cotiza en USD
+    scyr: { td: 'SCYR', tdEx: 'BME', gf: 'SCYR:BME', yf: 'SCYR.MC' },
+    san:  { td: 'SAN',  tdEx: 'BME', gf: 'SAN:BME',  yf: 'SAN.MC'  },
+    iag:  { td: 'IAG',  tdEx: 'BME', gf: 'IAG:BME',  yf: 'IAG.MC'  },
+    tsm:  { td: 'TSM',  tdEx: '',    gf: 'TSM:NYSE', yf: 'TSM'     },   // TSM cotiza en USD
   };
 
-  // Intermediarios CORS (se prueban en orden hasta que uno devuelva datos válidos).
-  // codetabs es el más tolerante; allorigins como respaldo. NOTA: desde un archivo
-  // local (file://) casi ninguno funciona; hace falta servir la app por http/https.
+  // Intermediarios CORS para el respaldo Google/Yahoo (se prueban en orden)
   const proxies = [
-    { url: (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`,    unwrap: false },
-    { url: (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,          unwrap: false },
-    { url: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,          unwrap: 'contents' },
+    { url: (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, unwrap: false },
+    { url: (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,       unwrap: false },
+    { url: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,       unwrap: 'contents' },
   ];
 
-  // Descarga una URL por los intermediarios y devuelve el primer resultado que
-  // parse() consiga interpretar (así un proxy que responde basura no bloquea al resto)
+  // --- Twelve Data: petición directa, sin intermediario ---
+  async function fetchTwelveData(symbol, exchange) {
+    if (!TWELVEDATA_APIKEY) return null;
+    let url = `https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${TWELVEDATA_APIKEY}`;
+    if (exchange) url += `&exchange=${exchange}`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) return null;
+      const d = await res.json();
+      const p = parseFloat(d && d.price);
+      return (p > 0) ? p : null;
+    } catch (e) { return null; }
+  }
+
+  // --- Respaldo vía intermediarios: primer resultado que parse() sepa interpretar ---
   async function fetchParsed(targetUrl, parse) {
     for (const p of proxies) {
       try {
-        const res = await fetch(p.url(targetUrl), { signal: AbortSignal.timeout(8000) });
+        const res = await fetch(p.url(targetUrl), { signal: AbortSignal.timeout(7000) });
         if (!res.ok) continue;
         let txt = await res.text();
         if (p.unwrap === 'contents') {
@@ -1877,11 +1901,13 @@ async function fetchPreciosBolsa() {
     return m ? parseFloat(m[1]) : null;
   }
 
-  // Precio de un símbolo: primero Google Finance, si falla Yahoo Finance
-  async function getPrice(gf, yf) {
-    let p = await fetchParsed(`https://www.google.com/finance/quote/${gf}`, parseGoogle);
+  // Precio de un valor: Twelve Data → Google Finance → Yahoo Finance
+  async function getPrice(t) {
+    let p = await fetchTwelveData(t.td, t.tdEx);
+    if (p != null) return { price: p, src: 'TwelveData' };
+    p = await fetchParsed(`https://www.google.com/finance/quote/${t.gf}`, parseGoogle);
     if (p != null) return { price: p, src: 'Google' };
-    p = await fetchParsed(`https://query1.finance.yahoo.com/v8/finance/chart/${yf}?interval=1d&range=1d`, parseYahoo);
+    p = await fetchParsed(`https://query1.finance.yahoo.com/v8/finance/chart/${t.yf}?interval=1d&range=1d`, parseYahoo);
     return p != null ? { price: p, src: 'Yahoo' } : null;
   }
 
@@ -1890,8 +1916,9 @@ async function fetchPreciosBolsa() {
     const errores = [];
     const fuentes = new Set();
 
-    // Tipo de cambio USD→€ : Google → Yahoo (USDEUR=X) → Yahoo (EURUSD=X invertido)
-    let usdEur = await fetchParsed('https://www.google.com/finance/quote/USD-EUR', parseGoogle);
+    // Tipo de cambio USD→€ : Twelve Data → Google → Yahoo (USDEUR=X) → Yahoo (EURUSD=X invertido)
+    let usdEur = await fetchTwelveData('USD/EUR', '');
+    if (usdEur == null) usdEur = await fetchParsed('https://www.google.com/finance/quote/USD-EUR', parseGoogle);
     if (usdEur == null) usdEur = await fetchParsed('https://query1.finance.yahoo.com/v8/finance/chart/USDEUR=X?interval=1d&range=1d', parseYahoo);
     if (usdEur == null) {
       const eurUsd = await fetchParsed('https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X?interval=1d&range=1d', parseYahoo);
@@ -1900,7 +1927,7 @@ async function fetchPreciosBolsa() {
     if (usdEur) precios.usdeur = Math.round(usdEur * 10000) / 10000;
 
     for (const [key, sym] of Object.entries(tickers)) {
-      const r = await getPrice(sym.gf, sym.yf);
+      const r = await getPrice(sym);
       if (!r) { errores.push(key.toUpperCase()); continue; }
       // SCYR/SAN/IAG en €, TSM en USD (se convierte a € en los totales)
       precios[key] = Math.round(r.price * 100) / 100;
@@ -1941,7 +1968,10 @@ async function fetchPreciosBolsa() {
       // Mostrar toast si fue actualización automática (sin botón visible)
       if (!btn || btn.style.display === 'none') showDatosSaved(`📈 Bolsa actualizada · ${hora}`);
     } else {
-      if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ No se pudieron obtener precios (Google y Yahoo fallaron)'; }
+      const txt = TWELVEDATA_APIKEY
+        ? '✗ No se pudieron obtener precios (revisa tu clave de Twelve Data)'
+        : '✗ Sin precios. Configura una clave gratuita de Twelve Data (ver comentario en el código)';
+      if (status) { status.style.color = 'var(--red)'; status.textContent = txt; }
     }
   } catch(e) {
     if (status) { status.style.color = 'var(--red)'; status.textContent = '✗ Sin conexión'; }
