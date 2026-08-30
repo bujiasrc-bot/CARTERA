@@ -565,9 +565,13 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="datos-section-header">
       <span class="datos-section-icon">🤖</span>
       <span class="datos-section-title">Indexa Capital</span>
-      <span class="datos-section-sub">Valor total de tu cartera</span>
+      <span class="datos-section-sub">Total aportado (con aportaciones mensuales) y valor actual</span>
     </div>
     <div class="datos-grid">
+      <div class="datos-field">
+        <label>Total invertido (aporte inicial + aportaciones)</label>
+        <input type="number" id="d-indexa-inv" placeholder="ej: 13850" step="0.01" />
+      </div>
       <div class="datos-field">
         <label>Valor actual total</label>
         <input type="number" id="d-indexa" placeholder="ej: 15191.68" step="0.01" />
@@ -575,7 +579,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="datos-result" id="d-idx-result"></div>
     <div style="margin-top:14px">
-      <button class="btn-datos-save" onclick="saveDatosSimple('indexa','d-indexa','d-idx-result')">Guardar Indexa</button>
+      <button class="btn-datos-save" onclick="saveDatosSimple('indexa','d-indexa','d-idx-result','d-indexa-inv')">Guardar Indexa</button>
     </div>
   </div>
 
@@ -1358,11 +1362,11 @@ const cls = (v) => v >= 0 ? 'pos' : 'neg';
 // gain/rent para plataformas normales (BASE) o bestinver
 function gainFor(k) {
   if (k === 'bestinver') return bestActual(state) - BEST_INV_TOTAL;
-  return state[k] - BASE[k].inv;
+  return state[k] - invFor(k);
 }
 function rentFor(k) {
   if (k === 'bestinver') return gainFor(k) / BEST_INV_TOTAL;
-  return gainFor(k) / BASE[k].inv;
+  return gainFor(k) / invFor(k);
 }
 function actFor(k) {
   if (k === 'bestinver') return bestActual(state);
@@ -1370,6 +1374,9 @@ function actFor(k) {
 }
 function invFor(k) {
   if (k === 'bestinver') return BEST_INV_TOTAL;
+  // Total invertido editable (p. ej. Indexa con aportaciones mensuales): state.<k>_inv
+  const custom = state[k + '_inv'];
+  if (typeof custom === 'number' && custom > 0) return custom;
   return BASE[k].inv;
 }
 // Mantener compatibilidad con código que usa gain(k)/rent(k) sobre BASE keys
@@ -1720,7 +1727,7 @@ function renderBolsa() {
 
 // ── INDEXA ───────────────────────────────────────────────────────────────────
 function renderIndexa() {
-  const inv = BASE.indexa.inv, act = state.indexa;
+  const inv = invFor('indexa'), act = state.indexa;
   const g = act - inv;
   document.getElementById('idx-inv').innerHTML  = `<span class="private">${fmt(inv)}</span>`;
   document.getElementById('idx-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
@@ -2187,15 +2194,17 @@ function initDatosPage() {
   renderDatosBolsaResult();
 
   // Simples
-  const idx   = document.getElementById('d-indexa');
-  const bbva  = document.getElementById('d-bbva');
-  const myin  = document.getElementById('d-myinvestor');
-  if (idx)  idx.value  = state.indexa    || 15191.68;
-  if (bbva) bbva.value = state.bbva      || 23167.68;
-  if (myin) myin.value = state.myinvestor|| 3214.69;
-  renderDatosSimpleResult('indexa',    'idx-result',  state.indexa    || 15191.68, 13850);
-  renderDatosSimpleResult('bbva-pp',   'bbva-result', state.bbva      || 23167.68, 21247.53);
-  renderDatosSimpleResult('myinvestor','my-result',   state.myinvestor|| 3214.69,  3011.60);
+  const idx    = document.getElementById('d-indexa');
+  const idxInv = document.getElementById('d-indexa-inv');
+  const bbva   = document.getElementById('d-bbva');
+  const myin   = document.getElementById('d-myinvestor');
+  if (idx)    idx.value    = state.indexa     || 15191.68;
+  if (idxInv) idxInv.value = invFor('indexa');
+  if (bbva)   bbva.value   = state.bbva       || 23167.68;
+  if (myin)   myin.value   = state.myinvestor || 3214.69;
+  renderDatosSimpleResult('indexa',    'd-idx-result',  state.indexa     || 15191.68, invFor('indexa'));
+  renderDatosSimpleResult('bbva-pp',   'd-bbva-result', state.bbva       || 23167.68, 21247.53);
+  renderDatosSimpleResult('myinvestor','d-my-result',   state.myinvestor || 3214.69,  3011.60);
 
   // Live previews on input change
   document.getElementById('d-inm-galdos').addEventListener('input', renderDatosInmResult);
@@ -2206,7 +2215,11 @@ function initDatosPage() {
   document.getElementById('d-san').addEventListener('input',  renderDatosBolsaResult);
   document.getElementById('d-iag').addEventListener('input',  renderDatosBolsaResult);
   document.getElementById('d-tsm').addEventListener('input',  renderDatosBolsaResult);
-  document.getElementById('d-indexa').addEventListener('input',    () => renderDatosSimpleResult('indexa',    'd-idx-result',  parseFloat(document.getElementById('d-indexa').value)||0, 13850));
+  const idxRefresh = () => renderDatosSimpleResult('indexa', 'd-idx-result',
+      parseFloat(document.getElementById('d-indexa').value) || 0,
+      parseFloat(document.getElementById('d-indexa-inv').value) || BASE.indexa.inv);
+  document.getElementById('d-indexa').addEventListener('input', idxRefresh);
+  document.getElementById('d-indexa-inv').addEventListener('input', idxRefresh);
   document.getElementById('d-bbva').addEventListener('input',      () => renderDatosSimpleResult('bbva-pp',   'd-bbva-result', parseFloat(document.getElementById('d-bbva').value)||0,   21247.53));
   document.getElementById('d-myinvestor').addEventListener('input',() => renderDatosSimpleResult('myinvestor','d-my-result',  parseFloat(document.getElementById('d-myinvestor').value)||0, 3011.60));
 }
@@ -2457,17 +2470,26 @@ function saveDatosBolsa() {
   showDatosSaved('Bolsa guardada ✓');
 }
 
-// ── GUARDAR simple
-function saveDatosSimple(stateKey, inputId, resultId) {
-  const val = parseFloat(document.getElementById(inputId).value);
+// ── GUARDAR simple (invInputId opcional: campo "Total invertido" editable)
+function saveDatosSimple(stateKey, inputId, resultId, invInputId) {
   const invMap = { indexa: 13850, bbva: 21247.53, myinvestor: 3011.60 };
-  if (!isNaN(val) && val > 0) {
-    state[stateKey] = val;
-    saveState();
-    renderAll();
-    renderDatosSimpleResult(stateKey, resultId, val, invMap[stateKey] || 0);
-    showDatosSaved('Guardado ✓');
+  let changed = false;
+
+  if (invInputId) {
+    const invVal = parseFloat(document.getElementById(invInputId).value);
+    if (!isNaN(invVal) && invVal > 0) { state[stateKey + '_inv'] = invVal; changed = true; }
   }
+  const val = parseFloat(document.getElementById(inputId).value);
+  if (!isNaN(val) && val > 0) { state[stateKey] = val; changed = true; }
+
+  if (!changed) return;
+  saveState();
+  renderAll();
+  const inv = (typeof state[stateKey + '_inv'] === 'number' && state[stateKey + '_inv'] > 0)
+            ? state[stateKey + '_inv'] : (invMap[stateKey] || 0);
+  const act = (typeof state[stateKey] === 'number') ? state[stateKey] : 0;
+  renderDatosSimpleResult(stateKey, resultId, act, inv);
+  showDatosSaved('Guardado ✓');
 }
 
 // ── Toast de confirmación
