@@ -14,6 +14,11 @@ if (typeof Chart === 'undefined') {
 }
 </script>
 
+<!-- Firebase (sincronización PC ↔ móvil) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0c0c10">
@@ -423,6 +428,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 <nav class="nav">
   <div class="nav-brand">📊 Mi Cartera</div>
   <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()" title="Modo privado">👁</button>
+  <button class="btn-privacy" id="btn-sync" onclick="toggleSync()" title="Sincronizar entre dispositivos">☁️</button>
   <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
   <button class="nav-btn" onclick="showPage('inmuebles')">Inmuebles</button>
   <button class="nav-btn" onclick="showPage('bestinver')">Bestinver</button>
@@ -2523,6 +2529,192 @@ function showDatosSaved(msg) {
 // Auto actualizar precios de bolsa al abrir la app
 autoUpdateBolsaOnLoad();
 
+</script>
+
+<!-- ═══════════════ SINCRONIZACIÓN PC ↔ MÓVIL (Firebase) ═══════════════ -->
+<script>
+(function () {
+  // --- Configuración del proyecto Firebase (datos públicos por diseño) ---
+  var firebaseConfig = {
+    apiKey: "AIzaSyA1Pfgk3h3nllrN-YAm5ocXJ8y2c3S8uyU",
+    authDomain: "mi-cartera-bb25d.firebaseapp.com",
+    databaseURL: "https://mi-cartera-bb25d-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "mi-cartera-bb25d",
+    storageBucket: "mi-cartera-bb25d.firebasestorage.app",
+    messagingSenderId: "348365558354",
+    appId: "1:348365558354:web:ba6c464f1bc3da7b1a458b"
+  };
+
+  // Claves de localStorage que se sincronizan (datos que introduce el usuario)
+  var SYNC_KEYS = [
+    'cartera_valores_v3', 'cartera_valores_v3_ts',
+    'cartera_inm_valores_v1',
+    'cartera_bolsa_precios_v1', 'cartera_bolsa_ts',
+    'cartera_gastos_ext_v1',
+    'td_apikey'
+  ];
+
+  var SYNC = {
+    user: null, ref: null,
+    deviceId: Math.random().toString(36).slice(2),
+    applying: false, pushTimer: null
+  };
+
+  // Guardamos la versión original de setItem ANTES de sustituirla
+  var _origSetItem = window.localStorage.setItem.bind(window.localStorage);
+
+  function badge(estado) {
+    var b = document.getElementById('btn-sync');
+    if (!b) return;
+    var mapa = {
+      out:  ['☁️', 'Pulsa para iniciar sesión y sincronizar entre dispositivos', false],
+      wait: ['⏳', 'Sincronizando…', true],
+      ok:   ['✅', 'Sincronizado' + (SYNC.user ? ' · ' + SYNC.user.email : '') + ' · pulsa para cerrar sesión', true],
+      err:  ['⚠️', 'Error de sincronización · pulsa para reintentar', false]
+    };
+    var m = mapa[estado] || mapa.out;
+    b.textContent = m[0];
+    b.title = m[1];
+    b.classList.toggle('active', m[2]);
+  }
+
+  function snapshotLocal() {
+    var bundle = {};
+    for (var i = 0; i < SYNC_KEYS.length; i++) {
+      var v = _origGetItem(SYNC_KEYS[i]);
+      if (v != null) bundle[SYNC_KEYS[i]] = v;
+    }
+    return bundle;
+  }
+  function _origGetItem(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+
+  function pushRemote() {
+    if (!SYNC.ref || SYNC.applying) return;
+    var data = snapshotLocal();
+    data._updatedAt = Date.now();
+    data._device = SYNC.deviceId;
+    SYNC.ref.set(data).then(function () { badge('ok'); })
+                      .catch(function (e) { console.warn('sync push:', e); badge('err'); });
+  }
+
+  function applyRemote(data) {
+    if (!data) return;
+    if (data._device === SYNC.deviceId) return;   // es nuestro propio cambio, no re-aplicar
+    SYNC.applying = true;
+    try {
+      for (var i = 0; i < SYNC_KEYS.length; i++) {
+        var k = SYNC_KEYS[i];
+        if (typeof data[k] === 'string') _origSetItem(k, data[k]);
+      }
+    } finally { SYNC.applying = false; }
+    // Reconstruir el estado en memoria y repintar (usa funciones del script principal)
+    try {
+      state = loadState();
+      var bpp = loadBolsaPrecios();
+      if (bpp.scyr || bpp.san || bpp.iag || bpp.tsm) {
+        var t = bolsaTotalEUR(bpp);
+        if (t > 0) state.bolsa = t;
+      }
+      var iv = loadInmValores();
+      if (iv.galdos && iv.mesias) state.inmuebles = iv.galdos + iv.mesias;
+      renderAll();
+      var dp = document.getElementById('page-datos');
+      if (dp && dp.classList.contains('active')) initDatosPage();
+      if (typeof applyPrivacy === 'function') applyPrivacy();
+    } catch (e) { console.warn('sync apply:', e); }
+    badge('ok');
+  }
+
+  // Interceptar escrituras en localStorage: si cambia una clave sincronizable
+  // y hay sesión, subir a la nube (con un pequeño retardo para agrupar cambios)
+  window.localStorage.setItem = function (k, v) {
+    _origSetItem(k, v);
+    if (SYNC.applying || !SYNC.ref) return;
+    if (SYNC_KEYS.indexOf(k) === -1) return;
+    clearTimeout(SYNC.pushTimer);
+    SYNC.pushTimer = setTimeout(pushRemote, 600);
+  };
+
+  // Botón de la barra superior
+  window.toggleSync = function () {
+    if (typeof firebase === 'undefined' || !firebase.apps || !firebase.apps.length) {
+      alert('Firebase no se ha cargado (revisa tu conexión a internet).');
+      return;
+    }
+    if (SYNC.user) {
+      if (confirm('¿Cerrar sesión de sincronización en este dispositivo?\n\nTus datos seguirán guardados en la nube y en este dispositivo.')) {
+        firebase.auth().signOut();
+      }
+      return;
+    }
+    badge('wait');
+    var provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider).catch(function (e) {
+      var code = e && e.code;
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+        badge('out'); return;
+      }
+      // En móvil los popups suelen fallar → iniciar sesión por redirección
+      try { firebase.auth().signInWithRedirect(provider); }
+      catch (e2) { console.warn('sign-in:', e, e2); badge('err'); }
+    });
+  };
+
+  // --- Arranque ---
+  if (typeof firebase === 'undefined') { console.warn('Firebase SDK no disponible'); badge('err'); return; }
+  try { firebase.initializeApp(firebaseConfig); }
+  catch (e) { console.warn('firebase init:', e); badge('err'); return; }
+
+  firebase.auth().getRedirectResult().catch(function (e) { console.warn('redirect result:', e); });
+
+  firebase.auth().onAuthStateChanged(function (user) {
+    SYNC.user = user || null;
+    if (!user) { SYNC.ref = null; badge('out'); return; }
+    SYNC.ref = firebase.database().ref('carteras/' + user.uid);
+    badge('wait');
+    SYNC.ref.once('value').then(function (snap) {
+      var remote = snap.val();
+      if (remote && remote._updatedAt) {
+        applyRemoteFirst(remote);   // la nube manda en la carga inicial
+      } else {
+        pushRemote();               // nube vacía: subimos lo de este dispositivo
+      }
+      // A partir de aquí, escuchar cambios de otros dispositivos en tiempo real.
+      // Ignoramos la primera llamada (es el estado que acabamos de procesar).
+      var firstOn = true;
+      SYNC.ref.on('value', function (s) {
+        if (firstOn) { firstOn = false; return; }
+        applyRemote(s.val());
+      });
+      badge('ok');
+    }).catch(function (e) { console.warn('sync init:', e); badge('err'); });
+  });
+
+  // Igual que applyRemote pero sin el filtro de _device (es la carga inicial)
+  function applyRemoteFirst(data) {
+    SYNC.applying = true;
+    try {
+      for (var i = 0; i < SYNC_KEYS.length; i++) {
+        var k = SYNC_KEYS[i];
+        if (typeof data[k] === 'string') _origSetItem(k, data[k]);
+      }
+    } finally { SYNC.applying = false; }
+    try {
+      state = loadState();
+      var bpp = loadBolsaPrecios();
+      if (bpp.scyr || bpp.san || bpp.iag || bpp.tsm) {
+        var t = bolsaTotalEUR(bpp);
+        if (t > 0) state.bolsa = t;
+      }
+      var iv = loadInmValores();
+      if (iv.galdos && iv.mesias) state.inmuebles = iv.galdos + iv.mesias;
+      renderAll();
+      var dp = document.getElementById('page-datos');
+      if (dp && dp.classList.contains('active')) initDatosPage();
+      if (typeof applyPrivacy === 'function') applyPrivacy();
+    } catch (e) { console.warn('sync apply inicial:', e); }
+  }
+})();
 </script>
 </body>
 </html>
