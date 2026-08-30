@@ -2597,17 +2597,19 @@ autoUpdateBolsaOnLoad();
                       .catch(function (e) { console.warn('sync push:', e); badge('err'); });
   }
 
-  function applyRemote(data) {
-    if (!data) return;
-    if (data._device === SYNC.deviceId) return;   // es nuestro propio cambio, no re-aplicar
+  // Vuelca las claves de un paquete en localStorage (no borra las que no vengan)
+  function writeBundle(bundle) {
     SYNC.applying = true;
     try {
       for (var i = 0; i < SYNC_KEYS.length; i++) {
         var k = SYNC_KEYS[i];
-        if (typeof data[k] === 'string') _origSetItem(k, data[k]);
+        if (typeof bundle[k] === 'string') _origSetItem(k, bundle[k]);
       }
     } finally { SYNC.applying = false; }
-    // Reconstruir el estado en memoria y repintar (usa funciones del script principal)
+  }
+
+  // Reconstruye el estado en memoria y repinta (usa funciones del script principal)
+  function repaintFromLocal() {
     try {
       state = loadState();
       var bpp = loadBolsaPrecios();
@@ -2621,7 +2623,15 @@ autoUpdateBolsaOnLoad();
       var dp = document.getElementById('page-datos');
       if (dp && dp.classList.contains('active')) initDatosPage();
       if (typeof applyPrivacy === 'function') applyPrivacy();
-    } catch (e) { console.warn('sync apply:', e); }
+    } catch (e) { console.warn('sync repaint:', e); }
+  }
+
+  // Cambio recibido de otro dispositivo por el listener en tiempo real
+  function applyRemote(data) {
+    if (!data) return;
+    if (data._device === SYNC.deviceId) return;   // es nuestro propio cambio, no re-aplicar
+    writeBundle(data);
+    repaintFromLocal();
     badge('ok');
   }
 
@@ -2673,12 +2683,30 @@ autoUpdateBolsaOnLoad();
     SYNC.ref = firebase.database().ref('carteras/' + user.uid);
     badge('wait');
     SYNC.ref.once('value').then(function (snap) {
-      var remote = snap.val();
-      if (remote && remote._updatedAt) {
-        applyRemoteFirst(remote);   // la nube manda en la carga inicial
-      } else {
-        pushRemote();               // nube vacía: subimos lo de este dispositivo
+      var remote = snap.val() || {};
+      var local = snapshotLocal();
+
+      // FUSIÓN inicial: la nube tiene prioridad en las claves compartidas;
+      // lo local rellena lo que la nube no tenga. Así ningún dispositivo con
+      // datos los pierde por culpa de otro que llegó vacío.
+      var merged = {};
+      var aportaLocal = false;
+      for (var i = 0; i < SYNC_KEYS.length; i++) {
+        var k = SYNC_KEYS[i];
+        if (typeof remote[k] === 'string') {
+          merged[k] = remote[k];
+        } else if (typeof local[k] === 'string') {
+          merged[k] = local[k];
+          aportaLocal = true;   // este dispositivo aporta algo que la nube no tenía
+        }
       }
+
+      writeBundle(merged);
+      repaintFromLocal();
+
+      // Si hemos aportado datos nuevos (o la nube estaba vacía), subir la unión
+      if (aportaLocal || !remote._updatedAt) pushRemote();
+
       // A partir de aquí, escuchar cambios de otros dispositivos en tiempo real.
       // Ignoramos la primera llamada (es el estado que acabamos de procesar).
       var firstOn = true;
@@ -2689,31 +2717,6 @@ autoUpdateBolsaOnLoad();
       badge('ok');
     }).catch(function (e) { console.warn('sync init:', e); badge('err'); });
   });
-
-  // Igual que applyRemote pero sin el filtro de _device (es la carga inicial)
-  function applyRemoteFirst(data) {
-    SYNC.applying = true;
-    try {
-      for (var i = 0; i < SYNC_KEYS.length; i++) {
-        var k = SYNC_KEYS[i];
-        if (typeof data[k] === 'string') _origSetItem(k, data[k]);
-      }
-    } finally { SYNC.applying = false; }
-    try {
-      state = loadState();
-      var bpp = loadBolsaPrecios();
-      if (bpp.scyr || bpp.san || bpp.iag || bpp.tsm) {
-        var t = bolsaTotalEUR(bpp);
-        if (t > 0) state.bolsa = t;
-      }
-      var iv = loadInmValores();
-      if (iv.galdos && iv.mesias) state.inmuebles = iv.galdos + iv.mesias;
-      renderAll();
-      var dp = document.getElementById('page-datos');
-      if (dp && dp.classList.contains('active')) initDatosPage();
-      if (typeof applyPrivacy === 'function') applyPrivacy();
-    } catch (e) { console.warn('sync apply inicial:', e); }
-  }
 })();
 </script>
 </body>
