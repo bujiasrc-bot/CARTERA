@@ -1842,7 +1842,7 @@ const TWELVEDATA_APIKEY = localStorage.getItem('td_apikey') || '';
 // depender de intermediarios públicos. Pega la URL COMPLETA de la función entre las
 // comillas, o en la consola (F12):
 //   localStorage.setItem('cartera_proxy_url', 'https://cartera-proxy-XXXX.vercel.app/api/proxy')
-const CARTERA_PROXY = localStorage.getItem('cartera_proxy_url') || '';
+const CARTERA_PROXY = localStorage.getItem('cartera_proxy_url') || 'https://cartera-proxy.vercel.app/api/proxy';
 
 async function fetchPreciosBolsa() {
   const btn = document.getElementById('btn-auto-bolsa');
