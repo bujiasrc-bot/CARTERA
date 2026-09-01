@@ -1838,6 +1838,12 @@ function applyPrivacy() {
 //         localStorage.setItem('td_apikey', 'TU_CLAVE_AQUI')
 const TWELVEDATA_APIKEY = localStorage.getItem('td_apikey') || '';
 
+// Proxy propio (función serverless en Vercel) para leer Yahoo/Google Finance sin
+// depender de intermediarios públicos. Pega la URL COMPLETA de la función entre las
+// comillas, o en la consola (F12):
+//   localStorage.setItem('cartera_proxy_url', 'https://cartera-proxy-XXXX.vercel.app/api/proxy')
+const CARTERA_PROXY = localStorage.getItem('cartera_proxy_url') || '';
+
 async function fetchPreciosBolsa() {
   const btn = document.getElementById('btn-auto-bolsa');
   const status = document.getElementById('bolsa-auto-status');
@@ -1854,12 +1860,17 @@ async function fetchPreciosBolsa() {
     tsm:  { td: 'TSM',  tdEx: '',    gf: 'TSM:NYSE', yf: 'TSM'     },   // TSM cotiza en USD
   };
 
-  // Intermediarios CORS para el respaldo Google/Yahoo (se prueban en orden)
-  const proxies = [
-    { url: (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, unwrap: false },
-    { url: (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,       unwrap: false },
-    { url: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,       unwrap: 'contents' },
-  ];
+  // Intermediarios CORS para leer Yahoo/Google (se prueban en orden).
+  // Si hay proxy propio configurado (Vercel, Cloudflare, etc.), va primero.
+  const proxies = [];
+  if (CARTERA_PROXY) {
+    var base = CARTERA_PROXY.replace(/\/+$/, '');
+    var sep = base.indexOf('?') === -1 ? '?' : '&';
+    proxies.push({ url: (u) => `${base}${sep}url=${encodeURIComponent(u)}`, unwrap: false });
+  }
+  proxies.push({ url: (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`, unwrap: false });
+  proxies.push({ url: (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,       unwrap: false });
+  proxies.push({ url: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,       unwrap: 'contents' });
 
   // --- Twelve Data: petición directa, sin intermediario ---
   async function fetchTwelveData(symbol, exchange) {
@@ -1914,14 +1925,14 @@ async function fetchPreciosBolsa() {
     return m ? parseFloat(m[1]) : null;
   }
 
-  // Precio de un valor: Twelve Data → Google Finance → Yahoo Finance
+  // Precio de un valor: Twelve Data → Yahoo Finance → Google Finance
   async function getPrice(t) {
     let p = await fetchTwelveData(t.td, t.tdEx);
     if (p != null) return { price: p, src: 'TwelveData' };
-    p = await fetchParsed(`https://www.google.com/finance/quote/${t.gf}`, parseGoogle);
-    if (p != null) return { price: p, src: 'Google' };
     p = await fetchParsed(`https://query1.finance.yahoo.com/v8/finance/chart/${t.yf}?interval=1d&range=1d`, parseYahoo);
-    return p != null ? { price: p, src: 'Yahoo' } : null;
+    if (p != null) return { price: p, src: 'Yahoo' };
+    p = await fetchParsed(`https://www.google.com/finance/quote/${t.gf}`, parseGoogle);
+    return p != null ? { price: p, src: 'Google' } : null;
   }
 
   try {
@@ -1929,14 +1940,14 @@ async function fetchPreciosBolsa() {
     const errores = [];
     const fuentes = new Set();
 
-    // Tipo de cambio USD→€ : Twelve Data → Google → Yahoo (USDEUR=X) → Yahoo (EURUSD=X invertido)
+    // Tipo de cambio USD→€ : Twelve Data → Yahoo (USDEUR=X) → Yahoo (EURUSD=X invertido) → Google
     let usdEur = await fetchTwelveData('USD/EUR', '');
-    if (usdEur == null) usdEur = await fetchParsed('https://www.google.com/finance/quote/USD-EUR', parseGoogle);
     if (usdEur == null) usdEur = await fetchParsed('https://query1.finance.yahoo.com/v8/finance/chart/USDEUR=X?interval=1d&range=1d', parseYahoo);
     if (usdEur == null) {
       const eurUsd = await fetchParsed('https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X?interval=1d&range=1d', parseYahoo);
       if (eurUsd) usdEur = 1 / eurUsd;
     }
+    if (usdEur == null) usdEur = await fetchParsed('https://www.google.com/finance/quote/USD-EUR', parseGoogle);
     if (usdEur) precios.usdeur = Math.round(usdEur * 10000) / 10000;
 
     for (const [key, sym] of Object.entries(tickers)) {
