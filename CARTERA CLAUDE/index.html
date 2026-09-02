@@ -245,7 +245,8 @@ body {
   border-radius: 12px;
   padding: 16px;
 }
-.proy-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.proy-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.proy-loc { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 .proy-amount { font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
 .proy-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
 
@@ -944,11 +945,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="stat-card" style="--accent-line:var(--green)">
       <div class="stat-label">Valor actual</div>
-      <div class="stat-value pos"><span class="private">5.548 €</span></div>
+      <div class="stat-value pos"><span class="private">5.797,97 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--yellow)">
       <div class="stat-label">Total cobrado</div>
-      <div class="stat-value neu"><span class="private">47,76 €</span></div>
+      <div class="stat-value neu"><span class="private">297,97 €</span></div>
     </div>
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Proyectos activos</div>
@@ -958,32 +959,36 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 
   <div class="grid2" style="margin-bottom:16px">
     <div class="proyecto-card">
-      <div class="proy-name">🏗️ Burgos</div>
+      <div class="proy-name">🏗️ Proyecto Parque Comercial Arlanzón</div>
+      <div class="proy-loc">Burgos</div>
       <div class="proy-amount"><span class="private">500 €</span></div>
       <div class="proy-row"><span>Estado</span><span class="badge neu">En curso</span></div>
       <div class="proy-row"><span>Cobrado</span><span class="private">0 €</span></div>
       <div class="proy-row"><span>Rentabilidad</span><span>0%</span></div>
     </div>
     <div class="proyecto-card">
-      <div class="proy-name">🏗️ Estepona</div>
+      <div class="proy-name">🏗️ Proyecto The Privilege</div>
+      <div class="proy-loc">Estepona</div>
       <div class="proy-amount"><span class="private">1.500 €</span></div>
       <div class="proy-row"><span>Estado</span><span class="badge neu">En curso</span></div>
       <div class="proy-row"><span>Cobrado</span><span class="private">0 €</span></div>
       <div class="proy-row"><span>Rentabilidad</span><span>0%</span></div>
     </div>
     <div class="proyecto-card" style="border-color:rgba(126,255,212,0.3)">
-      <div class="proy-name">🏗️ Madrid</div>
+      <div class="proy-name">🏗️ Proyecto Miguel Yuste 54</div>
+      <div class="proy-loc">Madrid</div>
       <div class="proy-amount"><span class="private">1.500 €</span></div>
       <div class="proy-row"><span>Estado</span><span class="badge pos">Con retorno</span></div>
-      <div class="proy-row"><span>Cobrado</span><span class="pos private">47,76 €</span></div>
-      <div class="proy-row"><span>Rentabilidad</span><span class="pos">+3.18%</span></div>
+      <div class="proy-row"><span>Cobrado</span><span class="pos private">60,65 €</span></div>
+      <div class="proy-row"><span>Rentabilidad</span><span class="pos">+4.04%</span></div>
     </div>
-    <div class="proyecto-card">
-      <div class="proy-name">🏗️ Galicia</div>
+    <div class="proyecto-card" style="border-color:rgba(126,255,212,0.3)">
+      <div class="proy-name">🏗️ Proyecto Auria</div>
+      <div class="proy-loc">Galicia</div>
       <div class="proy-amount"><span class="private">2.000 €</span></div>
-      <div class="proy-row"><span>Estado</span><span class="badge neu">En curso</span></div>
-      <div class="proy-row"><span>Cobrado</span><span class="private">0 €</span></div>
-      <div class="proy-row"><span>Rentabilidad</span><span>0%</span></div>
+      <div class="proy-row"><span>Estado</span><span class="badge pos">Con retorno</span></div>
+      <div class="proy-row"><span>Cobrado</span><span class="pos private">237,32 €</span></div>
+      <div class="proy-row"><span>Rentabilidad</span><span class="pos">+11.87%</span></div>
     </div>
   </div>
 
@@ -1101,7 +1106,7 @@ const BASE = {
   bbva:       { inv: 21247.53,  act: 23167.68 },
   indexa:     { inv: 13850,     act: 15191.68 },
   bolsa:      { inv: 9911.41,   act: 10785.65 },
-  urbanitae:  { inv: 5500,      act: 5547.76  },
+  urbanitae:  { inv: 5500,      act: 5797.97  },
   myinvestor: { inv: 3011.6,    act: 3214.69  },
 };
 
@@ -1747,7 +1752,7 @@ function renderIndexa() {
 // ── URBANITAE ─────────────────────────────────────────────────────────────────
 function renderUrbanitae() {
   makeChart('chart-urb', 'bar', {
-    labels: ['Burgos','Estepona','Madrid','Galicia'],
+    labels: ['Parque Arlanzón','The Privilege','Miguel Yuste 54','Auria'],
     datasets:[{ data:[500,1500,1500,2000], backgroundColor:['#c8b5ffcc','#ff9de2cc','#7effd4cc','#ffb86ccc'], borderRadius:8 }]
   }, { scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
 }
