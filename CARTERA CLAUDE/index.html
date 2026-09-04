@@ -554,6 +554,10 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <label>TSM · Taiwan Semi. (USD/acción)</label>
         <input type="number" id="d-tsm" placeholder="ej: 426.37" step="0.01" />
       </div>
+      <div class="datos-field">
+        <label>ITX · Inditex (€/acción)</label>
+        <input type="number" id="d-itx" placeholder="ej: 57.48" step="0.01" />
+      </div>
     </div>
     <div class="datos-result" id="d-bol-result"></div>
     <div style="margin-top:14px">
@@ -868,6 +872,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <tr><td>SAN</td><td>Santander</td><td>Banca</td><td>229</td><td><span class="private">10,61€</span></td><td><span class="private">10,62€</span></td><td><span class="private">2.430€</span></td><td><span class="private">2.432€</span></td><td class="pos"><span class="private">+2€</span></td><td><span class="badge neu">+0.1%</span></td></tr>
         <tr><td>IAG</td><td>IAG</td><td>Aerolíneas</td><td>350</td><td><span class="private">4,02€</span></td><td><span class="private">4,58€</span></td><td><span class="private">1.407€</span></td><td><span class="private">1.603€</span></td><td class="pos"><span class="private">+196€</span></td><td><span class="badge pos">+13.9%</span></td></tr>
         <tr><td>SAN</td><td>Santander</td><td>Banca</td><td>190</td><td><span class="private">10,03€</span></td><td><span class="private">10,62€</span></td><td><span class="private">1.906€</span></td><td><span class="private">2.018€</span></td><td class="pos"><span class="private">+112€</span></td><td><span class="badge pos">+5.9%</span></td></tr>
+        <tr><td>ITX</td><td>Inditex</td><td>Textil</td><td>20</td><td><span class="private">57,48€</span></td><td><span class="private">57,48€</span></td><td><span class="private">1.150€</span></td><td><span class="private">1.150€</span></td><td class="pos"><span class="private">+0€</span></td><td><span class="badge neu">+0.0%</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -1117,7 +1122,7 @@ const BASE = {
   inmuebles:  { inv: 163230,    act: 206704   },
   bbva:       { inv: 21247.53,  act: 23167.68 },
   indexa:     { inv: 13850,     act: 15191.68 },
-  bolsa:      { inv: 9911.41,   act: 10785.65 },
+  bolsa:      { inv: 11061.01,  act: 11935.25 },
   urbanitae:  { inv: 5500,      act: 5788.88  },
   myinvestor: { inv: 3011.6,    act: 3214.69  },
 };
@@ -1684,6 +1689,7 @@ function renderBolsa() {
   const pSan    = bp.san  || 10.62;
   const pIag    = bp.iag  || 4.58;
   const pTsmUsd = bp.tsm  || 426.37;          // precio TSM en USD
+  const pItx    = bp.itx  || 57.48;
   const usdEur  = bp.usdeur || 0.8639;        // tipo de cambio USD→€
   const pTsmEur = pTsmUsd * usdEur;           // precio TSM convertido a € (para totales)
 
@@ -1692,19 +1698,20 @@ function renderBolsa() {
   const actIag   = pIag   * 350;
   const actSan2  = pSan   * 190;
   const actTsm   = pTsmEur * 4;               // valor TSM en €
+  const actItx   = pItx   * 20;
 
   makeChart('chart-bol-compare', 'bar', {
-    labels: ['SCYR', 'SAN (x229)', 'IAG', 'SAN (x190)', 'TSM (x4)'],
+    labels: ['SCYR', 'SAN (x229)', 'IAG', 'SAN (x190)', 'TSM (x4)', 'ITX (x20)'],
     datasets: [
-      { label:'Invertido', data:[2695.55, 2429.69, 1407, 1905.7, 1473.47], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
-      { label:'Actual',    data:[actScyr, actSan1, actIag, actSan2, actTsm], backgroundColor:'#6bcfffcc', borderRadius:6 }
+      { label:'Invertido', data:[2695.55, 2429.69, 1407, 1905.7, 1473.47, 1149.60], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
+      { label:'Actual',    data:[actScyr, actSan1, actIag, actSan2, actTsm, actItx], backgroundColor:'#6bcfffcc', borderRadius:6 }
     ]
   }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
 
   makeChart('chart-bol-sector', 'doughnut', {
-    labels:['Infraestructuras','Banca','Aerolíneas','Semiconductores'],
-    datasets:[{ data:[actScyr, actSan1+actSan2, actIag, actTsm], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc'], borderColor:'#0c0c10', borderWidth:3 }]
+    labels:['Infraestructuras','Banca','Aerolíneas','Semiconductores','Textil'],
+    datasets:[{ data:[actScyr, actSan1+actSan2, actIag, actTsm, actItx], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc','#a8ff78cc'], borderColor:'#0c0c10', borderWidth:3 }]
   }, { cutout:'60%', plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}} });
 
   // Actualizar tabla de posiciones
@@ -1717,6 +1724,7 @@ function renderBolsa() {
       { ticker:'IAG',  nombre:'IAG',          sector:'Aerolíneas',      acc:350, pComp:4.02,   precio:pIag,    invEur:4.02*350,   actEur:actIag  },
       { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:190, pComp:10.03,  precio:pSan,    invEur:10.03*190,  actEur:actSan2 },
       { ticker:'TSM',  nombre:'Taiwan Semi.', sector:'Semiconductores', acc:4,   pComp:426.37, precio:pTsmUsd, invEur:1473.47,    actEur:actTsm, usd:true },
+      { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:20,  pComp:57.48,  precio:pItx,    invEur:1149.60,    actEur:actItx  },
     ];
     tbody.innerHTML = rows.map(r => {
       const pg    = r.actEur - r.invEur;
@@ -1875,6 +1883,7 @@ async function fetchPreciosBolsa() {
     san:  { td: 'SAN',  tdEx: 'BME', gf: 'SAN:BME',  yf: 'SAN.MC'  },
     iag:  { td: 'IAG',  tdEx: 'BME', gf: 'IAG:BME',  yf: 'IAG.MC'  },
     tsm:  { td: 'TSM',  tdEx: '',    gf: 'TSM:NYSE', yf: 'TSM'     },   // TSM cotiza en USD
+    itx:  { td: 'ITX',  tdEx: 'BME', gf: 'ITX:BME',  yf: 'ITX.MC'  },
   };
 
   // Intermediarios CORS para leer Yahoo/Google (se prueban en orden).
@@ -1993,6 +2002,7 @@ async function fetchPreciosBolsa() {
         if (nuevos.san)  document.getElementById('d-san').value = nuevos.san;
         if (nuevos.iag)  document.getElementById('d-iag').value = nuevos.iag;
         if (nuevos.tsm)  document.getElementById('d-tsm').value = nuevos.tsm;
+        if (nuevos.itx)  document.getElementById('d-itx').value = nuevos.itx;
         renderDatosBolsaResult();
       }
 
@@ -2132,6 +2142,7 @@ const BOLSA_ACCIONES = [
   { ticker: 'IAG',  nombre: 'IAG',       acciones: 350,  coste: 1407.00, key: 'iag'  },
   { ticker: 'SAN',  nombre: 'Santander', acciones: 190,  coste: 1905.70, key: 'san2' },
   { ticker: 'TSM',  nombre: 'Taiwan Semi.', acciones: 4, coste: 1473.47, key: 'tsm', usd: true },
+  { ticker: 'ITX',  nombre: 'Inditex',    acciones: 20,  coste: 1149.60, key: 'itx' },
 ];
 
 // Valor de mercado total de Bolsa en € (convierte TSM de USD a € con el tipo guardado)
@@ -2219,6 +2230,7 @@ function initDatosPage() {
   if (bp.san)  document.getElementById('d-san').value  = bp.san;
   if (bp.iag)  document.getElementById('d-iag').value  = bp.iag;
   if (bp.tsm) document.getElementById('d-tsm').value  = bp.tsm;
+  if (bp.itx)  document.getElementById('d-itx').value  = bp.itx;
   renderDatosBolsaResult();
 
   // Simples
@@ -2366,6 +2378,7 @@ function renderDatosBolsaResult() {
     san:  parseFloat(document.getElementById('d-san').value)  || 10.62,
     iag:  parseFloat(document.getElementById('d-iag').value)  || 4.58,
     tsm:  parseFloat(document.getElementById('d-tsm').value)  || 426.37,   // TSM en USD
+    itx:  parseFloat(document.getElementById('d-itx').value)  || 57.48,
     usdeur: bpFx.usdeur || 0.8639,
   };
   const totalAct = bolsaTotalEUR(precios);                                 // € (TSM convertido)
@@ -2394,6 +2407,10 @@ function renderDatosBolsaResult() {
           <div style="font-size:10px;color:var(--muted);margin-bottom:4px">TSM · 4 acc.</div>
           <div style="font-size:16px;font-weight:700">${precios.tsm} $</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px">≈ ${(precios.tsm*precios.usdeur).toFixed(2)}€ · USD/€ ${precios.usdeur}</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">ITX · 20 acc.</div>
+          <div style="font-size:16px;font-weight:700">${precios.itx}€</div>
         </div>
       </div>
 
@@ -2488,6 +2505,7 @@ function saveDatosBolsa() {
   bp.san  = parseFloat(document.getElementById('d-san').value)  || bp.san  || 0;
   bp.iag  = parseFloat(document.getElementById('d-iag').value)  || bp.iag  || 0;
   bp.tsm  = parseFloat(document.getElementById('d-tsm').value)  || bp.tsm  || 0;   // TSM en USD
+  bp.itx  = parseFloat(document.getElementById('d-itx').value)  || bp.itx  || 0;
   localStorage.setItem(BOLSA_KEY, JSON.stringify(bp));
   // Recalcular total bolsa en € (TSM convertido USD→€)
   const total = bolsaTotalEUR(bp);
