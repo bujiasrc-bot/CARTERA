@@ -1719,12 +1719,12 @@ function renderBolsa() {
   if (tbody) {
     // invEur = precio compra × nº acciones (coste original en €); actEur = valor de mercado en €
     const rows = [
-      { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:715, pComp:3.77,   precio:pScyr,   invEur:3.77*715,   actEur:actScyr },
-      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:229, pComp:10.61,  precio:pSan,    invEur:10.61*229,  actEur:actSan1 },
-      { ticker:'IAG',  nombre:'IAG',          sector:'Aerolíneas',      acc:350, pComp:4.02,   precio:pIag,    invEur:4.02*350,   actEur:actIag  },
-      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:190, pComp:10.03,  precio:pSan,    invEur:10.03*190,  actEur:actSan2 },
-      { ticker:'TSM',  nombre:'Taiwan Semi.', sector:'Semiconductores', acc:4,   pComp:426.37, precio:pTsmUsd, invEur:1473.47,    actEur:actTsm, usd:true },
-      { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:20,  pComp:57.48,  precio:pItx,    invEur:1149.60,    actEur:actItx  },
+      { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:715, pComp:3.77,   precio:pScyr,   invEur:3.77*715,   actEur:actScyr, fecha:'16/12/2025' },
+      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:229, pComp:10.61,  precio:pSan,    invEur:10.61*229,  actEur:actSan1, fecha:'25/02/2026' },
+      { ticker:'IAG',  nombre:'IAG',          sector:'Aerolíneas',      acc:350, pComp:4.02,   precio:pIag,    invEur:4.02*350,   actEur:actIag,  fecha:'20/03/2026' },
+      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:190, pComp:10.03,  precio:pSan,    invEur:10.03*190,  actEur:actSan2, fecha:'15/05/2026' },
+      { ticker:'TSM',  nombre:'Taiwan Semi.', sector:'Semiconductores', acc:4,   pComp:426.37, precio:pTsmUsd, invEur:1473.47,    actEur:actTsm,  usd:true, fecha:'14/08/2026' },
+      { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:20,  pComp:57.48,  precio:pItx,    invEur:1149.60,    actEur:actItx,  fecha:'04/09/2026' },
     ];
     tbody.innerHTML = rows.map(r => {
       const pg    = r.actEur - r.invEur;
@@ -1735,7 +1735,7 @@ function renderBolsa() {
       const pAct  = r.precio.toFixed(2).replace('.', ',') + ' ' + cur
                   + (r.usd ? ' <span style="font-size:10px;color:var(--muted)">USD</span>' : '');
       return `<tr>
-        <td>${r.ticker}</td>
+        <td>${r.ticker}<div style="font-size:10px;color:var(--muted);font-weight:400">${r.fecha}</div></td>
         <td>${r.nombre}</td>
         <td>${r.sector}</td>
         <td>${r.acc}</td>
