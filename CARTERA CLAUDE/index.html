@@ -560,8 +560,10 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       </div>
     </div>
     <div class="datos-result" id="d-bol-result"></div>
-    <div style="margin-top:14px">
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn-datos-save" onclick="saveDatosBolsa()">Guardar Bolsa</button>
+      <button class="btn-auto-precio" onclick="rehacerHistBolsa(this)">📊 Rehacer histórico</button>
+      <span id="bol-hist-status" style="font-size:11px;color:var(--muted)"></span>
     </div>
   </div>
 
@@ -861,6 +863,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">Evolución de la inversión</div>
+    <div id="bol-evol-wrap"></div>
   </div>
 
   <div class="chart-card" style="margin-bottom:16px">
@@ -1769,6 +1776,212 @@ function renderBolsa() {
       </tr>`;
     }).join('');
   }
+
+  renderBolsaEvol();
+}
+
+// ── BOLSA · HISTÓRICO Y EVOLUCIÓN ─────────────────────────────────────────────
+// Fuente híbrida: backfill único de Yahoo (1 año) + fotos diarias acumuladas.
+const BOLSA_HIST_KEY = 'cartera_bolsa_hist_v1';
+
+// Lotes de bolsa con su fecha de compra (ISO) y coste, para las gráficas de evolución
+const BOLSA_LOTES_EVOL = [
+  { key:'scyr', tk:'SCYR',       acc:715, coste:2695.55, fecha:'2025-12-16', usd:false, color:'#c8b5ff' },
+  { key:'san',  tk:'SAN (x229)', acc:229, coste:2429.69, fecha:'2026-02-25', usd:false, color:'#ffb86c' },
+  { key:'iag',  tk:'IAG',        acc:350, coste:1407.00, fecha:'2026-03-20', usd:false, color:'#6bcfff' },
+  { key:'san',  tk:'SAN (x190)', acc:190, coste:1905.70, fecha:'2026-05-15', usd:false, color:'#ffd36b' },
+  { key:'tsm',  tk:'TSM',        acc:4,   coste:1473.47, fecha:'2026-08-14', usd:true,  color:'#ff9de2' },
+  { key:'itx',  tk:'ITX (x20)',  acc:20,  coste:1149.60, fecha:'2026-09-04', usd:false, color:'#a8ff78' },
+  { key:'itx',  tk:'ITX (x26)',  acc:26,  coste:1419.08, fecha:'2026-09-09', usd:false, color:'#7effd4' },
+];
+const BOLSA_DIVS_EVOL = [ { d:'2026-02-15', imp:34.65 }, { d:'2026-07-01', imp:57.92 } ];
+
+function loadBolsaHist() {
+  try { return JSON.parse(localStorage.getItem(BOLSA_HIST_KEY)) || { base:{}, snaps:{}, baseDone:false }; }
+  catch(e) { return { base:{}, snaps:{}, baseDone:false }; }
+}
+function saveBolsaHist(h) { try { localStorage.setItem(BOLSA_HIST_KEY, JSON.stringify(h)); } catch(e) {} }
+
+// Guarda/actualiza la foto de HOY con los precios indicados (o los guardados)
+function pushBolsaSnapshot(precios) {
+  precios = precios || loadBolsaPrecios();
+  if (!precios || !precios.scyr) return;
+  const d = new Date().toISOString().slice(0, 10);
+  const h = loadBolsaHist();
+  h.snaps = h.snaps || {};
+  h.snaps[d] = {
+    scyr: precios.scyr, san: precios.san, iag: precios.iag,
+    tsm: precios.tsm, itx: precios.itx, usdeur: precios.usdeur || 0.8639
+  };
+  saveBolsaHist(h);
+}
+
+// Serie combinada y ordenada: [{ d:'YYYY-MM-DD', scyr, san, iag, tsm, itx, usdeur }, ...]
+function bolsaHistSerie() {
+  const h = loadBolsaHist();
+  const merged = { ...(h.base || {}), ...(h.snaps || {}) };
+  return Object.keys(merged).sort().map(d => ({ d, ...merged[d] }));
+}
+
+// Descarga histórica de Yahoo (1 año de cierres diarios). Se ejecuta una sola vez.
+async function backfillBolsaHist(force) {
+  const h = loadBolsaHist();
+  if (h.baseDone && !force) return;
+
+  const proxies = [];
+  if (CARTERA_PROXY) {
+    const b = CARTERA_PROXY.replace(/\/+$/, ''); const s = b.indexOf('?') === -1 ? '?' : '&';
+    proxies.push(u => `${b}${s}url=${encodeURIComponent(u)}`);
+  }
+  proxies.push(u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`);
+  proxies.push(u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`);
+
+  async function fetchSeries(yf) {
+    const target = `https://query1.finance.yahoo.com/v8/finance/chart/${yf}?interval=1d&range=1y`;
+    for (const px of proxies) {
+      try {
+        const res = await fetch(px(target), { signal: AbortSignal.timeout(10000) });
+        if (!res.ok) continue;
+        const j = JSON.parse(await res.text());
+        const r = j && j.chart && j.chart.result && j.chart.result[0];
+        if (!r || !r.timestamp) continue;
+        const close = (r.indicators && r.indicators.quote && r.indicators.quote[0] && r.indicators.quote[0].close) || [];
+        const out = {};
+        for (let i = 0; i < r.timestamp.length; i++) {
+          if (close[i] == null) continue;
+          out[new Date(r.timestamp[i] * 1000).toISOString().slice(0, 10)] = Math.round(close[i] * 10000) / 10000;
+        }
+        if (Object.keys(out).length) return out;
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  const [scyr, san, iag, tsm, itx, fx] = await Promise.all([
+    fetchSeries('SCYR.MC'), fetchSeries('SAN.MC'), fetchSeries('IAG.MC'),
+    fetchSeries('TSM'), fetchSeries('ITX.MC'), fetchSeries('USDEUR=X')
+  ]);
+  if (!scyr && !san && !iag && !tsm && !itx) return;   // fallo total: se reintenta en la próxima carga
+
+  // Relleno hacia delante (mercados con calendarios distintos / findes)
+  function ff(series, dates) {
+    if (!series) return {};
+    const keys = Object.keys(series).sort();
+    const res = {}; let li = 0;
+    for (const d of dates) {
+      while (li + 1 < keys.length && keys[li + 1] <= d) li++;
+      res[d] = keys[li] > d ? series[keys[0]] : series[keys[li]];
+    }
+    return res;
+  }
+  const backbone = Object.keys(scyr || san || iag || itx || tsm || {}).sort();
+  const S = ff(scyr, backbone), A = ff(san, backbone), I = ff(iag, backbone),
+        T = ff(tsm, backbone), X = ff(itx, backbone), F = ff(fx, backbone);
+
+  const base = {};
+  for (const d of backbone) base[d] = { scyr:S[d], san:A[d], iag:I[d], tsm:T[d], itx:X[d], usdeur:F[d] || 0.8639 };
+
+  const hh = loadBolsaHist();
+  hh.base = base; hh.baseDone = true; hh.baseTs = Date.now();
+  saveBolsaHist(hh);
+  renderBolsaEvol();
+}
+
+// Dibuja las dos gráficas de evolución dentro de #bol-evol-wrap
+function renderBolsaEvol() {
+  const wrap = document.getElementById('bol-evol-wrap');
+  if (!wrap) return;
+
+  const serie = bolsaHistSerie();
+  const hoy = new Date().toISOString().slice(0, 10);
+  const bpNow = loadBolsaPrecios();
+  if (bpNow && bpNow.scyr && (!serie.length || serie[serie.length - 1].d !== hoy)) {
+    serie.push({ d:hoy, scyr:bpNow.scyr, san:bpNow.san, iag:bpNow.iag, tsm:bpNow.tsm, itx:bpNow.itx, usdeur:bpNow.usdeur || 0.8639 });
+  }
+
+  if (serie.length < 2) {
+    wrap.innerHTML = '<div style="text-align:center;color:var(--muted);padding:36px 8px;font-size:13px;line-height:1.5">Recopilando histórico…<br>La gráfica aparece con 2+ días de datos, o pulsa «Rehacer histórico» en la pestaña Datos.</div>';
+    return;
+  }
+
+  const labels = serie.map(s => { const p = s.d.split('-'); return p[2] + '/' + p[1]; });
+
+  // ── Gráfica 1: rentabilidad % por lote, rebasada a 0 en su fecha de compra ──
+  const ds1 = BOLSA_LOTES_EVOL.map(l => ({
+    label: l.tk,
+    data: serie.map(s => {
+      if (s.d < l.fecha) return null;
+      let p = s[l.key];
+      if (p == null) return null;
+      if (l.usd) p = p * (s.usdeur || 0.8639);
+      return +((p * l.acc) / l.coste * 100 - 100).toFixed(2);
+    }),
+    borderColor: l.color, backgroundColor: l.color,
+    borderWidth: 2, pointRadius: 0, tension: 0.25, spanGaps: false
+  }));
+
+  // ── Gráfica 2: invertido (escalera) vs valor actual (€) ──
+  const invLine = serie.map(s => BOLSA_LOTES_EVOL.reduce((t, l) => t + (s.d >= l.fecha ? l.coste : 0), 0));
+  const actLine = serie.map(s => BOLSA_LOTES_EVOL.reduce((t, l) => {
+    if (s.d < l.fecha) return t;
+    let p = s[l.key]; if (p == null) return t;
+    if (l.usd) p = p * (s.usdeur || 0.8639);
+    return t + p * l.acc;
+  }, 0));
+  const divPts = serie.map((s, i) => {
+    const prev = i > 0 ? serie[i - 1].d : '0000-00-00';
+    return BOLSA_DIVS_EVOL.some(dv => dv.d > prev && dv.d <= s.d) ? actLine[i] : null;
+  });
+
+  wrap.innerHTML =
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Rentabilidad % por lote · desde su fecha de compra</div>' +
+    '<div class="chart-wrap"><canvas id="chart-bol-evol-pct"></canvas></div>' +
+    '<div style="font-size:12px;color:var(--muted);margin:18px 0 6px">Invertido vs valor actual (€)</div>' +
+    '<div class="chart-wrap"><canvas id="chart-bol-evol-eur"></canvas></div>';
+
+  const xTicks = { color:'#6b6b85', font:{ family:'Syne', size:10 }, maxTicksLimit:8, autoSkip:true };
+  const legend = { display:true, labels:{ color:'#9e9eb0', font:{ family:'Syne' }, boxWidth:10, boxHeight:10 } };
+
+  makeChart('chart-bol-evol-pct', 'line', { labels, datasets: ds1 }, {
+    plugins:{ legend, tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y}%` } } },
+    scales:{ x:{ grid:{ color:'rgba(255,255,255,0.04)' }, ticks:xTicks },
+             y:{ grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#6b6b85', font:{ family:'Syne' }, callback:v => v + '%' } } }
+  });
+
+  makeChart('chart-bol-evol-eur', 'line', {
+    labels,
+    datasets: [
+      { label:'Invertido', data:invLine, borderColor:'#6b6c85', backgroundColor:'rgba(107,108,133,0.12)',
+        borderWidth:2, borderDash:[5,4], pointRadius:0, stepped:true, fill:false },
+      { label:'Valor actual', data:actLine, borderColor:'#7effd4', backgroundColor:'rgba(126,255,212,0.12)',
+        borderWidth:2, pointRadius:0, tension:0.25, fill:'-1' },
+      { label:'Dividendo', data:divPts, borderColor:'#ffd36b', backgroundColor:'#ffd36b',
+        pointRadius:5, pointHoverRadius:6, pointStyle:'rectRot', showLine:false }
+    ]
+  }, {
+    plugins:{ legend, tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${fmt(c.parsed.y)}` } } },
+    scales:{ x:{ grid:{ color:'rgba(255,255,255,0.04)' }, ticks:xTicks },
+             y:{ grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#6b6b85', font:{ family:'Syne' }, callback:v => (v/1000).toFixed(1) + 'k€' } } }
+  });
+}
+
+// Botón "Rehacer histórico" de la pestaña Datos
+async function rehacerHistBolsa(btn) {
+  const st = document.getElementById('bol-hist-status');
+  if (btn) btn.disabled = true;
+  if (st) { st.style.color = 'var(--muted)'; st.textContent = 'Descargando histórico…'; }
+  try {
+    await backfillBolsaHist(true);
+    const h = loadBolsaHist();
+    const n = Object.keys(h.base || {}).length;
+    if (st) {
+      st.style.color = n ? 'var(--green)' : 'var(--red)';
+      st.textContent = n ? `✓ ${n} días de histórico` : '✗ No se pudo descargar (reintenta más tarde)';
+    }
+  } catch (e) {
+    if (st) { st.style.color = 'var(--red)'; st.textContent = '✗ Sin conexión'; }
+  }
+  if (btn) btn.disabled = false;
 }
 
 // ── INDEXA ───────────────────────────────────────────────────────────────────
@@ -2011,6 +2224,7 @@ async function fetchPreciosBolsa() {
       const nuevos = { ...bp, ...precios };
       localStorage.setItem(BOLSA_KEY, JSON.stringify(nuevos));
       localStorage.setItem('cartera_bolsa_ts', Date.now());
+      pushBolsaSnapshot(nuevos);   // foto del día para la gráfica de evolución
 
       // Recalcular total bolsa en € (TSM convertido USD→€ con el tipo guardado)
       const total = bolsaTotalEUR(nuevos);
@@ -2529,6 +2743,7 @@ function saveDatosBolsa() {
   bp.tsm  = parseFloat(document.getElementById('d-tsm').value)  || bp.tsm  || 0;   // TSM en USD
   bp.itx  = parseFloat(document.getElementById('d-itx').value)  || bp.itx  || 0;
   localStorage.setItem(BOLSA_KEY, JSON.stringify(bp));
+  pushBolsaSnapshot(bp);   // foto del día para la gráfica de evolución
   // Recalcular total bolsa en € (TSM convertido USD→€)
   const total = bolsaTotalEUR(bp);
   if (total > 0) state.bolsa = total;
@@ -2618,6 +2833,10 @@ function showDatosSaved(msg) {
 
 // Auto actualizar precios de bolsa al abrir la app
 autoUpdateBolsaOnLoad();
+
+// Histórico de bolsa: foto del día + backfill único de Yahoo (en segundo plano)
+pushBolsaSnapshot();
+backfillBolsaHist();
 
 </script>
 
