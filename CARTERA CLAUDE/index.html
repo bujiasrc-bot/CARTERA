@@ -1427,7 +1427,10 @@ function makeChart(id, type, data, options={}) {
   const ctx = document.getElementById(id);
   if (!ctx) return;
   if (charts[id]) { charts[id].destroy(); }
-  charts[id] = new Chart(ctx, { type, data, options: { ...chartDefaults, ...options, responsive:true, maintainAspectRatio:false } });
+  const opts = { ...chartDefaults, ...options, responsive:true, maintainAspectRatio:false };
+  // Los gráficos circulares no usan ejes x/y: evitar que hereden la rejilla cartesiana de chartDefaults
+  if ((type === 'doughnut' || type === 'pie') && !options.scales) delete opts.scales;
+  charts[id] = new Chart(ctx, { type, data, options: opts });
 }
 
 // ─── RENDER ALL ─────────────────────────────────────────────────────────────
@@ -1728,7 +1731,7 @@ function renderBolsa() {
   makeChart('chart-bol-sector', 'doughnut', {
     labels: valLabels,
     datasets:[{ data: valData, backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc','#a8ff78cc'], borderColor:'#0c0c10', borderWidth:3 }]
-  }, { cutout:'60%', scales:{ x:{ display:false }, y:{ display:false } },
+  }, { cutout:'60%',
        plugins:{ legend:{ display:true, labels:{ color:'#9e9eb0', font:{ family:'Syne' } } },
        tooltip:{ callbacks:{ label: c => ` ${fmt(c.parsed)} · ${(c.parsed / valTot * 100).toFixed(1)}%` } } } });
 
