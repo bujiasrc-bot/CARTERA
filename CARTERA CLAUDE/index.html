@@ -1200,9 +1200,34 @@ const BEST_APORT_SEED = [
 ];
 const BEST_APORT_SEED_VER = 2;
 
-// Posiciones efectivas = base BEST_FONDOS + aportaciones guardadas en state
+// Aportaciones: clave propia y sincronizada (como los precios de Bolsa).
+// { ver, items:[{id,fecha,fondo,titular,partic,importe}] }
+const BEST_APORT_KEY = 'cartera_best_aport_v1';
+
+function loadBestAport() {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(BEST_APORT_KEY)); } catch (e) {}
+  if (!data || !Array.isArray(data.items)) data = { ver: 0, items: [] };
+  // Alta "de fábrica" idempotente por id: al subir BEST_APORT_SEED_VER se
+  // añaden las que falten una sola vez; si el usuario borra alguna, no vuelve.
+  if ((data.ver || 0) < BEST_APORT_SEED_VER) {
+    const have = new Set(data.items.map(a => a.id));
+    BEST_APORT_SEED.forEach(a => { if (!have.has(a.id)) data.items.push({ ...a }); });
+    data.ver = BEST_APORT_SEED_VER;
+    try { localStorage.setItem(BEST_APORT_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+  return data.items;
+}
+
+function saveBestAport(items) {
+  try {
+    localStorage.setItem(BEST_APORT_KEY, JSON.stringify({ ver: BEST_APORT_SEED_VER, items }));
+  } catch (e) {}
+}
+
+// Posiciones efectivas = base BEST_FONDOS + aportaciones registradas
 function getBestFondos() {
-  const aps = Array.isArray(state.best_aportaciones) ? state.best_aportaciones : [];
+  const aps = loadBestAport();
   const list = BEST_FONDOS.map(f => ({ ...f }));
   const fkeyOf = f => f.nombre.includes('Mixto') ? 'mixto' : 'bestinfond';
   aps.forEach(a => {
@@ -1238,16 +1263,8 @@ const STORAGE_KEY = 'cartera_valores_v3';
 // ─── ESTADO ─────────────────────────────────────────────────────────────────
 let state = loadState();
 
-// Alta de aportaciones Bestinver "de fábrica". Idempotente por id y versionado:
-// al subir BEST_APORT_SEED_VER se añaden las nuevas una sola vez; si el usuario
-// borra alguna a mano, no reaparece (hasta la siguiente subida de versión).
-if (!Array.isArray(state.best_aportaciones)) state.best_aportaciones = [];
-if ((state.best_aport_seed_ver || 0) < BEST_APORT_SEED_VER) {
-  const have = new Set(state.best_aportaciones.map(a => a.id));
-  BEST_APORT_SEED.forEach(a => { if (!have.has(a.id)) state.best_aportaciones.push({ ...a }); });
-  state.best_aport_seed_ver = BEST_APORT_SEED_VER;
-  saveState();
-}
+// Limpieza: versiones antiguas guardaban las aportaciones dentro del estado.
+if (state && 'best_aportaciones' in state) { delete state.best_aportaciones; delete state.best_aport_seed_ver; }
 
 function loadState() {
   try {
@@ -2827,7 +2844,7 @@ function saveDatosInmuebles() {
 function renderAportacionesBestList() {
   const box = document.getElementById('d-best-aport-list');
   if (!box) return;
-  const aps = Array.isArray(state.best_aportaciones) ? state.best_aportaciones : [];
+  const aps = loadBestAport();
   if (!aps.length) {
     box.innerHTML = '<div style="font-size:12px;color:var(--muted)">Sin aportaciones registradas.</div>';
     return;
@@ -2856,14 +2873,14 @@ function addAportacionBest() {
     showDatosSaved('Revisa participaciones e importe');
     return;
   }
-  if (!Array.isArray(state.best_aportaciones)) state.best_aportaciones = [];
-  state.best_aportaciones.push({
+  const items = loadBestAport();
+  items.push({
     id: 'ap-' + Date.now(),
     fecha, fondo, titular,
     partic: +partic.toFixed(6),
     importe: +importe.toFixed(2),
   });
-  saveState();
+  saveBestAport(items);
   renderAll();
   renderAportacionesBestList();
   renderDatosBestResult();
@@ -2873,9 +2890,7 @@ function addAportacionBest() {
 }
 
 function deleteAportacionBest(id) {
-  if (!Array.isArray(state.best_aportaciones)) return;
-  state.best_aportaciones = state.best_aportaciones.filter(a => a.id !== id);
-  saveState();
+  saveBestAport(loadBestAport().filter(a => a.id !== id));
   renderAll();
   renderAportacionesBestList();
   renderDatosBestResult();
@@ -3022,6 +3037,7 @@ backfillBolsaHist();
     'cartera_inm_valores_v1',
     'cartera_bolsa_precios_v1', 'cartera_bolsa_ts',
     'cartera_gastos_ext_v1',
+    'cartera_best_aport_v1',
     'td_apikey'
   ];
 
