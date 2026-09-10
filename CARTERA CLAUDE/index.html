@@ -519,6 +519,45 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       </div>
     </div>
     <div class="datos-result" id="d-best-result"></div>
+
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;margin-bottom:2px">Aportaciones / suscripciones</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Copia cada suscripción de tu resguardo Bestinver: se suma a las participaciones y al coste del fondo.</div>
+      <div class="datos-grid">
+        <div class="datos-field">
+          <label>Fondo</label>
+          <select id="d-best-ap-fondo" class="nav-input">
+            <option value="bestinfond">Bestinfond F.I.</option>
+            <option value="mixto">Bestinver Mixto F.I.</option>
+          </select>
+        </div>
+        <div class="datos-field">
+          <label>Titular</label>
+          <select id="d-best-ap-titular" class="nav-input">
+            <option value="C y R">C y R</option>
+            <option value="Carmen">Carmen</option>
+            <option value="Marta">Marta</option>
+          </select>
+        </div>
+        <div class="datos-field">
+          <label>Fecha</label>
+          <input type="date" id="d-best-ap-fecha" class="nav-input" />
+        </div>
+        <div class="datos-field">
+          <label>Nº participaciones</label>
+          <input type="number" id="d-best-ap-partic" placeholder="ej: 1,392709" step="0.000001" class="nav-input" />
+        </div>
+        <div class="datos-field">
+          <label>Importe neto (€)</label>
+          <input type="number" id="d-best-ap-importe" placeholder="ej: 500" step="0.01" class="nav-input" />
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn-datos-save" onclick="addAportacionBest()">+ Añadir aportación</button>
+      </div>
+      <div id="d-best-aport-list" style="margin-top:12px"></div>
+    </div>
+
     <div style="margin-top:14px">
       <button class="btn-datos-save" onclick="saveDatosBestinver()">Guardar Bestinver</button>
     </div>
@@ -1146,8 +1185,43 @@ const BEST_FONDOS = [
 ];
 // NAV base (19 mayo 2026, según imagen)
 const NAV_BASE = { bestinfond: 337.196531, mixto: 45.211524 };
-// Coste total Bestinver
-const BEST_INV_TOTAL = BEST_FONDOS.reduce((s, f) => s + f.coste, 0); // 72491.66
+
+// Aportaciones registradas DESPUÉS de la foto base de BEST_FONDOS.
+// Se suman a las participaciones y al coste del fondo por (fondo + titular).
+// Solo aportaciones posteriores a la foto base (19/05/2026); las anteriores ya
+// están dentro de las participaciones/coste de BEST_FONDOS.
+const BEST_APORT_SEED = [
+  { id:'seed-carmen-20260601', fecha:'2026-06-01', fondo:'bestinfond', titular:'Carmen', partic:1.392709, importe:500 },
+  { id:'seed-carmen-20260721', fecha:'2026-07-21', fondo:'bestinfond', titular:'Carmen', partic:1.382800, importe:500 },
+  { id:'seed-marta-20260601',  fecha:'2026-06-01', fondo:'bestinfond', titular:'Marta',  partic:1.392709, importe:500 },
+  { id:'seed-marta-20260623',  fecha:'2026-06-23', fondo:'bestinfond', titular:'Marta',  partic:1.390382, importe:500 },
+  { id:'seed-cyr-20260821',    fecha:'2026-08-21', fondo:'bestinfond', titular:'C y R',  partic:1.380286, importe:500  },
+  { id:'seed-cyr-20260828',    fecha:'2026-08-28', fondo:'bestinfond', titular:'C y R',  partic:8.233997, importe:3000 },
+];
+const BEST_APORT_SEED_VER = 2;
+
+// Posiciones efectivas = base BEST_FONDOS + aportaciones guardadas en state
+function getBestFondos() {
+  const aps = Array.isArray(state.best_aportaciones) ? state.best_aportaciones : [];
+  const list = BEST_FONDOS.map(f => ({ ...f }));
+  const fkeyOf = f => f.nombre.includes('Mixto') ? 'mixto' : 'bestinfond';
+  aps.forEach(a => {
+    let row = list.find(f => fkeyOf(f) === a.fondo && f.titular === a.titular);
+    if (!row) {
+      row = { nombre: a.fondo === 'mixto' ? 'Bestinver Mixto F.I.' : 'Bestinfond F.I.',
+              titular: a.titular, partic: 0, coste: 0 };
+      list.push(row);
+    }
+    row.partic += (+a.partic || 0);
+    row.coste  += (+a.importe || 0);
+  });
+  return list;
+}
+
+// Coste total Bestinver (base + aportaciones)
+function bestInvTotal() {
+  return getBestFondos().reduce((s, f) => s + f.coste, 0);
+}
 
 const LABELS = {
   inmuebles: 'Inmuebles', bbva: 'BBVA PP',
@@ -1163,6 +1237,17 @@ const STORAGE_KEY = 'cartera_valores_v3';
 
 // ─── ESTADO ─────────────────────────────────────────────────────────────────
 let state = loadState();
+
+// Alta de aportaciones Bestinver "de fábrica". Idempotente por id y versionado:
+// al subir BEST_APORT_SEED_VER se añaden las nuevas una sola vez; si el usuario
+// borra alguna a mano, no reaparece (hasta la siguiente subida de versión).
+if (!Array.isArray(state.best_aportaciones)) state.best_aportaciones = [];
+if ((state.best_aport_seed_ver || 0) < BEST_APORT_SEED_VER) {
+  const have = new Set(state.best_aportaciones.map(a => a.id));
+  BEST_APORT_SEED.forEach(a => { if (!have.has(a.id)) state.best_aportaciones.push({ ...a }); });
+  state.best_aport_seed_ver = BEST_APORT_SEED_VER;
+  saveState();
+}
 
 function loadState() {
   try {
@@ -1181,7 +1266,7 @@ function loadState() {
 function bestActual(st) {
   const nav_f = st.nav_bestinfond || NAV_BASE.bestinfond;
   const nav_m = st.nav_mixto      || NAV_BASE.mixto;
-  return BEST_FONDOS.reduce((sum, f) => {
+  return getBestFondos().reduce((sum, f) => {
     const nav = f.nombre.includes('Mixto') ? nav_m : nav_f;
     return sum + f.partic * nav;
   }, 0);
@@ -1297,10 +1382,11 @@ function updateNavPreview() {
   const nav_m = parseFloat(document.getElementById('inp-nav_mixto')?.value)      || state.nav_mixto;
   const tempSt = { nav_bestinfond: nav_f, nav_mixto: nav_m };
   const total = bestActual(tempSt);
-  const ganancia = total - BEST_INV_TOTAL;
-  const pct = (ganancia / BEST_INV_TOTAL * 100).toFixed(2);
+  const invTot = bestInvTotal();
+  const ganancia = total - invTot;
+  const pct = (ganancia / invTot * 100).toFixed(2);
 
-  const rows = BEST_FONDOS.map(f => {
+  const rows = getBestFondos().map(f => {
     const v = bestFondoActual(f, tempSt);
     const g = v - f.coste;
     const p = (g / f.coste * 100).toFixed(2);
@@ -1392,11 +1478,11 @@ const cls = (v) => v >= 0 ? 'pos' : 'neg';
 
 // gain/rent para plataformas normales (BASE) o bestinver
 function gainFor(k) {
-  if (k === 'bestinver') return bestActual(state) - BEST_INV_TOTAL;
+  if (k === 'bestinver') return bestActual(state) - bestInvTotal();
   return state[k] - invFor(k);
 }
 function rentFor(k) {
-  if (k === 'bestinver') return gainFor(k) / BEST_INV_TOTAL;
+  if (k === 'bestinver') return gainFor(k) / bestInvTotal();
   return gainFor(k) / invFor(k);
 }
 function actFor(k) {
@@ -1404,7 +1490,7 @@ function actFor(k) {
   return state[k];
 }
 function invFor(k) {
-  if (k === 'bestinver') return BEST_INV_TOTAL;
+  if (k === 'bestinver') return bestInvTotal();
   // Total invertido editable (p. ej. Indexa con aportaciones mensuales): state.<k>_inv
   const custom = state[k + '_inv'];
   if (typeof custom === 'number' && custom > 0) return custom;
@@ -1638,7 +1724,7 @@ function renderInmuebles() {
 
 // ── BESTINVER ────────────────────────────────────────────────────────────────
 function renderBestinver() {
-  const inv = BEST_INV_TOTAL;
+  const inv = bestInvTotal();
   const act = bestActual(state);
   const g = act - inv;
 
@@ -1647,9 +1733,10 @@ function renderBestinver() {
   document.getElementById('best-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
   document.getElementById('best-rent').textContent = fmtPct(g / inv);
 
-  const labels = BEST_FONDOS.map(f => f.nombre.replace(' F.I.','') + '\n(' + f.titular + ')');
-  const actuals = BEST_FONDOS.map(f => bestFondoActual(f, state));
-  const costes  = BEST_FONDOS.map(f => f.coste);
+  const fondos = getBestFondos();
+  const labels = fondos.map(f => f.nombre.replace(' F.I.','') + '\n(' + f.titular + ')');
+  const actuals = fondos.map(f => bestFondoActual(f, state));
+  const costes  = fondos.map(f => f.coste);
 
   makeChart('chart-best-fondos', 'bar', {
     labels,
@@ -1668,7 +1755,7 @@ function renderBestinver() {
   // Actualizar tabla detalle
   const tbody = document.getElementById('best-tabla-body');
   if (tbody) {
-    tbody.innerHTML = BEST_FONDOS.map(f => {
+    tbody.innerHTML = getBestFondos().map(f => {
       const v = bestFondoActual(f, state);
       const g = v - f.coste;
       const p = (g / f.coste * 100).toFixed(2);
@@ -2466,6 +2553,9 @@ function initDatosPage() {
   // Bestinver
   document.getElementById('d-nav-bestinfond').value = state.nav_bestinfond || 337.196531;
   document.getElementById('d-nav-mixto').value      = state.nav_mixto      || 45.211524;
+  const apFecha = document.getElementById('d-best-ap-fecha');
+  if (apFecha && !apFecha.value) apFecha.value = new Date().toISOString().slice(0, 10);
+  renderAportacionesBestList();
   renderDatosBestResult();
 
   // Bolsa
@@ -2589,8 +2679,13 @@ function renderDatosBestResult() {
   const nav_m = parseFloat(document.getElementById('d-nav-mixto').value)      || state.nav_mixto;
   const tempSt = { nav_bestinfond: nav_f, nav_mixto: nav_m };
   const total = bestActual(tempSt);
-  const g = total - BEST_INV_TOTAL;
+  const invTot = bestInvTotal();
+  const g = total - invTot;
   document.getElementById('d-best-result').innerHTML = `
+    <div class="datos-result-item">
+      <div class="datos-result-label">Invertido</div>
+      <div class="datos-result-val private">${fmt(invTot)}</div>
+    </div>
     <div class="datos-result-item">
       <div class="datos-result-label">Total actual</div>
       <div class="datos-result-val private">${fmt(total)}</div>
@@ -2601,7 +2696,7 @@ function renderDatosBestResult() {
     </div>
     <div class="datos-result-item">
       <div class="datos-result-label">Rentabilidad</div>
-      <div class="datos-result-val pos">${fmtPct(g/BEST_INV_TOTAL)}</div>
+      <div class="datos-result-val pos">${fmtPct(g/invTot)}</div>
     </div>
     <div class="datos-result-item">
       <div class="datos-result-label">NAV Bestinfond</div>
@@ -2726,6 +2821,65 @@ function saveDatosInmuebles() {
     renderDatosInmResult();
     renderRentTracker();
   }
+}
+
+// ── Aportaciones Bestinver ─────────────────────────────────────────────────
+function renderAportacionesBestList() {
+  const box = document.getElementById('d-best-aport-list');
+  if (!box) return;
+  const aps = Array.isArray(state.best_aportaciones) ? state.best_aportaciones : [];
+  if (!aps.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--muted)">Sin aportaciones registradas.</div>';
+    return;
+  }
+  const nombreFondo = k => k === 'mixto' ? 'Bestinver Mixto' : 'Bestinfond';
+  const sorted = [...aps].sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+  box.innerHTML = sorted.map(a => `
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;margin-bottom:6px;font-size:12px;flex-wrap:wrap">
+      <span style="color:var(--muted);min-width:78px">${(a.fecha || '').split('-').reverse().join('/')}</span>
+      <span style="font-weight:600;min-width:110px">${nombreFondo(a.fondo)}</span>
+      <span style="color:var(--muted);min-width:56px">${a.titular}</span>
+      <span style="min-width:96px;text-align:right">${(+a.partic).toFixed(6)} part.</span>
+      <span style="min-width:70px;text-align:right;font-weight:600" class="private">${fmt(+a.importe)}</span>
+      <button onclick="deleteAportacionBest('${a.id}')" title="Eliminar"
+        style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;line-height:1">&times;</button>
+    </div>`).join('');
+}
+
+function addAportacionBest() {
+  const fondo   = document.getElementById('d-best-ap-fondo').value;
+  const titular = document.getElementById('d-best-ap-titular').value;
+  const fecha   = document.getElementById('d-best-ap-fecha').value || new Date().toISOString().slice(0, 10);
+  const partic  = parseFloat(document.getElementById('d-best-ap-partic').value);
+  const importe = parseFloat(document.getElementById('d-best-ap-importe').value);
+  if (isNaN(partic) || partic <= 0 || isNaN(importe) || importe <= 0) {
+    showDatosSaved('Revisa participaciones e importe');
+    return;
+  }
+  if (!Array.isArray(state.best_aportaciones)) state.best_aportaciones = [];
+  state.best_aportaciones.push({
+    id: 'ap-' + Date.now(),
+    fecha, fondo, titular,
+    partic: +partic.toFixed(6),
+    importe: +importe.toFixed(2),
+  });
+  saveState();
+  renderAll();
+  renderAportacionesBestList();
+  renderDatosBestResult();
+  document.getElementById('d-best-ap-partic').value = '';
+  document.getElementById('d-best-ap-importe').value = '';
+  showDatosSaved('Aportación añadida ✓');
+}
+
+function deleteAportacionBest(id) {
+  if (!Array.isArray(state.best_aportaciones)) return;
+  state.best_aportaciones = state.best_aportaciones.filter(a => a.id !== id);
+  saveState();
+  renderAll();
+  renderAportacionesBestList();
+  renderDatosBestResult();
+  showDatosSaved('Aportación eliminada ✓');
 }
 
 // ── GUARDAR Bestinver
