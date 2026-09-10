@@ -855,11 +855,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <div class="chart-wrap"><canvas id="chart-bol-compare"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Distribución por sector</div>
+      <div class="chart-title">Distribución por valor</div>
       <div class="chart-wrap donut" style="position:relative">
         <canvas id="chart-bol-sector"></canvas>
         <div class="donut-center">
-          <div class="small">sectores</div>
+          <div class="small" id="bol-donut-center">peso %</div>
         </div>
       </div>
     </div>
@@ -1722,10 +1722,22 @@ function renderBolsa() {
   }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
 
+  // Distribución por valor (peso % sobre el valor de mercado total, lotes fusionados)
+  const valNames = ['SCYR', 'SAN', 'IAG', 'TSM', 'ITX'];
+  const valData  = [actScyr, actSan1 + actSan2, actIag, actTsm, actItx1 + actItx2];
+  const valTot   = valData.reduce((a, b) => a + b, 0) || 1;
+  const valPesos = valData.map(v => v / valTot * 100);
+  const valLabels = valNames.map((n, i) => `${n} · ${valPesos[i].toFixed(1)}%`);
+  const centro = document.getElementById('bol-donut-center');
+  if (centro) {
+    const top = valPesos.indexOf(Math.max(...valPesos));
+    centro.innerHTML = `${valNames[top]}<br><span style="font-size:15px;font-weight:700;color:var(--text)">${valPesos[top].toFixed(0)}%</span>`;
+  }
   makeChart('chart-bol-sector', 'doughnut', {
-    labels:['Infraestructuras','Banca','Aerolíneas','Semiconductores','Textil'],
-    datasets:[{ data:[actScyr, actSan1+actSan2, actIag, actTsm, actItx1+actItx2], backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc','#a8ff78cc'], borderColor:'#0c0c10', borderWidth:3 }]
-  }, { cutout:'60%', plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}} });
+    labels: valLabels,
+    datasets:[{ data: valData, backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc','#a8ff78cc'], borderColor:'#0c0c10', borderWidth:3 }]
+  }, { cutout:'60%', plugins:{ legend:{ display:true, labels:{ color:'#9e9eb0', font:{ family:'Syne' } } },
+       tooltip:{ callbacks:{ label: c => ` ${fmt(c.parsed)} · ${(c.parsed / valTot * 100).toFixed(1)}%` } } } });
 
   // Actualizar tabla de posiciones
   const tbody = document.getElementById('bol-tabla-body');
