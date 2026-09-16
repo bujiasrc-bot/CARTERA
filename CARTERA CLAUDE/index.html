@@ -917,6 +917,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <tr><td>SAN</td><td>Santander</td><td>Banca</td><td>190</td><td><span class="private">10,03€</span></td><td><span class="private">10,62€</span></td><td><span class="private">1.906€</span></td><td><span class="private">2.018€</span></td><td class="pos"><span class="private">+112€</span></td><td><span class="badge pos">+5.9%</span></td><td><span class="badge pos">+21.0%</span></td></tr>
         <tr><td>ITX</td><td>Inditex</td><td>Textil</td><td>20</td><td><span class="private">57,48€</span></td><td><span class="private">57,48€</span></td><td><span class="private">1.150€</span></td><td><span class="private">1.150€</span></td><td class="pos"><span class="private">+0€</span></td><td><span class="badge neu">+0.0%</span></td><td><span class="badge neu">—</span></td></tr>
         <tr><td>ITX</td><td>Inditex</td><td>Textil</td><td>26</td><td><span class="private">54,58€</span></td><td><span class="private">54,58€</span></td><td><span class="private">1.419€</span></td><td><span class="private">1.419€</span></td><td class="pos"><span class="private">+0€</span></td><td><span class="badge neu">+0.0%</span></td><td><span class="badge neu">—</span></td></tr>
+        <tr><td>SCYR</td><td>Sacyr</td><td>Infraes.</td><td>100</td><td><span class="private">4,24€</span></td><td><span class="private">4,24€</span></td><td><span class="private">424€</span></td><td><span class="private">424€</span></td><td class="pos"><span class="private">+0€</span></td><td><span class="badge neu">+0.0%</span></td><td><span class="badge neu">—</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -1170,7 +1171,7 @@ const BASE = {
   inmuebles:  { inv: 163230,    act: 206704   },
   bbva:       { inv: 21247.53,  act: 23167.68 },
   indexa:     { inv: 13850,     act: 15191.68 },
-  bolsa:      { inv: 12480.09,  act: 13354.33 },
+  bolsa:      { inv: 12904.04,  act: 13778.28 },
   urbanitae:  { inv: 5500,      act: 5788.88  },
   myinvestor: { inv: 3011.6,    act: 3214.69  },
 };
@@ -1809,7 +1810,8 @@ function renderBolsa() {
   const usdEur  = bp.usdeur || 0.8639;        // tipo de cambio USD→€
   const pTsmEur = pTsmUsd * usdEur;           // precio TSM convertido a € (para totales)
 
-  const actScyr  = pScyr  * 715;
+  const actScyr1 = pScyr  * 715;
+  const actScyr2 = pScyr  * 100;
   const actSan1  = pSan   * 229;
   const actIag   = pIag   * 350;
   const actSan2  = pSan   * 190;
@@ -1818,17 +1820,17 @@ function renderBolsa() {
   const actItx2  = pItx   * 26;
 
   makeChart('chart-bol-compare', 'bar', {
-    labels: ['SCYR', 'SAN (x229)', 'IAG', 'SAN (x190)', 'TSM (x4)', 'ITX (x20)', 'ITX (x26)'],
+    labels: ['SCYR (x715)', 'SAN (x229)', 'IAG', 'SAN (x190)', 'TSM (x4)', 'ITX (x20)', 'ITX (x26)', 'SCYR (x100)'],
     datasets: [
-      { label:'Invertido', data:[2695.55, 2429.69, 1407, 1905.7, 1473.47, 1149.60, 1419.08], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
-      { label:'Actual',    data:[actScyr, actSan1, actIag, actSan2, actTsm, actItx1, actItx2], backgroundColor:'#6bcfffcc', borderRadius:6 }
+      { label:'Invertido', data:[2695.55, 2429.69, 1407, 1905.7, 1473.47, 1149.60, 1419.08, 423.95], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
+      { label:'Actual',    data:[actScyr1, actSan1, actIag, actSan2, actTsm, actItx1, actItx2, actScyr2], backgroundColor:'#6bcfffcc', borderRadius:6 }
     ]
   }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
        scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
 
   // Distribución por valor (peso % sobre el valor de mercado total, lotes fusionados)
   const valNames = ['SCYR', 'SAN', 'IAG', 'TSM', 'ITX'];
-  const valData  = [actScyr, actSan1 + actSan2, actIag, actTsm, actItx1 + actItx2];
+  const valData  = [actScyr1 + actScyr2, actSan1 + actSan2, actIag, actTsm, actItx1 + actItx2];
   const valTot   = valData.reduce((a, b) => a + b, 0) || 1;
   const valPesos = valData.map(v => v / valTot * 100);
   const valLabels = valNames.map((n, i) => `${n} · ${valPesos[i].toFixed(1)}%`);
@@ -1844,13 +1846,14 @@ function renderBolsa() {
   if (tbody) {
     // invEur = precio compra × nº acciones (coste original en €); actEur = valor de mercado en €
     const rows = [
-      { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:715, pComp:3.77,   precio:pScyr,   invEur:3.77*715,   actEur:actScyr, fecha:'16/12/2025' },
-      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:229, pComp:10.61,  precio:pSan,    invEur:10.61*229,  actEur:actSan1, fecha:'25/02/2026' },
-      { ticker:'IAG',  nombre:'IAG',          sector:'Aerolíneas',      acc:350, pComp:4.02,   precio:pIag,    invEur:4.02*350,   actEur:actIag,  fecha:'20/03/2026' },
-      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:190, pComp:10.03,  precio:pSan,    invEur:10.03*190,  actEur:actSan2, fecha:'15/05/2026' },
-      { ticker:'TSM',  nombre:'Taiwan Semi.', sector:'Semiconductores', acc:4,   pComp:426.37, precio:pTsmUsd, invEur:1473.47,    actEur:actTsm,  usd:true, fecha:'14/08/2026' },
-      { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:20,  pComp:57.48,  precio:pItx,    invEur:1149.60,    actEur:actItx1, fecha:'04/09/2026' },
-      { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:26,  pComp:54.58,  precio:pItx,    invEur:1419.08,    actEur:actItx2, fecha:'09/09/2026' },
+      { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:715, pComp:3.77,   precio:pScyr,   invEur:3.77*715,   actEur:actScyr1, fecha:'16/12/2025' },
+      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:229, pComp:10.61,  precio:pSan,    invEur:10.61*229,  actEur:actSan1,  fecha:'25/02/2026' },
+      { ticker:'IAG',  nombre:'IAG',          sector:'Aerolíneas',      acc:350, pComp:4.02,   precio:pIag,    invEur:4.02*350,   actEur:actIag,   fecha:'20/03/2026' },
+      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:190, pComp:10.03,  precio:pSan,    invEur:10.03*190,  actEur:actSan2,  fecha:'15/05/2026' },
+      { ticker:'TSM',  nombre:'Taiwan Semi.', sector:'Semiconductores', acc:4,   pComp:426.37, precio:pTsmUsd, invEur:1473.47,    actEur:actTsm,   usd:true, fecha:'14/08/2026' },
+      { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:20,  pComp:57.48,  precio:pItx,    invEur:1149.60,    actEur:actItx1,  fecha:'04/09/2026' },
+      { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:26,  pComp:54.58,  precio:pItx,    invEur:1419.08,    actEur:actItx2,  fecha:'09/09/2026' },
+      { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:100, pComp:4.24,   precio:pScyr,   invEur:423.95,     actEur:actScyr2, fecha:'16/09/2026' },
     ];
     tbody.innerHTML = rows.map(r => {
       const pg    = r.actEur - r.invEur;
@@ -1898,13 +1901,14 @@ const BOLSA_HIST_KEY = 'cartera_bolsa_hist_v1';
 
 // Lotes de bolsa con su fecha de compra (ISO) y coste, para las gráficas de evolución
 const BOLSA_LOTES_EVOL = [
-  { key:'scyr', tk:'SCYR',       acc:715, coste:2695.55, fecha:'2025-12-16', usd:false, color:'#c8b5ff' },
-  { key:'san',  tk:'SAN (x229)', acc:229, coste:2429.69, fecha:'2026-02-25', usd:false, color:'#ffb86c' },
-  { key:'iag',  tk:'IAG',        acc:350, coste:1407.00, fecha:'2026-03-20', usd:false, color:'#6bcfff' },
-  { key:'san',  tk:'SAN (x190)', acc:190, coste:1905.70, fecha:'2026-05-15', usd:false, color:'#ffd36b' },
-  { key:'tsm',  tk:'TSM',        acc:4,   coste:1473.47, fecha:'2026-08-14', usd:true,  color:'#ff9de2' },
-  { key:'itx',  tk:'ITX (x20)',  acc:20,  coste:1149.60, fecha:'2026-09-04', usd:false, color:'#a8ff78' },
-  { key:'itx',  tk:'ITX (x26)',  acc:26,  coste:1419.08, fecha:'2026-09-09', usd:false, color:'#7effd4' },
+  { key:'scyr', tk:'SCYR (x715)', acc:715, coste:2695.55, fecha:'2025-12-16', usd:false, color:'#c8b5ff' },
+  { key:'san',  tk:'SAN (x229)',  acc:229, coste:2429.69, fecha:'2026-02-25', usd:false, color:'#ffb86c' },
+  { key:'iag',  tk:'IAG',         acc:350, coste:1407.00, fecha:'2026-03-20', usd:false, color:'#6bcfff' },
+  { key:'san',  tk:'SAN (x190)',  acc:190, coste:1905.70, fecha:'2026-05-15', usd:false, color:'#ffd36b' },
+  { key:'tsm',  tk:'TSM',         acc:4,   coste:1473.47, fecha:'2026-08-14', usd:true,  color:'#ff9de2' },
+  { key:'itx',  tk:'ITX (x20)',   acc:20,  coste:1149.60, fecha:'2026-09-04', usd:false, color:'#a8ff78' },
+  { key:'itx',  tk:'ITX (x26)',   acc:26,  coste:1419.08, fecha:'2026-09-09', usd:false, color:'#7effd4' },
+  { key:'scyr', tk:'SCYR (x100)', acc:100, coste:423.95,  fecha:'2026-09-16', usd:false, color:'#b5e0ff' },
 ];
 const BOLSA_DIVS_EVOL = [ { d:'2026-02-15', imp:34.65 }, { d:'2026-07-01', imp:57.92 } ];
 
@@ -2491,13 +2495,15 @@ const BOLSA_ACCIONES = [
   { ticker: 'TSM',  nombre: 'Taiwan Semi.', acciones: 4, coste: 1473.47, key: 'tsm', usd: true },
   { ticker: 'ITX',  nombre: 'Inditex',    acciones: 20,  coste: 1149.60, key: 'itx' },
   { ticker: 'ITX',  nombre: 'Inditex',    acciones: 26,  coste: 1419.08, key: 'itx2' },
+  { ticker: 'SCYR', nombre: 'Sacyr',     acciones: 100,  coste: 423.95,  key: 'scyr2' },
 ];
 
 // Valor de mercado total de Bolsa en € (convierte TSM de USD a € con el tipo guardado)
 function bolsaTotalEUR(precios) {
   const fx = precios.usdeur || 0.8639;
   return BOLSA_ACCIONES.reduce((total, a) => {
-    let p = precios[a.key === 'san2' ? 'san' : a.key === 'itx2' ? 'itx' : a.key] || 0;
+    // Varios lotes del mismo valor comparten precio (san2/itx2/scyr2... → san/itx/scyr)
+    let p = precios[a.key.replace(/\d+$/, '')] || 0;
     if (a.usd) p = p * fx;
     return total + p * a.acciones;
   }, 0);
@@ -2748,7 +2754,7 @@ function renderDatosBolsaResult() {
       <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding:0 4px">Precios por acción</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px">
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SCYR · 715 acc.</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SCYR · 815 acc.</div>
           <div style="font-size:16px;font-weight:700">${precios.scyr}€</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
