@@ -2608,10 +2608,16 @@ function saveEfectivoItems(items) {
 // lo ha tocado, se revela sola en cuanto haya al menos un movimiento guardado
 // (en este dispositivo o llegado por sincronización).
 function efectivoIsVisible() {
-  const v = localStorage.getItem(EFECTIVO_VIS_KEY);
-  if (v === '1') return true;
-  if (v === '0') return false;
-  return loadEfectivo().items.length > 0;
+  // Protegido con try/catch: en el primer renderAll() del arranque esta función se
+  // invoca antes de que su propia const (EFECTIVO_VIS_KEY, más abajo en el script)
+  // se haya inicializado, lo que lanzaría un error y cortaría el resto del script
+  // (mismo motivo por el que loadGastos()/loadEfectivo() envuelven su lectura).
+  try {
+    const v = localStorage.getItem(EFECTIVO_VIS_KEY);
+    if (v === '1') return true;
+    if (v === '0') return false;
+  } catch (e) {}
+  try { return loadEfectivo().items.length > 0; } catch (e) { return false; }
 }
 
 function applyEfectivoVisibility() {
