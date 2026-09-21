@@ -430,6 +430,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="nav-brand">📊 Mi Cartera</div>
   <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()" title="Modo privado">👁</button>
   <button class="btn-privacy" id="btn-sync" onclick="toggleSync()" title="Sincronizar entre dispositivos">☁️</button>
+  <button class="btn-privacy" id="btn-efectivo-toggle" onclick="toggleEfectivoVisible()" title="Efectivo">🗄️</button>
   <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
   <button class="nav-btn" onclick="showPage('inmuebles')">Inmuebles</button>
   <button class="nav-btn" onclick="showPage('bestinver')">Bestinver</button>
@@ -438,6 +439,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <button class="nav-btn" onclick="showPage('urbanitae')">Urbanitae</button>
   <button class="nav-btn" onclick="showPage('bbva')">BBVA PP</button>
   <button class="nav-btn" onclick="showPage('myinvestor')">MyInvestor</button>
+  <button class="nav-btn" id="nav-btn-efectivo" style="display:none" onclick="showPage('efectivo')">Efectivo</button>
   <button class="nav-btn" style="color:var(--accent);border-bottom:2px solid transparent" onclick="showPage('datos')">✏️ Datos</button>
 </nav>
 
@@ -1171,6 +1173,74 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   </div>
 </div>
 
+<!-- ═══════════════════ EFECTIVO (pestaña oculta) ═══════════════════ -->
+<div id="page-efectivo" class="page">
+  <div class="section-title">💶 Efectivo</div>
+  <div class="section-sub">Dinero en metálico (no en cuenta bancaria) · pestaña oculta, solo visible si la activas</div>
+
+  <div class="stats-row">
+    <div class="stat-card" style="--accent-line:var(--accent)">
+      <div class="stat-label">Efectivo actual</div>
+      <div class="stat-value" id="ef-total"><span class="private">0 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--green)">
+      <div class="stat-label">Total añadido</div>
+      <div class="stat-value pos" id="ef-entradas"><span class="private">+0 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--red)">
+      <div class="stat-label">Total retirado</div>
+      <div class="stat-value neg" id="ef-salidas"><span class="private">-0 €</span></div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--blue)">
+      <div class="stat-label">Movimientos</div>
+      <div class="stat-value" style="color:var(--blue)" id="ef-count">0</div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">Añadir movimiento</div>
+    <div class="datos-grid" style="margin-bottom:0">
+      <div class="datos-field">
+        <label>Fecha</label>
+        <input type="date" id="ef-fecha" />
+      </div>
+      <div class="datos-field">
+        <label>Tipo</label>
+        <select id="ef-tipo" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;font-weight:600;padding:10px 14px;outline:none;">
+          <option value="entrada">Entrada (añado dinero)</option>
+          <option value="salida">Salida (saco dinero)</option>
+        </select>
+      </div>
+      <div class="datos-field">
+        <label>Importe (€)</label>
+        <input type="number" id="ef-importe" placeholder="ej: 100" step="0.01" min="0" />
+      </div>
+      <div class="datos-field">
+        <label>Nota (opcional)</label>
+        <input type="text" id="ef-nota" placeholder="ej: sobre del cumpleaños" style="font-weight:400" />
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button class="btn-datos-save" onclick="addEfectivoMov()">+ Añadir movimiento</button>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Evolución del efectivo</div>
+      <div class="chart-wrap"><canvas id="chart-efec-evol"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Historial de movimientos</div>
+      <div id="ef-tracker" style="padding-top:4px"></div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <button class="btn-reset" onclick="toggleEfectivoVisible()">🙈 Ocultar esta pestaña</button>
+  </div>
+</div>
+
 <script>
 // ─── DATOS BASE (valores de compra fijos) ───────────────────────────────────
 const BASE = {
@@ -1338,8 +1408,12 @@ function saveState() {
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  // No depender de `event` (rompe si se llama sin un clic real, p.ej. desde el
+  // interruptor de Efectivo): buscamos el botón de nav por su onclick.
+  const navBtn = document.querySelector(`.nav-btn[onclick*="showPage('${id}')"]`);
+  if (navBtn) navBtn.classList.add('active');
   if (id === 'datos') initDatosPage();
 }
 
@@ -1585,6 +1659,7 @@ function renderAll() {
   renderUrbanitae();
   renderBBVA();
   renderMyInvestor();
+  renderEfectivo();
 }
 
 // ── DASHBOARD ───────────────────────────────────────────────────────────────
@@ -2513,6 +2588,138 @@ function renderGastosTracker() {
   `;
 }
 
+// ─── EFECTIVO (pestaña oculta) ───────────────────────────────────────────────
+// Dinero en metálico, fuera del banco. { items:[{id,fecha,importe(+entrada/-salida),nota}] }
+const EFECTIVO_KEY = 'cartera_efectivo_v1';
+const EFECTIVO_VIS_KEY = 'cartera_efectivo_visible'; // '1'/'0' explícito, o sin fijar (null)
+
+function loadEfectivo() {
+  try {
+    const d = JSON.parse(localStorage.getItem(EFECTIVO_KEY));
+    if (d && Array.isArray(d.items)) return d;
+  } catch (e) {}
+  return { items: [] };
+}
+function saveEfectivoItems(items) {
+  localStorage.setItem(EFECTIVO_KEY, JSON.stringify({ items }));
+}
+
+// Visible si el usuario lo ha fijado explícitamente con el interruptor; si nunca
+// lo ha tocado, se revela sola en cuanto haya al menos un movimiento guardado
+// (en este dispositivo o llegado por sincronización).
+function efectivoIsVisible() {
+  const v = localStorage.getItem(EFECTIVO_VIS_KEY);
+  if (v === '1') return true;
+  if (v === '0') return false;
+  return loadEfectivo().items.length > 0;
+}
+
+function applyEfectivoVisibility() {
+  const vis = efectivoIsVisible();
+  const nav = document.getElementById('nav-btn-efectivo');
+  if (nav) nav.style.display = vis ? '' : 'none';
+  const toggleBtn = document.getElementById('btn-efectivo-toggle');
+  if (toggleBtn) toggleBtn.classList.toggle('active', vis);
+  if (!vis) {
+    const page = document.getElementById('page-efectivo');
+    if (page && page.classList.contains('active')) showPage('dashboard');
+  }
+}
+
+function toggleEfectivoVisible() {
+  const next = efectivoIsVisible() ? '0' : '1';
+  localStorage.setItem(EFECTIVO_VIS_KEY, next);
+  applyEfectivoVisibility();
+  if (next === '1') showPage('efectivo');
+}
+
+function addEfectivoMov() {
+  const fecha = document.getElementById('ef-fecha').value;
+  const tipo  = document.getElementById('ef-tipo').value;
+  const cant  = parseFloat(document.getElementById('ef-importe').value);
+  const nota  = document.getElementById('ef-nota').value.trim();
+
+  if (!fecha) { showDatosSaved('⚠️ Selecciona una fecha'); return; }
+  if (isNaN(cant) || cant <= 0) { showDatosSaved('⚠️ Importe no válido'); return; }
+
+  const importe = tipo === 'salida' ? -cant : cant;
+  const data = loadEfectivo();
+  data.items.push({ id: Date.now(), fecha, importe, nota });
+  saveEfectivoItems(data.items);
+
+  document.getElementById('ef-importe').value = '';
+  document.getElementById('ef-nota').value = '';
+
+  // Primer movimiento y el interruptor nunca se tocó: se revela y se queda fijado
+  if (localStorage.getItem(EFECTIVO_VIS_KEY) === null) localStorage.setItem(EFECTIVO_VIS_KEY, '1');
+
+  renderAll();
+  showDatosSaved(tipo === 'salida' ? 'Salida registrada ✓' : 'Entrada registrada ✓');
+}
+
+function deleteEfectivoMov(id) {
+  const data = loadEfectivo();
+  saveEfectivoItems(data.items.filter(m => m.id !== id));
+  renderAll();
+}
+
+function renderEfectivo() {
+  applyEfectivoVisibility();
+
+  const items = loadEfectivo().items;
+  const total    = items.reduce((s, m) => s + m.importe, 0);
+  const entradas = items.filter(m => m.importe > 0).reduce((s, m) => s + m.importe, 0);
+  const salidas  = items.filter(m => m.importe < 0).reduce((s, m) => s + Math.abs(m.importe), 0);
+
+  const totalEl = document.getElementById('ef-total');
+  if (totalEl) totalEl.innerHTML = `<span class="private">${fmt(total)}</span>`;
+  const entEl = document.getElementById('ef-entradas');
+  if (entEl) entEl.innerHTML = `<span class="private">+${fmt(entradas)}</span>`;
+  const salEl = document.getElementById('ef-salidas');
+  if (salEl) salEl.innerHTML = `<span class="private">-${fmt(salidas)}</span>`;
+  const cntEl = document.getElementById('ef-count');
+  if (cntEl) cntEl.textContent = items.length;
+
+  const track = document.getElementById('ef-tracker');
+  if (track) {
+    if (!items.length) {
+      track.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0">No hay movimientos registrados todavía</div>';
+    } else {
+      const sorted = [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      track.innerHTML = sorted.map(m => `
+        <div class="gasto-row">
+          <div class="gasto-info">
+            <div class="gasto-nombre">${m.importe >= 0 ? '➕ Entrada' : '➖ Salida'}${m.nota ? ' · ' + m.nota : ''}</div>
+            <div class="gasto-fecha">${m.fecha}</div>
+          </div>
+          <span class="gasto-importe private" style="color:${m.importe >= 0 ? 'var(--green)' : 'var(--red)'}">${m.importe >= 0 ? '+' : '-'}${fmt(Math.abs(m.importe))}</span>
+          <button class="btn-del-gasto" onclick="deleteEfectivoMov(${m.id})" title="Eliminar">🗑️</button>
+        </div>`).join('');
+    }
+  }
+
+  // Gráfica de evolución: saldo acumulado tras cada movimiento, en orden cronológico
+  const chronological = [...items].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  let running = 0;
+  const labels = [], serie = [];
+  chronological.forEach(m => { running += m.importe; labels.push(m.fecha); serie.push(running); });
+
+  makeChart('chart-efec-evol', 'line', {
+    labels,
+    datasets: [{
+      label: 'Efectivo', data: serie,
+      borderColor: '#7effd4', backgroundColor: 'rgba(126,255,212,0.15)',
+      fill: true, tension: 0.25, pointRadius: 3
+    }]
+  }, {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family:'Syne', size:10 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family:'Syne' }, callback: v => fmt(v) } }
+    }
+  });
+}
+
 // Inmueble config
 const INMUEBLES_CONFIG = {
   galdos:  { coste: 81350,  rentaDia: 1,  rentaNeta: 444, nombre: 'Galdós'  },
@@ -3091,6 +3298,7 @@ backfillBolsaHist();
     'cartera_bolsa_precios_v1', 'cartera_bolsa_ts',
     'cartera_gastos_ext_v1',
     'cartera_best_aport_v1',
+    'cartera_efectivo_v1',
     'td_apikey'
   ];
 
