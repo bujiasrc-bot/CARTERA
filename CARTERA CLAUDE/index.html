@@ -630,10 +630,14 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
         <label>Valor actual total</label>
         <input type="number" id="d-indexa" placeholder="ej: 15191.68" step="0.01" />
       </div>
+      <div class="datos-field">
+        <label>Fecha primera aportación (opcional, para rent. anual.)</label>
+        <input type="date" id="d-indexa-fecha" />
+      </div>
     </div>
     <div class="datos-result" id="d-idx-result"></div>
     <div style="margin-top:14px">
-      <button class="btn-datos-save" onclick="saveDatosSimple('indexa','d-indexa','d-idx-result','d-indexa-inv')">Guardar Indexa</button>
+      <button class="btn-datos-save" onclick="saveDatosSimple('indexa','d-indexa','d-idx-result','d-indexa-inv','d-indexa-fecha')">Guardar Indexa</button>
     </div>
   </div>
 
@@ -845,6 +849,10 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <div class="stat-label">Rentabilidad</div>
       <div class="stat-value pos" id="best-rent">+44.1%</div>
     </div>
+    <div class="stat-card" style="--accent-line:var(--accent2)">
+      <div class="stat-label">Rentabilidad anual.</div>
+      <div class="stat-value pos" id="best-rent-anual">—</div>
+    </div>
   </div>
 
   <div class="grid2">
@@ -861,7 +869,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="chart-card" style="margin-bottom:16px">
     <div class="chart-title">Detalle de posiciones · valores calculados con NAV actual</div>
     <table class="inv-table">
-      <thead><tr><th>Fondo</th><th>Titular</th><th>Invertido</th><th>Saldo actual</th><th>Ganancia €</th><th>Rent. %</th><th>NAV actual</th></tr></thead>
+      <thead><tr><th>Fondo</th><th>Titular</th><th>Invertido</th><th>Saldo actual</th><th>Ganancia €</th><th>Rent. %</th><th>Rent. anual.</th><th>NAV actual</th></tr></thead>
       <tbody id="best-tabla-body">
         <tr><td>Bestinfond F.I.</td><td style="text-align:right">C y R</td><td style="text-align:right"><span class="private">39.750 €</span></td><td style="text-align:right"><span class="private">57.094 €</span></td><td class="pos" style="text-align:right"><span class="private">+17.344 €</span></td><td style="text-align:right"><span class="badge pos">+43.6%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">337,196531</td></tr>
         <tr><td>Bestinver Mixto F.I.</td><td style="text-align:right">C y R</td><td style="text-align:right"><span class="private">31.686 €</span></td><td style="text-align:right"><span class="private">46.594 €</span></td><td class="pos" style="text-align:right"><span class="private">+14.908 €</span></td><td style="text-align:right"><span class="badge pos">+47.1%</span></td><td style="text-align:right;color:var(--muted);font-size:12px">45,211524</td></tr>
@@ -964,6 +972,10 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="stat-card" style="--accent-line:var(--blue)">
       <div class="stat-label">Rentabilidad</div>
       <div class="stat-value pos" id="idx-rent">+9.7%</div>
+    </div>
+    <div class="stat-card" style="--accent-line:var(--accent2)">
+      <div class="stat-label">Rentabilidad anual.</div>
+      <div class="stat-value pos" id="idx-rent-anual">—</div>
     </div>
   </div>
 
@@ -1347,6 +1359,40 @@ function bestInvTotal() {
   return getBestFondos().reduce((s, f) => s + f.coste, 0);
 }
 
+// Fecha de la foto base de BEST_FONDOS (19/05/2026): se usa como fecha aproximada
+// de "inversión" del coste base de cada posición para calcular la TIR anualizada,
+// ya que no se conoce la fecha real de cada compra histórica anterior a esa foto.
+// Las aportaciones posteriores SÍ usan su fecha real. Por eso la rentabilidad
+// anualizada de Bestinver es una aproximación (probablemente por debajo de la
+// real, si la posición base lleva invertida más tiempo del que refleja esta fecha).
+const BEST_BASE_FECHA = '2026-05-19';
+
+// Flujos de caja de una posición (fondo+titular): coste base en BEST_BASE_FECHA
+// (si lo hay) + cada aportación real en su fecha, + el valor actual hoy. Para xirr().
+function bestCashflowsFondo(fondoKey, titular, valorActual) {
+  const base = BEST_FONDOS.find(f => fkeyOfBest(f) === fondoKey && f.titular === titular);
+  const flows = [];
+  if (base && base.coste > 0) flows.push({ fecha: BEST_BASE_FECHA, importe: -base.coste });
+  loadBestAport().forEach(a => {
+    if (a.fondo === fondoKey && a.titular === titular) flows.push({ fecha: a.fecha, importe: -(+a.importe || 0) });
+  });
+  if (!flows.length) return null;
+  flows.push({ fecha: new Date().toISOString().slice(0, 10), importe: valorActual });
+  return flows;
+}
+
+// Flujos de caja combinados de TODO Bestinver (todas las posiciones y titulares),
+// con un único valor actual agregado hoy. Válido para XIRR (no importa de qué
+// "cuenta" venga cada flujo, solo su fecha e importe).
+function bestCashflowsAll() {
+  const flows = [];
+  BEST_FONDOS.forEach(f => { if (f.coste > 0) flows.push({ fecha: BEST_BASE_FECHA, importe: -f.coste }); });
+  loadBestAport().forEach(a => flows.push({ fecha: a.fecha, importe: -(+a.importe || 0) }));
+  if (!flows.length) return null;
+  flows.push({ fecha: new Date().toISOString().slice(0, 10), importe: bestActual(state) });
+  return flows;
+}
+
 const LABELS = {
   inmuebles: 'Inmuebles', bbva: 'BBVA PP',
   indexa: 'Indexa Capital', bolsa: 'Bolsa', urbanitae: 'Urbanitae', myinvestor: 'MyInvestor'
@@ -1606,6 +1652,29 @@ const fmt = (n, d=0) => {
 const fmtPct = (n) => (n >= 0 ? '+' : '') + (n * 100).toFixed(1) + '%';
 const cls = (v) => v >= 0 ? 'pos' : 'neg';
 
+// TIR anualizada (XIRR) a partir de varios flujos de caja con fecha, por bisección.
+// cashflows = [{fecha:'YYYY-MM-DD', importe}] — negativo = dinero invertido,
+// positivo = valor recuperado/actual. Necesita al menos un signo de cada.
+function xirr(cashflows) {
+  if (!cashflows || cashflows.length < 2) return null;
+  const sorted = [...cashflows].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  const t0 = new Date(sorted[0].fecha).getTime();
+  const flows = sorted.map(cf => ({
+    dias: (new Date(cf.fecha).getTime() - t0) / 86400000,
+    importe: cf.importe
+  }));
+  const npv = rate => flows.reduce((s, f) => s + f.importe / Math.pow(1 + rate, f.dias / 365.25), 0);
+  let lo = -0.99, hi = 10; // de -99% a +1000% anual
+  let flo = npv(lo), fhi = npv(hi);
+  if (!isFinite(flo) || !isFinite(fhi) || flo * fhi > 0) return null; // sin cambio de signo: no resoluble
+  for (let i = 0; i < 100; i++) {
+    const mid = (lo + hi) / 2, fm = npv(mid);
+    if (Math.abs(fm) < 0.01) return mid;
+    if (flo * fm < 0) hi = mid; else { lo = mid; flo = fm; }
+  }
+  return (lo + hi) / 2;
+}
+
 // gain/rent para plataformas normales (BASE) o bestinver
 function gainFor(k) {
   if (k === 'bestinver') return bestActual(state) - bestInvTotal();
@@ -1864,6 +1933,14 @@ function renderBestinver() {
   document.getElementById('best-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
   document.getElementById('best-rent').textContent = fmtPct(g / inv);
 
+  const rentAnualEl = document.getElementById('best-rent-anual');
+  if (rentAnualEl) {
+    const flowsAll = bestCashflowsAll();
+    const rAnual = flowsAll ? xirr(flowsAll) : null;
+    if (rAnual == null) { rentAnualEl.textContent = '—'; rentAnualEl.className = 'stat-value'; }
+    else { rentAnualEl.textContent = fmtPct(rAnual); rentAnualEl.className = 'stat-value ' + cls(rAnual); }
+  }
+
   const fondos = getBestFondos();
   const labels = fondos.map(f => f.nombre.replace(' F.I.','') + '\n(' + f.titular + ')');
   const actuals = fondos.map(f => bestFondoActual(f, state));
@@ -1891,6 +1968,9 @@ function renderBestinver() {
       const g = v - f.coste;
       const p = (g / f.coste * 100).toFixed(2);
       const nav = bestNavs(state)[fkeyOfBest(f)];
+      const flows = bestCashflowsFondo(fkeyOfBest(f), f.titular, v);
+      const rAnual = flows ? xirr(flows) : null;
+      const badgeAnual = rAnual == null ? '<span class="badge neu">—</span>' : `<span class="badge ${cls(rAnual)}">${fmtPct(rAnual)}</span>`;
       return `<tr>
         <td>${f.nombre}</td>
         <td style="text-align:right">${f.titular}</td>
@@ -1898,6 +1978,7 @@ function renderBestinver() {
         <td style="text-align:right"><span class="private">${fmt(v)}</span></td>
         <td class="${g>=0?'pos':'neg'}" style="text-align:right"><span class="private">${g>=0?'+':''}${fmt(g)}</span></td>
         <td style="text-align:right"><span class="badge ${g>=0?'pos':'neg'}">${g>=0?'+':''}${p}%</span></td>
+        <td style="text-align:right">${badgeAnual}</td>
         <td style="text-align:right;color:var(--muted);font-size:12px">${nav.toFixed(6)}</td>
       </tr>`;
     }).join('');
@@ -2221,6 +2302,14 @@ function renderIndexa() {
   document.getElementById('idx-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
   document.getElementById('idx-gan').innerHTML  = `<span class="private">${(g >= 0 ? '+' : '')}${fmt(g)}</span>`;
   document.getElementById('idx-rent').textContent = fmtPct(g / inv);
+
+  const idxRentAnualEl = document.getElementById('idx-rent-anual');
+  if (idxRentAnualEl) {
+    const fecha = state.indexa_fecha;
+    const rAnual = fecha ? xirr([{ fecha, importe: -inv }, { fecha: new Date().toISOString().slice(0, 10), importe: act }]) : null;
+    if (rAnual == null) { idxRentAnualEl.textContent = '—'; idxRentAnualEl.className = 'stat-value'; }
+    else { idxRentAnualEl.textContent = fmtPct(rAnual); idxRentAnualEl.className = 'stat-value ' + cls(rAnual); }
+  }
 
   makeChart('chart-idx-compare', 'bar', {
     labels: ['Indexa Capital'],
@@ -2843,12 +2932,14 @@ function initDatosPage() {
   renderDatosBolsaResult();
 
   // Simples
-  const idx    = document.getElementById('d-indexa');
-  const idxInv = document.getElementById('d-indexa-inv');
-  const bbva   = document.getElementById('d-bbva');
-  const myin   = document.getElementById('d-myinvestor');
-  if (idx)    idx.value    = state.indexa     || 15191.68;
-  if (idxInv) idxInv.value = invFor('indexa');
+  const idx      = document.getElementById('d-indexa');
+  const idxInv   = document.getElementById('d-indexa-inv');
+  const idxFecha = document.getElementById('d-indexa-fecha');
+  const bbva     = document.getElementById('d-bbva');
+  const myin     = document.getElementById('d-myinvestor');
+  if (idx)      idx.value      = state.indexa       || 15191.68;
+  if (idxInv)   idxInv.value   = invFor('indexa');
+  if (idxFecha) idxFecha.value = state.indexa_fecha || '';
   if (bbva)   bbva.value   = state.bbva       || 23167.68;
   if (myin)   myin.value   = state.myinvestor || 3214.69;
   renderDatosSimpleResult('indexa',    'd-idx-result',  state.indexa     || 15191.68, invFor('indexa'));
@@ -3196,14 +3287,19 @@ function saveDatosBolsa() {
   showDatosSaved('Bolsa guardada ✓');
 }
 
-// ── GUARDAR simple (invInputId opcional: campo "Total invertido" editable)
-function saveDatosSimple(stateKey, inputId, resultId, invInputId) {
+// ── GUARDAR simple (invInputId opcional: "Total invertido" editable;
+//    fechaInputId opcional: fecha para calcular la rentabilidad anualizada)
+function saveDatosSimple(stateKey, inputId, resultId, invInputId, fechaInputId) {
   const invMap = { indexa: 13850, bbva: 21247.53, myinvestor: 3011.60 };
   let changed = false;
 
   if (invInputId) {
     const invVal = parseFloat(document.getElementById(invInputId).value);
     if (!isNaN(invVal) && invVal > 0) { state[stateKey + '_inv'] = invVal; changed = true; }
+  }
+  if (fechaInputId) {
+    const fechaVal = document.getElementById(fechaInputId).value;
+    if (fechaVal) { state[stateKey + '_fecha'] = fechaVal; changed = true; }
   }
   const val = parseFloat(document.getElementById(inputId).value);
   if (!isNaN(val) && val > 0) { state[stateKey] = val; changed = true; }
