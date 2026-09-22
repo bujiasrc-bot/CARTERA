@@ -1359,13 +1359,57 @@ function bestInvTotal() {
   return getBestFondos().reduce((s, f) => s + f.coste, 0);
 }
 
-// La posición BASE (BEST_FONDOS, foto del 19/05/2026) no tiene fecha de compra
-// real conocida — puede llevar invertida años (algunas desde 2017). Por eso la
-// TIR anualizada de Bestinver NO incluye ese coste base en absoluto: solo usa
-// flujos con fecha REAL conocida (las aportaciones registradas) y solo la parte
-// del valor actual que corresponde a esas aportaciones. Así el % nunca se infla
-// artificialmente por mezclar dinero antiguo de fecha desconocida con un plazo
-// corto. Consecuencia: mientras no haya aportaciones con ≥1 año, no hay cifra.
+// Historial COMPLETO real (extracto del bróker, dado por el usuario) para las
+// posiciones donde se conoce TODO el movimiento desde el origen. Reconciliado
+// exactamente con BEST_FONDOS: la suma de participaciones de estos movimientos
+// (hasta la foto del 19/05/2026, sin contar aportaciones posteriores que ya están
+// en loadBestAport()) coincide con las participaciones base de esa posición.
+// importe: negativo = dinero invertido (Suscripción/Traspaso entrada), positivo =
+// dinero recibido (Reembolso, importe NETO ya con retenciones descontadas).
+// Fuente: extracto "movimientos2292026.xlsx" del bróker, sep-2026.
+const BEST_HIST_COMPLETO = {
+  'bestinfond|C y R': [
+    { fecha: '2017-05-30', importe: -32042.52 },  // Traspaso ext. entrada
+    { fecha: '2023-08-03', importe: -125 },
+    { fecha: '2023-09-05', importe: -125 },
+    { fecha: '2023-10-03', importe: -125 },
+    { fecha: '2023-11-03', importe: -125 },
+    { fecha: '2023-12-05', importe: -125 },
+    { fecha: '2024-01-03', importe: -125 },
+    { fecha: '2024-02-05', importe: -125 },
+    { fecha: '2024-03-05', importe: -125 },
+    { fecha: '2024-04-03', importe: -125 },
+    { fecha: '2024-05-03', importe: -125 },
+    { fecha: '2024-06-04', importe: -125 },
+    { fecha: '2024-07-03', importe: -125 },
+    { fecha: '2024-08-05', importe: -125 },
+    { fecha: '2024-09-03', importe: -125 },
+    { fecha: '2024-09-09', importe: 6655.89 },    // Reembolso (bruto 7000, retención 344.11)
+    { fecha: '2026-03-13', importe: -6000 },
+    { fecha: '2026-04-21', importe: -500 },
+    { fecha: '2026-04-22', importe: -5000 },
+  ],
+  'mixto|C y R': [
+    { fecha: '2017-05-30', importe: -34213.65 },  // Traspaso ext. entrada
+    { fecha: '2024-10-23', importe: 3000 },       // Reembolso (bruto 3183.89, retención 183.89)
+  ],
+};
+
+// Para las posiciones SIN historial completo: la primera compra conocida (fecha
+// real, dato del usuario) de la posición base. El coste/participaciones de
+// BEST_FONDOS puede ser MAYOR que esta compra sola (hubo más operaciones —compras
+// o reembolsos— entre esta fecha y la foto del 19/05/2026 de las que no se sabe la
+// fecha exacta): esa diferencia se deja FUERA del cálculo a propósito, sin
+// inventar fechas. Por eso el % de estas puede quedarse algo por debajo del real.
+// Clave: "<fkeyOfBest>|<titular>". No hace falta entrada si ya está en
+// BEST_HIST_COMPLETO, ni para Ruth (nace entera de una aportación con fecha exacta).
+const BEST_BASE_COMPRA_CONOCIDA = {
+  'bestinfond|Carmen': { fecha: '2026-01-14', coste: 500,      partic: 1.526110    },
+  'bestinfond|Marta':  { fecha: '2026-01-14', coste: 500,      partic: 1.526110    },
+};
+
+// Rentabilidad anualizada de Bestinver: solo cuenta dinero con fecha REAL conocida
+// y exige que el flujo más antiguo tenga ya ≥1 año, igual que hace la propia Bestinver.
 const BEST_XIRR_MIN_DIAS = 365;
 
 // TIR anualizada aplicando el mínimo de días de antigüedad (si no se cumple, null)
@@ -1377,28 +1421,75 @@ function xirrConMinimo(flows, minDias) {
   return xirr(flows);
 }
 
-// Flujos de caja de las APORTACIONES de una posición (fondo+titular): cada
-// aportación real, en su fecha, + el valor de mercado HOY de esas participaciones
-// (no de toda la posición, solo la parte aportada con fecha conocida). Para xirr().
-function bestCashflowsFondo(fondoKey, titular, navHoy) {
-  const aportes = loadBestAport().filter(a => a.fondo === fondoKey && a.titular === titular);
-  if (!aportes.length) return null;
-  const flows = aportes.map(a => ({ fecha: a.fecha, importe: -(+a.importe || 0) }));
-  const particAportada = aportes.reduce((s, a) => s + (+a.partic || 0), 0);
-  flows.push({ fecha: new Date().toISOString().slice(0, 10), importe: particAportada * navHoy });
+// Flujos de caja de una posición (fondo+titular). Si hay historial completo real,
+// se usa entero (+ aportaciones posteriores) y el valor de mercado TOTAL de hoy.
+// Si no, solo la compra base conocida (si la hay) + aportaciones, valoradas por
+// su propia participación (no toda la posición). Para xirr().
+function bestCashflowsFondo(fondoKey, titular, navHoy, valorTotalHoy) {
+  const key = fondoKey + '|' + titular;
+  const flows = [];
+
+  if (BEST_HIST_COMPLETO[key]) {
+    BEST_HIST_COMPLETO[key].forEach(t => flows.push({ fecha: t.fecha, importe: t.importe }));
+    loadBestAport().forEach(a => {
+      if (a.fondo === fondoKey && a.titular === titular) flows.push({ fecha: a.fecha, importe: -(+a.importe || 0) });
+    });
+    if (!flows.length) return null;
+    flows.push({ fecha: new Date().toISOString().slice(0, 10), importe: valorTotalHoy });
+    return flows;
+  }
+
+  let particConocidas = 0;
+  const compra = BEST_BASE_COMPRA_CONOCIDA[key];
+  if (compra) { flows.push({ fecha: compra.fecha, importe: -compra.coste }); particConocidas += compra.partic; }
+  loadBestAport().forEach(a => {
+    if (a.fondo === fondoKey && a.titular === titular) {
+      flows.push({ fecha: a.fecha, importe: -(+a.importe || 0) });
+      particConocidas += (+a.partic || 0);
+    }
+  });
+  if (!flows.length) return null;
+  flows.push({ fecha: new Date().toISOString().slice(0, 10), importe: particConocidas * navHoy });
   return flows;
 }
 
-// Flujos de caja combinados de TODAS las aportaciones de Bestinver (cualquier
-// fondo/titular), con el valor de mercado hoy de esa parte aportada. Válido para
-// XIRR (no importa de qué "cuenta" venga cada flujo, solo su fecha e importe).
+// Flujos de caja combinados de TODO Bestinver: para cada posición usa historial
+// completo si lo hay (+ valor total de hoy) o compra conocida + aportaciones
+// (+ valor de la parte conocida, fondo a fondo porque cada uno tiene su propio NAV).
+// Para xirr().
 function bestCashflowsAll() {
-  const aportes = loadBestAport();
-  if (!aportes.length) return null;
+  const flows = [];
+  const particPorFondo = {};
+  const addPartic = (fondoKey, n) => { particPorFondo[fondoKey] = (particPorFondo[fondoKey] || 0) + n; };
+  const cubiertos = new Set(); // '<fondoKey>|<titular>' con historial completo (no duplicar su compra/aportación)
+  let valorCubiertos = 0;
+
+  getBestFondos().forEach(f => {
+    const key = fkeyOfBest(f) + '|' + f.titular;
+    if (BEST_HIST_COMPLETO[key]) {
+      BEST_HIST_COMPLETO[key].forEach(t => flows.push({ fecha: t.fecha, importe: t.importe }));
+      cubiertos.add(key);
+      valorCubiertos += bestFondoActual(f, state);
+    }
+  });
+
+  Object.entries(BEST_BASE_COMPRA_CONOCIDA).forEach(([key, c]) => {
+    if (cubiertos.has(key)) return;
+    flows.push({ fecha: c.fecha, importe: -c.coste });
+    addPartic(key.split('|')[0], c.partic);
+  });
+
+  loadBestAport().forEach(a => {
+    flows.push({ fecha: a.fecha, importe: -(+a.importe || 0) });
+    const key = a.fondo + '|' + a.titular;
+    if (cubiertos.has(key)) return; // su valor ya va dentro de valorCubiertos
+    addPartic(a.fondo, +a.partic || 0);
+  });
+  if (!flows.length) return null;
+
   const navs = bestNavs(state);
-  const flows = aportes.map(a => ({ fecha: a.fecha, importe: -(+a.importe || 0) }));
-  const valorAportado = aportes.reduce((s, a) => s + (+a.partic || 0) * (navs[a.fondo] || 0), 0);
-  flows.push({ fecha: new Date().toISOString().slice(0, 10), importe: valorAportado });
+  const valorConocido = valorCubiertos + Object.entries(particPorFondo).reduce((s, [fondoKey, n]) => s + n * (navs[fondoKey] || 0), 0);
+  flows.push({ fecha: new Date().toISOString().slice(0, 10), importe: valorConocido });
   return flows;
 }
 
@@ -1946,7 +2037,7 @@ function renderBestinver() {
   if (rentAnualEl) {
     const flowsAll = bestCashflowsAll();
     const rAnual = flowsAll ? xirrConMinimo(flowsAll, BEST_XIRR_MIN_DIAS) : null;
-    const tituloAnual = 'Solo con las aportaciones que has registrado (fecha real conocida) desde que la primera cumple 1 año; NO incluye la posición previa a la foto del 19/05/2026, cuya fecha real de compra no se conoce.';
+    const tituloAnual = 'Solo con dinero de fecha real conocida (compras base con fecha confirmada + aportaciones registradas), desde que el más antiguo cumple 1 año. La diferencia con la posición base total (de fecha desconocida) queda fuera.';
     if (rAnual == null) { rentAnualEl.textContent = '—'; rentAnualEl.className = 'stat-value'; }
     else { rentAnualEl.textContent = fmtPct(rAnual); rentAnualEl.className = 'stat-value ' + cls(rAnual); }
     rentAnualEl.title = tituloAnual;
@@ -1979,10 +2070,10 @@ function renderBestinver() {
       const g = v - f.coste;
       const p = (g / f.coste * 100).toFixed(2);
       const nav = bestNavs(state)[fkeyOfBest(f)];
-      const flows = bestCashflowsFondo(fkeyOfBest(f), f.titular, nav);
+      const flows = bestCashflowsFondo(fkeyOfBest(f), f.titular, nav, v);
       const rAnual = flows ? xirrConMinimo(flows, BEST_XIRR_MIN_DIAS) : null;
       const badgeAnual = rAnual == null
-        ? '<span class="badge neu" title="Solo con aportaciones propias (fecha conocida) y ≥1 año desde la primera">—</span>'
+        ? '<span class="badge neu" title="Solo con dinero de fecha real conocida y ≥1 año desde el más antiguo">—</span>'
         : `<span class="badge ${cls(rAnual)}">${fmtPct(rAnual)}</span>`;
       return `<tr>
         <td>${f.nombre}</td>
