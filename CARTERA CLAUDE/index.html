@@ -665,9 +665,13 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <div class="datos-section-header">
       <span class="datos-section-icon">🌱</span>
       <span class="datos-section-title">MyInvestor · Sego Renovables</span>
-      <span class="datos-section-sub">Valor de mercado de tu cartera</span>
+      <span class="datos-section-sub">Total aportado (con aportaciones) y valor de mercado actual</span>
     </div>
     <div class="datos-grid">
+      <div class="datos-field">
+        <label>Total invertido (aporte inicial + aportaciones)</label>
+        <input type="number" id="d-myinvestor-inv" placeholder="ej: 3011.60" step="0.01" />
+      </div>
       <div class="datos-field">
         <label>Valor de mercado</label>
         <input type="number" id="d-myinvestor" placeholder="ej: 3383.24" step="0.01" />
@@ -675,7 +679,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
     <div class="datos-result" id="d-my-result"></div>
     <div style="margin-top:14px">
-      <button class="btn-datos-save" onclick="saveDatosSimple('myinvestor','d-myinvestor','d-my-result')">Guardar MyInvestor</button>
+      <button class="btn-datos-save" onclick="saveDatosSimple('myinvestor','d-myinvestor','d-my-result','d-myinvestor-inv')">Guardar MyInvestor</button>
     </div>
   </div>
 
@@ -2458,7 +2462,7 @@ function renderBBVA() {
 
 // ── MYINVESTOR ────────────────────────────────────────────────────────────────
 function renderMyInvestor() {
-  const inv = BASE.myinvestor.inv, act = state.myinvestor;
+  const inv = invFor('myinvestor'), act = state.myinvestor;
   const g = act - inv;
   document.getElementById('my-inv').innerHTML  = `<span class="private">${fmt(inv)}</span>`;
   document.getElementById('my-act').innerHTML  = `<span class="private">${fmt(act)}</span>`;
@@ -3046,14 +3050,16 @@ function initDatosPage() {
   const idxFecha = document.getElementById('d-indexa-fecha');
   const bbva     = document.getElementById('d-bbva');
   const myin     = document.getElementById('d-myinvestor');
+  const myinInv  = document.getElementById('d-myinvestor-inv');
   if (idx)      idx.value      = state.indexa       || 15191.68;
   if (idxInv)   idxInv.value   = invFor('indexa');
   if (idxFecha) idxFecha.value = state.indexa_fecha || '';
   if (bbva)   bbva.value   = state.bbva       || 23167.68;
   if (myin)   myin.value   = state.myinvestor || 3214.69;
+  if (myinInv) myinInv.value = invFor('myinvestor');
   renderDatosSimpleResult('indexa',    'd-idx-result',  state.indexa     || 15191.68, invFor('indexa'));
   renderDatosSimpleResult('bbva-pp',   'd-bbva-result', state.bbva       || 23167.68, 21247.53);
-  renderDatosSimpleResult('myinvestor','d-my-result',   state.myinvestor || 3214.69,  3011.60);
+  renderDatosSimpleResult('myinvestor','d-my-result',   state.myinvestor || 3214.69,  invFor('myinvestor'));
 
   // Live previews on input change
   document.getElementById('d-inm-galdos').addEventListener('input', renderDatosInmResult);
@@ -3071,7 +3077,11 @@ function initDatosPage() {
   document.getElementById('d-indexa').addEventListener('input', idxRefresh);
   document.getElementById('d-indexa-inv').addEventListener('input', idxRefresh);
   document.getElementById('d-bbva').addEventListener('input',      () => renderDatosSimpleResult('bbva-pp',   'd-bbva-result', parseFloat(document.getElementById('d-bbva').value)||0,   21247.53));
-  document.getElementById('d-myinvestor').addEventListener('input',() => renderDatosSimpleResult('myinvestor','d-my-result',  parseFloat(document.getElementById('d-myinvestor').value)||0, 3011.60));
+  const myinRefresh = () => renderDatosSimpleResult('myinvestor', 'd-my-result',
+      parseFloat(document.getElementById('d-myinvestor').value) || 0,
+      parseFloat(document.getElementById('d-myinvestor-inv').value) || BASE.myinvestor.inv);
+  document.getElementById('d-myinvestor').addEventListener('input', myinRefresh);
+  document.getElementById('d-myinvestor-inv').addEventListener('input', myinRefresh);
 }
 
 // ── Render resultados inmuebles
