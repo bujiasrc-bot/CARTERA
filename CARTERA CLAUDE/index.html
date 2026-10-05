@@ -451,6 +451,81 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   transition: color 0.2s;
 }
 .gasto-row .btn-del-gasto:hover { color: var(--red); }
+
+/* SEGUROS */
+.seg-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
+.seg-card > summary, .seg-oferta > summary {
+  list-style: none; cursor: pointer; display: flex; gap: 10px;
+  align-items: center; justify-content: space-between; flex-wrap: wrap;
+}
+.seg-card > summary { padding: 16px 20px; }
+.seg-card > summary::-webkit-details-marker, .seg-oferta > summary::-webkit-details-marker { display: none; }
+.seg-card .seg-nombre::before { content: "▸ "; color: var(--muted); display: inline-block; width: 1em; transition: transform .2s; }
+.seg-card[open] .seg-nombre::before { content: "▾ "; }
+.seg-card > summary > div:first-of-type { flex: 1; min-width: 200px; }
+.seg-card[open] > summary { border-bottom: 1px solid var(--border); }
+.seg-nombre { font-size: 15px; font-weight: 700; }
+.seg-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.seg-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg-body { padding: 16px 20px 20px; }
+.seg-bloque { margin-bottom: 26px; }
+.seg-bloque-title {
+  font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.seg-subtitulo { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+  margin: 14px 0 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.seg-hint { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
+.seg-vacio { font-size: 12px; color: var(--muted); padding: 4px 0; }
+.seg-acc { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.seg-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; align-items: end; margin-top: 10px; }
+.seg-form.seg-form-1 { grid-template-columns: 1fr; }
+.seg-form .form-group label { margin-bottom: 4px; }
+.seg-form input, .seg-form select { padding: 8px 10px !important; font-size: 13px !important; }
+.seg-form .btn-save, .seg-form .btn-reset { padding: 9px 14px; }
+.seg-subform { background: var(--card2); border: 1px dashed var(--border); border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
+.seg-subform.editando { border: 1px solid var(--accent); }
+.seg-subform-title { font-size: 12px; font-weight: 700; }
+.seg-subform .form-group input, .seg-subform .form-group select { background: var(--card); }
+.seg-scroll { overflow-x: auto; }
+.seg-aviso { padding: 10px 14px; border-radius: 10px; font-size: 12px; margin-bottom: 10px; background: rgba(255,184,108,0.10); color: var(--yellow); }
+.seg-aviso.info { background: rgba(200,181,255,0.08); color: var(--accent); display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.btn-mini {
+  background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-decoration: none;
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; padding: 7px 12px; cursor: pointer; white-space: nowrap;
+}
+.btn-mini:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-mini:disabled { opacity: .55; cursor: default; }
+.seg-file { position: relative; justify-self: start; }
+.seg-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.seg-sel {
+  background: var(--card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  font-family: 'Syne', sans-serif; font-size: 12px; padding: 6px 8px; text-transform: none; letter-spacing: 0;
+}
+.gasto-row .seg-cob-val {
+  width: 42%; max-width: 220px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: 'Syne', sans-serif; font-size: 12px; padding: 6px 8px; outline: none;
+}
+.gasto-row .seg-cob-val:focus { border-color: var(--accent); }
+#view-seguros .gasto-row { gap: 8px; }
+.seg-oferta { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.seg-oferta > summary { font-size: 13px; }
+.seg-oferta[open] > summary { margin-bottom: 6px; }
+.seg-oferta .gasto-row { background: var(--card); }
+.seg-oferta .form-group input, .seg-oferta .form-group select { background: var(--card); }
+.seg-contratar { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 14px; }
+.seg-cmp th, .seg-cmp td { text-align: center; white-space: nowrap; }
+.seg-cmp th:first-child, .seg-cmp td:first-child { text-align: left; white-space: normal; }
+.seg-cmp .seg-cmp-total td { border-top: 1px solid var(--border); font-weight: 700; }
+.seg-vigente td { background: rgba(126,255,212,0.04); }
+.seg-cmp .seg-cmp-dif td { background: rgba(255,184,108,0.06); }
+.seg-cmp .seg-cmp-dif td:first-child { box-shadow: inset 3px 0 0 var(--yellow); }
+.seg-no { color: var(--red); }
+.seg-pie { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 14px; }
+@media (max-width: 600px) {
+  .seg-card > summary, .seg-body { padding-left: 14px; padding-right: 14px; }
+  .gasto-row .seg-cob-val { width: 45%; }
+}
 .gastos-tracker { margin-top: 14px; }
 .gastos-tracker-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
 .gastos-separador {
@@ -3820,51 +3895,15 @@ const REG_CONFIG = {
       ['Cuotas / mes', fmt(items.reduce((s, r) => s + RNUM(r.cuota), 0))],
     ],
   },
+  // Seguros tiene su propia pantalla (renderSeguros, más abajo): aquí solo lo que usa Vencimientos
   seguros: {
     key: 'cartera_seguros_v1', icono: '🛡️', titulo: 'Seguros', singular: 'seguro',
-    sub: 'Coche, hogar, vida, salud… · recibo, frecuencia y cargos automáticos',
-    ayuda: 'Los recibos se registran solos según la frecuencia: no tienes que añadirlos a mano.',
-    campos: [
-      { k:'nombre', label:'Tipo / nombre', tipo:'text', ph:'ej: Seguro coche' },
-      { k:'compania', label:'Compañía', tipo:'text', ph:'ej: Ocaso' },
-      { k:'prima', label:'Importe del recibo (€)', tipo:'number', ph:'ej: 35' },
-      { k:'frecuencia', label:'Frecuencia', tipo:'select', opciones: Object.keys(FREC_MESES) },
-      { k:'inicio', label:'Primer recibo / inicio', tipo:'date' },
-    ],
     deuda: null,
-    // Cargos futuros según la frecuencia, a partir de la fecha de inicio
-    proximos: (r, hoy, hasta) => {
-      const ini = parseFecha(r.inicio || r.vence);   // r.vence: registros antiguos
-      if (!ini) return [];
-      const paso = FREC_MESES[r.frecuencia] || 12;
-      return fechasCargo(ini, paso, hoy, hasta).map(f => ({
-        fecha: f, importe: RNUM(r.prima), recurrente: r.frecuencia || 'anual',
-        concepto: `${r.nombre || 'Seguro'}${r.compania ? ' · ' + r.compania : ''}`,
-      }));
-    },
-    // Recibos ya cargados desde la fecha de inicio (cuentan automáticamente)
-    pagado: r => {
-      const ini = parseFecha(r.inicio || r.vence);
-      if (!ini) return { n: 0, total: 0 };
-      const paso = FREC_MESES[r.frecuencia] || 12;
-      const n = fechasCargo(ini, paso, ini, startOfDay(new Date())).length;
-      return { n, total: n * RNUM(r.prima) };
-    },
-    resumen: r => {
-      const ini = parseFecha(r.inicio || r.vence);
-      const prox = ini ? fechasCargo(ini, FREC_MESES[r.frecuencia] || 12, startOfDay(new Date()), new Date(2100, 0, 1))[0] : null;
-      return [['Recibo', fmt(RNUM(r.prima))], ['Frecuencia', r.frecuencia || 'anual'],
-              ['Próximo', prox ? fmtFecha(prox) : '—'], ['Pagado', fmt(REG_CONFIG.seguros.pagado(r).total)]];
-    },
-    stats: items => {
-      const anual = items.reduce((s, r) => s + RNUM(r.prima) * (12 / (FREC_MESES[r.frecuencia] || 12)), 0);
-      const pagado = items.reduce((s, r) => s + REG_CONFIG.seguros.pagado(r).total, 0);
-      return [
-        ['Seguros', String(items.length)],
-        ['Coste anual estimado', fmt(anual)],
-        ['Pagado hasta hoy', fmt(pagado)],
-      ];
-    },
+    // Recibos futuros, cada uno con el precio que esté en vigor en su fecha
+    proximos: (s, hoy, hasta) => segCargos(s, hoy, hasta).map(c => ({
+      fecha: c.fecha, importe: c.prima, recurrente: c.frecuencia,
+      concepto: `${s.nombre || 'Seguro'}${c.compania ? ' · ' + c.compania : ''}`,
+    })),
   },
   tarjetas: {
     key: 'cartera_tarjetas_v1', icono: '💳', titulo: 'Tarjetas', singular: 'tarjeta',
@@ -3903,6 +3942,9 @@ function regSave(sec, items) {
 }
 // Registro que se está editando (null = modo añadir). Sobrevive a los repintados.
 let REG_EDIT = null;   // { sec, id }
+// true = el próximo repintado debe vaciar/recargar los formularios (lo pide el usuario:
+// editar, guardar, cancelar). false = conservar lo que haya escrito (p. ej. al sincronizar).
+let REG_FORM_RESET = false;
 
 // Guarda el formulario: añade un registro nuevo o actualiza el que se está editando
 function addRegistro(sec) {
@@ -3914,6 +3956,7 @@ function addRegistro(sec) {
   }
   if (!r.nombre) { showDatosSaved('⚠️ Escribe un nombre'); return; }
   const items = regLoad(sec);
+  REG_FORM_RESET = true;
   if (REG_EDIT && REG_EDIT.sec === sec) {
     r.id = REG_EDIT.id;
     const i = items.findIndex(x => x.id === REG_EDIT.id);
@@ -3932,12 +3975,14 @@ function addRegistro(sec) {
 // Carga un registro en el formulario para corregirlo
 function editRegistro(sec, id) {
   REG_EDIT = { sec, id };
+  REG_FORM_RESET = true;
   renderSeccionesNuevas();
   const form = document.querySelector('#view-' + sec + ' .update-form');
   if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function cancelarEdicion(sec) {
   REG_EDIT = null;
+  REG_FORM_RESET = true;
   renderSeccionesNuevas();
 }
 // Rellena los campos del formulario con los valores del registro que se edita
@@ -3952,7 +3997,7 @@ function rellenarFormulario(sec) {
 
 function delRegistro(sec, id) {
   if (!confirm('¿Eliminar este registro?')) return;
-  if (REG_EDIT && REG_EDIT.id === id) REG_EDIT = null;
+  if (REG_EDIT && REG_EDIT.id === id) { REG_EDIT = null; REG_FORM_RESET = true; }
   regSave(sec, regLoad(sec).filter(r => r.id !== id));
 }
 
@@ -4002,6 +4047,698 @@ function renderRegistro(sec) {
           <button class="btn-del-gasto" onclick="editRegistro('${sec}', ${r.id})" title="Editar">✏️</button>
           <button class="btn-del-gasto" onclick="delRegistro('${sec}', ${r.id})" title="Eliminar">🗑️</button>
         </div>`).join('') : '<div class="section-sub" style="margin:0">Todavía no hay registros.</div>'}
+    </div>`;
+}
+
+// ══════════════ SEGUROS: una ficha por póliza con historial de precios, coberturas, ofertas y documentos ══════════════
+// Modelo (clave cartera_seguros_v1, sincronizada):
+//   { id, nombre,
+//     historial: [{ id, desde, prima, compania, frecuencia }]   ← un tramo por renovación / cambio de precio
+//     coberturas: [{ id, nombre, valor }]                       ← valor: '' = incluida, 'No', '600 €', '?'…
+//     docs: [{ id, nombre, tam, fecha, compania, url? }]        ← fichero en IndexedDB (solo este dispositivo) o enlace
+//     ofertas: [{ id, compania, prima, frecuencia, fecha, notas, coberturas, docs }] }
+// Cada recibo se calcula solo con el precio del tramo en vigor en su fecha.
+
+const segNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+let _segUltId = 0;
+const segId = () => (_segUltId = Math.max(Date.now(), _segUltId + 1));
+const segAnual = h => RNUM(h.prima) * 12 / (FREC_MESES[h.frecuencia] || 12);
+const toISO = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const segPct = p => (p > 0 ? '+' : '') + p.toFixed(1).replace('.', ',') + ' %';
+const segDif = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n), 2);
+function sumarMeses(d, n) {
+  const y = d.getFullYear(), m = d.getMonth() + n;
+  return new Date(y, m, Math.min(d.getDate(), new Date(y, m + 1, 0).getDate()));
+}
+
+// Coberturas típicas para rellenar de un golpe
+const SEG_COB_TIPICAS = {
+  coche: ['Responsabilidad civil obligatoria', 'Responsabilidad civil voluntaria', 'Defensa jurídica',
+          'Asistencia en viaje', 'Rotura de lunas', 'Robo', 'Incendio', 'Daños propios (todo riesgo)',
+          'Franquicia', 'Accidentes del conductor', 'Vehículo de sustitución', 'Fenómenos atmosféricos'],
+  hogar: ['Continente', 'Contenido', 'Responsabilidad civil', 'Daños por agua', 'Robo y expoliación',
+          'Rotura de cristales', 'Fenómenos atmosféricos', 'Daños eléctricos', 'Asistencia hogar 24 h',
+          'Defensa jurídica'],
+  vida:  ['Fallecimiento', 'Invalidez absoluta', 'Fallecimiento por accidente', 'Capital asegurado'],
+  salud: ['Medicina general', 'Especialistas', 'Pruebas diagnósticas', 'Hospitalización', 'Urgencias',
+          'Dental', 'Copagos', 'Reembolso de gastos'],
+};
+
+// Estado de pantalla (sobrevive a los repintados)
+const SEG_UI = { abiertos: new Set(), editH: null /* { sid, hid } */, aviso: null };
+
+// ── Tramos de precio y recibos ──────────────────────────────────────────────
+function segTramos(s) {
+  const hs = (s.historial || []).map(h => ({ h, ini: parseFecha(h.desde) })).filter(t => t.ini)
+    .sort((a, b) => a.ini - b.ini);
+  return hs.map((t, i) => ({ ...t, fin: hs[i + 1] ? hs[i + 1].ini : null }));
+}
+function segCargos(s, desde, hasta) {
+  const out = [];
+  for (const t of segTramos(s)) {
+    const tope = t.fin && new Date(t.fin.getTime() - 1) < hasta ? new Date(t.fin.getTime() - 1) : hasta;
+    for (const f of fechasCargo(t.ini, FREC_MESES[t.h.frecuencia] || 12, desde, tope)) {
+      out.push({ fecha: f, prima: RNUM(t.h.prima), compania: t.h.compania || '', frecuencia: t.h.frecuencia || 'anual' });
+    }
+  }
+  return out;
+}
+// Tramo en vigor en una fecha (por defecto hoy); null si aún no había empezado
+function segTramoEn(s, fecha) {
+  const f = fecha || startOfDay(new Date());
+  const ts = segTramos(s).filter(t => t.ini <= f);
+  return ts.length ? ts[ts.length - 1] : null;
+}
+// Precio actual: el tramo en vigor; si todavía no ha empezado ninguno, el primero
+function segActual(s) {
+  const t = segTramoEn(s) || segTramos(s)[0];
+  return t ? t.h : (s.historial || [])[s.historial.length - 1] || null;
+}
+function segPagado(s) {
+  const cs = segCargos(s, new Date(1900, 0, 1), startOfDay(new Date()));
+  return { n: cs.length, total: cs.reduce((a, c) => a + c.prima, 0) };
+}
+// Renovación: un año después del último precio registrado
+function segRenovacion(s) {
+  const ts = segTramos(s);
+  if (!ts.length) return null;
+  const ult = ts[ts.length - 1], hoy = startOfDay(new Date());
+  if (ult.ini > hoy) return { fecha: ult.ini, futuro: true, dias: Math.round((ult.ini - hoy) / 86400000) };
+  const fecha = sumarMeses(ult.ini, 12);
+  return { fecha, pendiente: hoy >= fecha, dias: Math.round((fecha - hoy) / 86400000) };
+}
+
+// ── Carga, migración y guardado ─────────────────────────────────────────────
+// Ordena el historial y deja copiados los datos del precio actual en el propio seguro
+// (por compatibilidad con una versión antigua de la app que siga abierta en otro dispositivo)
+function segOrdenar(s) {
+  s.historial.sort((a, b) => String(a.desde).localeCompare(String(b.desde)));
+  const a = segActual(s);
+  if (a) { s.prima = a.prima; s.frecuencia = a.frecuencia; s.compania = a.compania; s.inicio = a.desde; }
+}
+// Mete el contenido de `src` dentro de `dest` (historial, coberturas, documentos y ofertas)
+function segUnirEn(dest, src) {
+  for (const h of src.historial || []) {
+    if (!dest.historial.some(x => x.desde === h.desde && RNUM(x.prima) === RNUM(h.prima))) dest.historial.push(h);
+  }
+  for (const c of src.coberturas || []) {
+    if (!dest.coberturas.some(x => segNorm(x.nombre) === segNorm(c.nombre))) dest.coberturas.push(c);
+  }
+  dest.docs.push(...(src.docs || []));
+  dest.ofertas.push(...(src.ofertas || []));
+}
+// Convierte los registros antiguos (uno por recibo) en fichas con historial.
+// Los registros antiguos con el mismo nombre se juntan en la misma ficha.
+function segMigrar() {
+  const items = regLoad('seguros');
+  if (items.every(r => Array.isArray(r.historial) && Array.isArray(r.coberturas) && Array.isArray(r.docs) && Array.isArray(r.ofertas))) return;
+  const out = [], porNombre = new Map(), unidos = new Map();
+  for (const r of items.filter(r => Array.isArray(r.historial))) {
+    for (const f of ['coberturas', 'docs', 'ofertas']) if (!Array.isArray(r[f])) r[f] = [];
+    if (!porNombre.has(segNorm(r.nombre))) porNombre.set(segNorm(r.nombre), r);
+    out.push(r);
+  }
+  for (const r of items.filter(r => !Array.isArray(r.historial))) {
+    const k = segNorm(r.nombre);
+    let s = porNombre.get(k);
+    if (!s) {
+      s = { id: r.id || segId(), nombre: r.nombre || 'Seguro', historial: [], coberturas: [], docs: [], ofertas: [] };
+      porNombre.set(k, s);
+      out.push(s);
+    }
+    const h = { id: segId(), desde: r.inicio || r.vence || '', prima: RNUM(r.prima), compania: r.compania || '', frecuencia: r.frecuencia || 'anual' };
+    if (!s.historial.some(x => x.desde === h.desde && RNUM(x.prima) === h.prima)) s.historial.push(h);
+    unidos.set(s, s.historial.length);
+  }
+  out.forEach(segOrdenar);
+  const juntados = [...unidos].filter(([, n]) => n > 1).map(([s, n]) => `${s.nombre} (${n} precios)`);
+  if (juntados.length) SEG_UI.aviso = 'He juntado los registros repetidos en una sola ficha con su historial de precios: ' + juntados.join(', ') + '.';
+  localStorage.setItem(REG_CONFIG.seguros.key, JSON.stringify(out));
+}
+// Modifica un seguro y guarda. `limpiar` = vaciar los formularios después (acción terminada)
+function segMod(sid, fn, limpiar = true) {
+  const items = regLoad('seguros');
+  const s = items.find(x => x.id === sid);
+  if (!s) return;
+  if (fn(s, items) === false) return;
+  segOrdenar(s);
+  if (limpiar) REG_FORM_RESET = true;
+  regSave('seguros', items);
+}
+const segDueno = (s, oid) => oid ? (s.ofertas || []).find(o => o.id === oid) : s;
+const segVal = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+
+// ── Acciones: seguros ───────────────────────────────────────────────────────
+function segNuevo() {
+  const nombre = segVal('sg-new-nombre');
+  if (!nombre) { showDatosSaved('⚠️ Escribe un nombre'); return; }
+  const h = { id: segId(), desde: segVal('sg-new-desde'), prima: RNUM(segVal('sg-new-prima')),
+              compania: segVal('sg-new-compania'), frecuencia: segVal('sg-new-frecuencia') || 'anual' };
+  if (!h.desde) { showDatosSaved('⚠️ Indica la fecha del recibo'); return; }
+  const items = regLoad('seguros');
+  const igual = items.find(x => segNorm(x.nombre) === segNorm(nombre));
+  if (igual && confirm(`Ya tienes «${igual.nombre}».\n\n¿Quieres añadir este importe a su historial de precios (recomendado)?\n\nAceptar = añadir al historial · Cancelar = crear otro seguro aparte`)) {
+    SEG_UI.abiertos.add(igual.id);
+    segMod(igual.id, s => { s.historial.push(h); });
+    showDatosSaved('Precio añadido al historial ✓');
+    return;
+  }
+  const s = { id: segId(), nombre, historial: [h], coberturas: [], docs: [], ofertas: [] };
+  segOrdenar(s);
+  items.push(s);
+  SEG_UI.abiertos.add(s.id);
+  REG_FORM_RESET = true;
+  regSave('seguros', items);
+  showDatosSaved('Seguro añadido ✓');
+}
+function segRenombrar(sid) {
+  const s = regLoad('seguros').find(x => x.id === sid);
+  if (!s) return;
+  const n = prompt('Nuevo nombre del seguro:', s.nombre);
+  if (n && n.trim()) segMod(sid, x => { x.nombre = n.trim(); }, false);
+}
+async function segBorrar(sid) {
+  const items = regLoad('seguros');
+  const s = items.find(x => x.id === sid);
+  if (!s || !confirm(`¿Eliminar «${s.nombre}» con todo su historial, coberturas, ofertas y documentos?`)) return;
+  for (const d of [...s.docs, ...s.ofertas.flatMap(o => o.docs || [])]) if (!d.url) segDocDel(d.id).catch(() => {});
+  REG_FORM_RESET = true;
+  regSave('seguros', items.filter(x => x.id !== sid));
+}
+function segUnir(sid) {
+  const otro = Number(segVal(`sg-u-${sid}`));
+  const items = regLoad('seguros');
+  const dest = items.find(x => x.id === sid), src = items.find(x => x.id === otro);
+  if (!dest || !src) { showDatosSaved('⚠️ Elige el seguro a unir'); return; }
+  if (!confirm(`Se meterá todo lo de «${src.nombre}» dentro de «${dest.nombre}» y «${src.nombre}» desaparecerá.\n\n¿Continuar?`)) return;
+  segUnirEn(dest, src);
+  segOrdenar(dest);
+  REG_FORM_RESET = true;
+  regSave('seguros', items.filter(x => x.id !== otro));
+  showDatosSaved('Seguros unidos ✓');
+}
+
+// ── Acciones: historial de precios ──────────────────────────────────────────
+function segGuardarPrecio(sid) {
+  const h = { desde: segVal(`sg-h-${sid}-desde`), prima: RNUM(segVal(`sg-h-${sid}-prima`)),
+              compania: segVal(`sg-h-${sid}-compania`), frecuencia: segVal(`sg-h-${sid}-frecuencia`) || 'anual' };
+  if (!h.desde) { showDatosSaved('⚠️ Indica la fecha'); return; }
+  if (!h.prima) { showDatosSaved('⚠️ Indica el importe del recibo'); return; }
+  const ed = SEG_UI.editH && SEG_UI.editH.sid === sid ? SEG_UI.editH.hid : null;
+  SEG_UI.editH = null;
+  segMod(sid, s => {
+    if (ed) { const x = s.historial.find(y => y.id === ed); if (x) Object.assign(x, h); else s.historial.push({ id: segId(), ...h }); }
+    else s.historial.push({ id: segId(), ...h });
+  });
+  showDatosSaved(ed ? 'Precio corregido ✓' : 'Nuevo precio registrado ✓');
+}
+function segEditarPrecio(sid, hid) {
+  SEG_UI.editH = { sid, hid };
+  REG_FORM_RESET = true;
+  renderSeccionesNuevas();
+  const f = document.getElementById(`sg-h-${sid}-desde`);
+  if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function segCancelarPrecio() { SEG_UI.editH = null; REG_FORM_RESET = true; renderSeccionesNuevas(); }
+function segBorrarPrecio(sid, hid) {
+  if (!confirm('¿Eliminar este precio del historial?')) return;
+  if (SEG_UI.editH && SEG_UI.editH.hid === hid) SEG_UI.editH = null;
+  segMod(sid, s => {
+    if (s.historial.length <= 1) { alert('Es el único precio del seguro. Si quieres quitarlo, elimina el seguro entero.'); return false; }
+    s.historial = s.historial.filter(h => h.id !== hid);
+  });
+}
+
+// ── Acciones: coberturas (de la póliza o de una oferta) ─────────────────────
+function segCobAnadir(sid, oid) {
+  const p = oid ? `sg-oc-${oid}` : `sg-c-${sid}`;
+  const nombre = segVal(`${p}-nombre`);
+  if (!nombre) { showDatosSaved('⚠️ Escribe la cobertura'); return; }
+  segMod(sid, s => {
+    const d = segDueno(s, oid);
+    if (!d) return false;
+    d.coberturas = d.coberturas || [];
+    if (d.coberturas.some(c => segNorm(c.nombre) === segNorm(nombre))) { showDatosSaved('⚠️ Esa cobertura ya está'); return false; }
+    d.coberturas.push({ id: segId(), nombre, valor: segVal(`${p}-valor`) });
+  });
+}
+function segCobTipicas(sid) {
+  const tipo = segVal(`sg-ct-${sid}`);
+  if (!SEG_COB_TIPICAS[tipo]) return;
+  segMod(sid, s => {
+    for (const n of SEG_COB_TIPICAS[tipo]) {
+      if (!s.coberturas.some(c => segNorm(c.nombre) === segNorm(n))) s.coberturas.push({ id: segId(), nombre: n, valor: '?' });
+    }
+  });
+}
+// Copia a una oferta la lista de coberturas de la póliza actual, con «?» para ir rellenando
+function segCobCopiar(sid, oid) {
+  segMod(sid, s => {
+    const o = segDueno(s, oid);
+    if (!o) return false;
+    o.coberturas = o.coberturas || [];
+    for (const c of s.coberturas) {
+      if (!o.coberturas.some(x => segNorm(x.nombre) === segNorm(c.nombre))) o.coberturas.push({ id: segId(), nombre: c.nombre, valor: '?' });
+    }
+  });
+}
+// Guardado al salir del campo; se repinta un instante después para no perder el foco del siguiente campo
+function segCobValor(sid, oid, cid, valor) {
+  setTimeout(() => segMod(sid, s => {
+    const d = segDueno(s, oid);
+    const c = d && (d.coberturas || []).find(x => x.id === cid);
+    if (!c) return false;
+    c.valor = valor.trim();
+  }, false), 0);
+}
+function segCobBorrar(sid, oid, cid) {
+  segMod(sid, s => {
+    const d = segDueno(s, oid);
+    if (!d) return false;
+    d.coberturas = (d.coberturas || []).filter(c => c.id !== cid);
+  }, false);
+}
+
+// ── Acciones: ofertas ───────────────────────────────────────────────────────
+function segOfertaNueva(sid) {
+  const o = { id: segId(), compania: segVal(`sg-o-${sid}-compania`), prima: RNUM(segVal(`sg-o-${sid}-prima`)),
+              frecuencia: segVal(`sg-o-${sid}-frecuencia`) || 'anual', fecha: segVal(`sg-o-${sid}-fecha`) || toISO(new Date()),
+              notas: segVal(`sg-o-${sid}-notas`), coberturas: [], docs: [] };
+  if (!o.compania) { showDatosSaved('⚠️ Escribe la compañía'); return; }
+  if (!o.prima) { showDatosSaved('⚠️ Indica el importe'); return; }
+  SEG_UI.abiertos.add(o.id);
+  segMod(sid, s => { s.ofertas.push(o); });
+  showDatosSaved('Oferta añadida ✓');
+}
+function segOfertaCampo(sid, oid, campo, valor) {
+  setTimeout(() => segMod(sid, s => {
+    const o = segDueno(s, oid);
+    if (!o) return false;
+    o[campo] = campo === 'prima' ? RNUM(valor) : valor.trim();
+  }, false), 0);
+}
+function segOfertaBorrar(sid, oid) {
+  const s = regLoad('seguros').find(x => x.id === sid);
+  const o = s && segDueno(s, oid);
+  if (!o || !confirm(`¿Eliminar la oferta de ${o.compania || 'esta compañía'}?`)) return;
+  for (const d of o.docs || []) if (!d.url) segDocDel(d.id).catch(() => {});
+  segMod(sid, x => { x.ofertas = x.ofertas.filter(y => y.id !== oid); }, false);
+}
+// Contratar una oferta: pasa a ser el precio vigente desde la fecha indicada, con sus coberturas y documentos
+function segOfertaContratar(sid, oid) {
+  const fecha = segVal(`sg-ok-${oid}-fecha`);
+  if (!fecha) { showDatosSaved('⚠️ Indica desde qué fecha'); return; }
+  const s = regLoad('seguros').find(x => x.id === sid);
+  const o = s && segDueno(s, oid);
+  if (!o) return;
+  if (!confirm(`Cambiar «${s.nombre}» a ${o.compania} desde el ${fmtFecha(parseFecha(fecha))}?\n\n` +
+               `· Se añade su precio al historial\n· Sus coberturas pasan a ser las de la póliza\n· Sus documentos pasan a la póliza (los anteriores se conservan)`)) return;
+  segMod(sid, x => {
+    const of = segDueno(x, oid);
+    x.historial.push({ id: segId(), desde: fecha, prima: of.prima, compania: of.compania, frecuencia: of.frecuencia || 'anual' });
+    if ((of.coberturas || []).length) x.coberturas = of.coberturas;
+    x.docs.push(...(of.docs || []).map(d => ({ ...d, compania: d.compania || of.compania })));
+    x.ofertas = x.ofertas.filter(y => y.id !== oid);
+  });
+  showDatosSaved('Cambio de compañía registrado ✓');
+}
+
+// ── Documentos: ficheros en IndexedDB (no se sincronizan) o enlaces (sí) ────
+function segDB() {
+  return new Promise((ok, ko) => {
+    const r = indexedDB.open('cartera_docs', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('docs');
+    r.onsuccess = () => ok(r.result);
+    r.onerror = () => ko(r.error);
+  });
+}
+async function segDocTx(modo, fn) {
+  const db = await segDB();
+  return new Promise((ok, ko) => {
+    const tx = db.transaction('docs', modo);
+    const req = fn(tx.objectStore('docs'));
+    tx.oncomplete = () => ok(req && req.result);
+    tx.onerror = () => ko(tx.error);
+  });
+}
+const segDocPut = (id, blob) => segDocTx('readwrite', st => st.put(blob, String(id)));
+const segDocGet = id => segDocTx('readonly', st => st.get(String(id)));
+const segDocDel = id => segDocTx('readwrite', st => st.delete(String(id)));
+const segDocKeys = () => segDocTx('readonly', st => st.getAllKeys());
+
+async function segAdjuntar(sid, oid, input) {
+  const files = [...(input.files || [])];
+  if (!files.length) return;
+  const s = regLoad('seguros').find(x => x.id === sid);
+  const d = s && segDueno(s, oid);
+  if (!d) return;
+  const metas = [];
+  try {
+    for (const f of files) {
+      if (f.size > 25 * 1024 * 1024) { alert(`«${f.name}» ocupa más de 25 MB; no se adjunta.`); continue; }
+      const id = segId();
+      await segDocPut(id, f);
+      metas.push({ id, nombre: f.name, tam: f.size, fecha: toISO(new Date()), compania: oid ? d.compania : (segActual(s) || {}).compania || '' });
+    }
+  } catch (e) {
+    console.warn('adjuntar:', e);
+    alert('No se ha podido guardar el documento en este dispositivo.');
+  }
+  input.value = '';
+  if (!metas.length) return;
+  segMod(sid, x => { const dd = segDueno(x, oid); if (!dd) return false; dd.docs = dd.docs || []; dd.docs.push(...metas); }, false);
+  showDatosSaved('Documento adjuntado ✓');
+}
+function segEnlace(sid, oid) {
+  const p = `sg-dl-${oid || sid}`;
+  let url = segVal(`${p}-url`);
+  if (!url) { showDatosSaved('⚠️ Pega el enlace'); return; }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  const nombre = segVal(`${p}-nombre`) || 'Enlace';
+  segMod(sid, s => {
+    const d = segDueno(s, oid);
+    if (!d) return false;
+    d.docs = d.docs || [];
+    d.docs.push({ id: segId(), nombre, url, fecha: toISO(new Date()), compania: oid ? d.compania : (segActual(s) || {}).compania || '' });
+  });
+}
+async function segAbrirDoc(id) {
+  try {
+    const blob = await segDocGet(id);
+    if (!blob) { alert('Este documento se adjuntó en otro dispositivo y no está guardado en este.'); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) { console.warn('abrir doc:', e); alert('No se ha podido abrir el documento.'); }
+}
+function segDocBorrar(sid, oid, did) {
+  if (!confirm('¿Quitar este documento?')) return;
+  segDocDel(did).catch(() => {});
+  segMod(sid, s => { const d = segDueno(s, oid); if (!d) return false; d.docs = (d.docs || []).filter(x => x.id !== did); }, false);
+}
+// Marca los documentos cuyo fichero no está en este dispositivo
+async function segMarcarDocs() {
+  const els = document.querySelectorAll('#view-seguros [data-docid]');
+  if (!els.length) return;
+  let keys = [];
+  try { keys = (await segDocKeys()).map(String); } catch (e) { return; }
+  els.forEach(el => {
+    if (keys.includes(el.dataset.docid)) return;
+    el.disabled = true;
+    el.textContent = '📵 En otro dispositivo';
+    el.title = 'Se adjuntó en otro dispositivo; los ficheros no se sincronizan. Usa un enlace (Drive) para verlo en todos.';
+  });
+}
+
+// ── Pintado ─────────────────────────────────────────────────────────────────
+const segOpcFrec = sel => Object.keys(FREC_MESES).map(f =>
+  `<option value="${f}" ${f === (sel || 'anual') ? 'selected' : ''}>${f.charAt(0).toUpperCase() + f.slice(1)}</option>`).join('');
+const segCampo = (label, html) => `<div class="form-group"><label>${label}</label>${html}</div>`;
+// Cómo se ve el valor de una cobertura
+function segCobTxt(c) {
+  if (!c) return '<span class="seg-no">✗ No incluida</span>';
+  const v = (c.valor || '').trim();
+  if (!v) return '<span class="pos">✓ Incluida</span>';
+  if (v === '?') return '<span class="neu">¿? Por revisar</span>';
+  if (/^no\b/i.test(segNorm(v))) return `<span class="seg-no">✗ ${REsc(v)}</span>`;
+  return `✓ ${REsc(v)}`;
+}
+function segCobHTML(sid, oid, lista) {
+  const p = oid ? `sg-oc-${oid}` : `sg-c-${sid}`;
+  const o = oid ? `, ${oid}` : ', null';
+  return `
+    ${(lista || []).length ? (lista || []).map(c => `
+      <div class="gasto-row">
+        <div class="gasto-info"><div class="gasto-nombre">${REsc(c.nombre)}</div></div>
+        <input class="seg-cob-val" id="sg-cv-${c.id}" value="${REsc(c.valor || '')}" placeholder="Incluida"
+               title="Vacío = incluida · «No» = no incluida · o el límite / franquicia (ej: 300 €)"
+               onchange="segCobValor(${sid}${o}, ${c.id}, this.value)" />
+        <button class="btn-del-gasto" onclick="segCobBorrar(${sid}${o}, ${c.id})" title="Quitar">🗑️</button>
+      </div>`).join('') : '<div class="seg-vacio">Sin coberturas apuntadas.</div>'}
+    <div class="seg-form">
+      ${segCampo('Cobertura', `<input id="${p}-nombre" list="seg-cob-lista" placeholder="ej: Rotura de lunas" />`)}
+      ${segCampo('Detalle (opcional)', `<input id="${p}-valor" placeholder="Incluida / No / 300 €" />`)}
+      <button class="btn-mini" onclick="segCobAnadir(${sid}${o})">+ Añadir cobertura</button>
+    </div>`;
+}
+function segDocsHTML(sid, oid, docs) {
+  const k = oid || sid;
+  const o = oid ? `, ${oid}` : ', null';
+  return `
+    ${(docs || []).length ? docs.map(d => `
+      <div class="gasto-row">
+        <div class="gasto-info">
+          <div class="gasto-nombre">${d.url ? '🔗' : '📄'} ${REsc(d.nombre)}</div>
+          <div class="gasto-fecha">${[d.compania, d.fecha ? fmtFecha(parseFecha(d.fecha)) : '', d.tam ? (d.tam / 1048576).toFixed(1).replace('.', ',') + ' MB' : '', d.url ? 'enlace' : 'guardado en el dispositivo'].filter(Boolean).map(REsc).join(' · ')}</div>
+        </div>
+        ${d.url ? `<a class="btn-mini" href="${REsc(d.url)}" target="_blank" rel="noopener">Abrir</a>`
+                : `<button class="btn-mini" data-docid="${d.id}" onclick="segAbrirDoc(${d.id})">Abrir</button>`}
+        <button class="btn-del-gasto" onclick="segDocBorrar(${sid}${o}, ${d.id})" title="Quitar">🗑️</button>
+      </div>`).join('') : '<div class="seg-vacio">Sin documentos.</div>'}
+    <div class="seg-form">
+      <label class="btn-mini seg-file">📎 Adjuntar PDF o foto
+        <input type="file" accept="application/pdf,image/*" multiple onchange="segAdjuntar(${sid}${o}, this)" />
+      </label>
+    </div>
+    <div class="seg-form">
+      ${segCampo('O pega un enlace (Drive…)', `<input id="sg-dl-${k}-url" placeholder="https://drive.google.com/…" />`)}
+      ${segCampo('Nombre', `<input id="sg-dl-${k}-nombre" placeholder="ej: Condiciones póliza" />`)}
+      <button class="btn-mini" onclick="segEnlace(${sid}${o})">+ Añadir enlace</button>
+    </div>`;
+}
+// Tabla comparativa: póliza actual frente a cada oferta
+function segComparativaHTML(s, act) {
+  if (!s.ofertas.length) return '';
+  const cols = [{ titulo: `Actual · ${act.compania || '—'}`, cob: s.coberturas, anual: segAnual(act) },
+                ...s.ofertas.map(o => ({ titulo: o.compania || 'Oferta', cob: o.coberturas || [], anual: segAnual(o) }))];
+  const nombres = [];
+  for (const c of cols) for (const x of c.cob) if (!nombres.some(n => segNorm(n) === segNorm(x.nombre))) nombres.push(x.nombre);
+  const busca = (c, n) => c.cob.find(x => segNorm(x.nombre) === segNorm(n));
+  return `
+    <div class="seg-bloque">
+      <div class="seg-bloque-title">⚖️ Comparativa</div>
+      <div class="seg-scroll">
+        <table class="inv-table seg-cmp">
+          <thead><tr><th>Cobertura</th>${cols.map(c => `<th>${REsc(c.titulo)}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${nombres.map(n => {
+              const txt = cols.map(c => segCobTxt(busca(c, n)));
+              return `<tr${new Set(txt).size > 1 ? ' class="seg-cmp-dif" title="Hay diferencias en esta cobertura"' : ''}><td>${REsc(n)}</td>${txt.map(t => `<td>${t}</td>`).join('')}</tr>`;
+            }).join('')}
+            <tr class="seg-cmp-total"><td>Coste anual</td>${cols.map(c => `<td><span class="private">${fmt(c.anual, 2)}</span></td>`).join('')}</tr>
+            <tr><td>Diferencia / año</td>${cols.map((c, i) => {
+              if (!i) return '<td>—</td>';
+              const d = c.anual - cols[0].anual;
+              return `<td class="${d < 0 ? 'pos' : d > 0 ? 'neg' : ''}"><span class="private">${segDif(d)}</span></td>`;
+            }).join('')}</tr>
+          </tbody>
+        </table>
+      </div>
+      ${nombres.length ? '' : '<div class="seg-vacio">Apunta coberturas en la póliza y en las ofertas para compararlas aquí.</div>'}
+    </div>`;
+}
+function segTarjetaHTML(s, todos) {
+  const sid = s.id;
+  const act = segActual(s) || { prima: 0, frecuencia: 'anual', compania: '' };
+  const tramos = segTramos(s);
+  const sinFecha = s.historial.filter(h => !parseFecha(h.desde));
+  const ren = segRenovacion(s);
+  const pag = segPagado(s);
+  const hoy = startOfDay(new Date());
+  const prox = segCargos(s, hoy, new Date(2100, 0, 1))[0];
+  // Variación del precio vigente frente al anterior (un cambio futuro ya registrado se ve en la tabla)
+  const ult = tramos[tramos.length - 1];
+  const iVig = tramos.findIndex(t => t.h === act), pen = iVig > 0 ? tramos[iVig - 1] : null;
+  const varUlt = pen && segAnual(pen.h) ? (segAnual(act) - segAnual(pen.h)) / segAnual(pen.h) * 100 : null;
+  const mejor = s.ofertas.length ? s.ofertas.reduce((m, o) => segAnual(o) < segAnual(m) ? o : m) : null;
+  const ahorroMejor = mejor ? segAnual(act) - segAnual(mejor) : 0;
+  const ed = SEG_UI.editH && SEG_UI.editH.sid === sid ? s.historial.find(h => h.id === SEG_UI.editH.hid) : null;
+  const defH = ed || { desde: ren && !ren.futuro ? toISO(ren.fecha) : toISO(hoy), compania: act.compania, prima: '', frecuencia: act.frecuencia };
+  const primero = tramos[0];
+
+  return `
+  <details class="seg-card" ${SEG_UI.abiertos.has(sid) ? 'open' : ''} ontoggle="segToggle(${sid}, this.open)">
+    <summary>
+      <div>
+        <div class="seg-nombre">🛡️ ${REsc(s.nombre)}</div>
+        <div class="seg-meta">${REsc(act.compania || 'Sin compañía')} · <span class="private">${fmt(RNUM(act.prima), 2)}</span> ${act.frecuencia || 'anual'}
+          · <span class="private">${fmt(segAnual(act), 2)}</span>/año${prox ? ' · próximo recibo ' + fmtFecha(prox.fecha) : ''}</div>
+      </div>
+      <div class="seg-badges">
+        ${varUlt != null ? `<span class="badge ${varUlt > 0 ? 'neg' : varUlt < 0 ? 'pos' : ''}">${varUlt > 0 ? '▲' : varUlt < 0 ? '▼' : '='} ${segPct(varUlt)}</span>` : ''}
+        ${ren && ren.pendiente ? '<span class="badge neu">⚠️ Renovación sin precio</span>' : ''}
+        ${mejor ? `<span class="badge ${ahorroMejor > 0 ? 'pos' : ''}">${s.ofertas.length} oferta${s.ofertas.length > 1 ? 's' : ''}${ahorroMejor > 0 ? ' · ahorro ' + fmt(ahorroMejor) : ''}</span>` : ''}
+      </div>
+    </summary>
+    <div class="seg-body">
+      ${ren && ren.pendiente ? `<div class="seg-aviso">⚠️ Renovó el ${fmtFecha(ren.fecha)} y no has apuntado el nuevo importe: se está suponiendo el mismo precio. Regístralo abajo en «Nuevo precio».</div>` : ''}
+
+      <div class="seg-bloque">
+        <div class="seg-bloque-title">📈 Historial de precios
+          <span class="seg-hint">Pagado hasta hoy: <span class="private">${fmt(pag.total, 2)}</span> (${pag.n} recibo${pag.n === 1 ? '' : 's'})</span></div>
+        <div class="seg-scroll">
+          <table class="inv-table">
+            <thead><tr><th>Desde</th><th>Compañía</th><th>Recibo</th><th>Coste anual</th><th>Variación</th><th></th></tr></thead>
+            <tbody>
+              ${[...sinFecha.map(h => ({ h, ini: null })), ...tramos].map((t, i, arr) => {
+                const prev = i > 0 && arr[i - 1].ini ? arr[i - 1].h : null;
+                const dif = prev && t.ini ? segAnual(t.h) - segAnual(prev) : null;
+                const pct = dif != null && segAnual(prev) ? dif / segAnual(prev) * 100 : null;
+                const cambio = prev && segNorm(prev.compania) !== segNorm(t.h.compania);
+                const vigente = t.h === act;
+                return `<tr${vigente ? ' class="seg-vigente"' : ''}>
+                  <td>${t.ini ? fmtFecha(t.ini) : '<span class="neu">sin fecha</span>'}${vigente ? ' <span class="badge pos">vigente</span>' : ''}</td>
+                  <td>${REsc(t.h.compania || '—')}${cambio ? ' <span class="seg-hint">(cambio)</span>' : ''}</td>
+                  <td><span class="private">${fmt(RNUM(t.h.prima), 2)}</span> <span class="seg-hint">${t.h.frecuencia || 'anual'}</span></td>
+                  <td><span class="private">${fmt(segAnual(t.h), 2)}</span></td>
+                  <td class="${dif > 0 ? 'neg' : dif < 0 ? 'pos' : ''}">${dif != null ? `<span class="private">${segDif(dif)}</span>${pct != null ? ' (' + segPct(pct) + ')' : ''}` : '—'}</td>
+                  <td style="white-space:nowrap">
+                    <button class="btn-del-gasto" onclick="segEditarPrecio(${sid}, ${t.h.id})" title="Corregir">✏️</button>
+                    <button class="btn-del-gasto" onclick="segBorrarPrecio(${sid}, ${t.h.id})" title="Eliminar">🗑️</button>
+                  </td></tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${primero && ult && primero !== ult && segAnual(primero.h) ? `<div class="seg-hint" style="margin-top:8px">Desde ${fmtFecha(primero.ini)}: <span class="private">${segDif(segAnual(ult.h) - segAnual(primero.h))}</span>/año (${segPct((segAnual(ult.h) - segAnual(primero.h)) / segAnual(primero.h) * 100)})</div>` : ''}
+        <div class="seg-subform ${ed ? 'editando' : ''}">
+          <div class="seg-subform-title">${ed ? '✏️ Corrigiendo el precio del ' + (parseFecha(ed.desde) ? fmtFecha(parseFecha(ed.desde)) : 'registro sin fecha') : '➕ Nuevo precio (renovación o cambio)'}</div>
+          <div class="seg-form">
+            ${segCampo('Desde', `<input id="sg-h-${sid}-desde" type="date" value="${REsc(defH.desde)}" />`)}
+            ${segCampo('Compañía', `<input id="sg-h-${sid}-compania" value="${REsc(defH.compania || '')}" />`)}
+            ${segCampo('Importe recibo (€)', `<input id="sg-h-${sid}-prima" type="number" step="any" min="0" value="${REsc(defH.prima)}" placeholder="ej: 905" />`)}
+            ${segCampo('Frecuencia', `<select id="sg-h-${sid}-frecuencia">${segOpcFrec(defH.frecuencia)}</select>`)}
+            <button class="btn-save" onclick="segGuardarPrecio(${sid})">${ed ? '💾 Guardar' : '+ Registrar'}</button>
+            ${ed ? '<button class="btn-reset" onclick="segCancelarPrecio()">Cancelar</button>' : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="seg-bloque">
+        <div class="seg-bloque-title">✅ Coberturas de la póliza actual
+          <span class="seg-acc">
+            <select id="sg-ct-${sid}" class="seg-sel"><option value="">Rellenar típicas de…</option>${Object.keys(SEG_COB_TIPICAS).map(t => `<option value="${t}">${t}</option>`).join('')}</select>
+            <button class="btn-mini" onclick="segCobTipicas(${sid})">Añadir</button>
+          </span></div>
+        <div class="seg-hint" style="margin-bottom:8px">En cada cobertura escribe el detalle: vacío = incluida, «No» = no incluida, o el límite / franquicia.</div>
+        ${segCobHTML(sid, null, s.coberturas)}
+      </div>
+
+      <div class="seg-bloque">
+        <div class="seg-bloque-title">📄 Documentos de la póliza</div>
+        ${segDocsHTML(sid, null, s.docs)}
+      </div>
+
+      <div class="seg-bloque">
+        <div class="seg-bloque-title">💬 Ofertas de otras compañías</div>
+        ${s.ofertas.map(o => {
+          const dif = segAnual(o) - segAnual(act);
+          const pct = segAnual(act) ? dif / segAnual(act) * 100 : 0;
+          return `
+          <details class="seg-oferta" ${SEG_UI.abiertos.has(o.id) ? 'open' : ''} ontoggle="segToggle(${o.id}, this.open)">
+            <summary>
+              <span><b>${REsc(o.compania || 'Oferta')}</b> · <span class="private">${fmt(segAnual(o), 2)}</span>/año${o.fecha ? ' · ' + fmtFecha(parseFecha(o.fecha)) : ''}</span>
+              <span class="badge ${dif < 0 ? 'pos' : dif > 0 ? 'neg' : ''}">${dif < 0 ? 'Ahorras' : dif > 0 ? 'Cuesta más' : 'Igual'} <span class="private">${fmt(Math.abs(dif), 2)}</span>/año (${segPct(pct)})</span>
+            </summary>
+            <div class="seg-form">
+              ${segCampo('Compañía', `<input id="sg-oe-${o.id}-compania" value="${REsc(o.compania)}" onchange="segOfertaCampo(${sid}, ${o.id}, 'compania', this.value)" />`)}
+              ${segCampo('Importe recibo (€)', `<input id="sg-oe-${o.id}-prima" type="number" step="any" min="0" value="${RNUM(o.prima)}" onchange="segOfertaCampo(${sid}, ${o.id}, 'prima', this.value)" />`)}
+              ${segCampo('Frecuencia', `<select id="sg-oe-${o.id}-frecuencia" onchange="segOfertaCampo(${sid}, ${o.id}, 'frecuencia', this.value)">${segOpcFrec(o.frecuencia)}</select>`)}
+              ${segCampo('Fecha oferta', `<input id="sg-oe-${o.id}-fecha" type="date" value="${REsc(o.fecha || '')}" onchange="segOfertaCampo(${sid}, ${o.id}, 'fecha', this.value)" />`)}
+            </div>
+            <div class="seg-form seg-form-1">
+              ${segCampo('Notas', `<input id="sg-oe-${o.id}-notas" value="${REsc(o.notas || '')}" placeholder="ej: mediador, condiciones, permanencia…" onchange="segOfertaCampo(${sid}, ${o.id}, 'notas', this.value)" />`)}
+            </div>
+            <div class="seg-subtitulo">Coberturas de la oferta
+              ${s.coberturas.length ? `<button class="btn-mini" onclick="segCobCopiar(${sid}, ${o.id})">Copiar lista de la póliza actual</button>` : ''}</div>
+            ${segCobHTML(sid, o.id, o.coberturas)}
+            <div class="seg-subtitulo">Documentos de la oferta</div>
+            ${segDocsHTML(sid, o.id, o.docs)}
+            <div class="seg-form seg-contratar">
+              ${segCampo('Me cambio desde', `<input id="sg-ok-${o.id}-fecha" type="date" value="${ren ? toISO(ren.fecha) : toISO(hoy)}" />`)}
+              <button class="btn-save" onclick="segOfertaContratar(${sid}, ${o.id})">✅ Contratar esta oferta</button>
+              <button class="btn-reset" onclick="segOfertaBorrar(${sid}, ${o.id})">🗑️ Eliminar oferta</button>
+            </div>
+          </details>`;
+        }).join('')}
+        <div class="seg-subform">
+          <div class="seg-subform-title">➕ Apuntar una oferta</div>
+          <div class="seg-form">
+            ${segCampo('Compañía', `<input id="sg-o-${sid}-compania" placeholder="ej: Línea Directa" />`)}
+            ${segCampo('Importe recibo (€)', `<input id="sg-o-${sid}-prima" type="number" step="any" min="0" placeholder="ej: 760" />`)}
+            ${segCampo('Frecuencia', `<select id="sg-o-${sid}-frecuencia">${segOpcFrec(act.frecuencia)}</select>`)}
+            ${segCampo('Fecha oferta', `<input id="sg-o-${sid}-fecha" type="date" value="${toISO(hoy)}" />`)}
+            ${segCampo('Notas', `<input id="sg-o-${sid}-notas" placeholder="opcional" />`)}
+            <button class="btn-save" onclick="segOfertaNueva(${sid})">+ Añadir oferta</button>
+          </div>
+        </div>
+      </div>
+
+      ${segComparativaHTML(s, act)}
+
+      <div class="seg-pie">
+        <button class="btn-mini" onclick="segRenombrar(${sid})">✏️ Renombrar</button>
+        ${todos.length > 1 ? `<span class="seg-acc">
+          <select id="sg-u-${sid}" class="seg-sel"><option value="">Unir con…</option>${todos.filter(x => x.id !== sid).map(x => `<option value="${x.id}">${REsc(x.nombre)}</option>`).join('')}</select>
+          <button class="btn-mini" onclick="segUnir(${sid})">🔗 Unir aquí</button></span>` : ''}
+        <button class="btn-reset" onclick="segBorrar(${sid})">🗑️ Eliminar seguro</button>
+      </div>
+    </div>
+  </details>`;
+}
+function segToggle(sid, abierto) { if (abierto) SEG_UI.abiertos.add(sid); else SEG_UI.abiertos.delete(sid); }
+function segCerrarAviso() { SEG_UI.aviso = null; renderSeccionesNuevas(); }
+
+function renderSeguros() {
+  const el = document.getElementById('view-seguros');
+  if (!el) return;
+  const items = regLoad('seguros').filter(s => Array.isArray(s.historial));
+  if (SEG_UI.editH && !items.some(s => s.id === SEG_UI.editH.sid && s.historial.some(h => h.id === SEG_UI.editH.hid))) SEG_UI.editH = null;
+  const hoy = startOfDay(new Date()), haceUnAno = sumarMeses(hoy, -12);
+  const anual = items.reduce((a, s) => a + (segTramoEn(s) ? segAnual(segTramoEn(s).h) : 0), 0);
+  const pagado = items.reduce((a, s) => a + segPagado(s).total, 0);
+  // Variación frente a hace un año (solo seguros que ya existían entonces)
+  let antes = 0, ahora = 0;
+  for (const s of items) {
+    const a = segTramoEn(s, haceUnAno), b = segTramoEn(s);
+    if (a && b) { antes += segAnual(a.h); ahora += segAnual(b.h); }
+  }
+  const varAno = antes ? (ahora - antes) / antes * 100 : null;
+  const avisos = items.map(s => ({ s, r: segRenovacion(s) }))
+    .filter(x => x.r && !x.r.futuro && (x.r.pendiente || x.r.dias <= 45))
+    .sort((a, b) => a.r.fecha - b.r.fecha);
+  const nuevoH = { desde: toISO(hoy) };
+
+  el.innerHTML = `
+    <div class="section-title">🛡️ Seguros</div>
+    <div class="section-sub">Una ficha por seguro: historial de precios, coberturas, documentos y ofertas de otras compañías</div>
+    ${SEG_UI.aviso ? `<div class="seg-aviso info">ℹ️ ${REsc(SEG_UI.aviso)} <button class="btn-mini" onclick="segCerrarAviso()">Entendido</button></div>` : ''}
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Seguros</div><div class="stat-value">${items.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Coste anual actual</div><div class="stat-value"><span class="private">${fmt(anual)}</span></div></div>
+      <div class="stat-card" style="--accent-line:${varAno > 0 ? 'var(--red)' : 'var(--green)'}"><div class="stat-label">Vs. hace un año</div>
+        <div class="stat-value ${varAno > 0 ? 'neg' : varAno < 0 ? 'pos' : ''}">${varAno != null ? segPct(varAno) : '—'}</div>
+        <div class="stat-sub">${varAno != null ? `<span class="private">${segDif(ahora - antes)}</span>/año` : 'aún sin historial de un año'}</div></div>
+      <div class="stat-card"><div class="stat-label">Pagado hasta hoy</div><div class="stat-value"><span class="private">${fmt(pagado)}</span></div></div>
+    </div>
+    ${avisos.map(({ s, r }) => `<div class="seg-aviso">${r.pendiente
+        ? `⚠️ <b>${REsc(s.nombre)}</b> renovó el ${fmtFecha(r.fecha)}: apunta el nuevo importe para ver cuánto ha subido.`
+        : `🔔 <b>${REsc(s.nombre)}</b> renueva el ${fmtFecha(r.fecha)} (en ${r.dias} día${r.dias === 1 ? '' : 's'}): buen momento para pedir ofertas.`}</div>`).join('')}
+    <datalist id="seg-cob-lista">${[...new Set(Object.values(SEG_COB_TIPICAS).flat())].map(n => `<option value="${REsc(n)}">`).join('')}</datalist>
+    ${items.map(s => segTarjetaHTML(s, items)).join('') || '<div class="chart-card" style="margin-bottom:16px"><div class="section-sub" style="margin:0">Todavía no hay seguros.</div></div>'}
+    <div class="update-form" style="margin-top:20px">
+      <div class="update-form-title">Añadir seguro</div>
+      <div class="update-form-sub">Un seguro = una ficha. Cuando renueve o cambie de precio no crees otro: ábrelo y usa «Nuevo precio». Los recibos se cuentan solos según la frecuencia.</div>
+      <div class="form-grid">
+        ${segCampo('Nombre', '<input id="sg-new-nombre" placeholder="ej: BMW M2C, Hogar Galdós…" />')}
+        ${segCampo('Compañía', '<input id="sg-new-compania" placeholder="ej: Mapfre" />')}
+        ${segCampo('Importe del recibo (€)', '<input id="sg-new-prima" type="number" step="any" min="0" placeholder="ej: 820" />')}
+        ${segCampo('Frecuencia', `<select id="sg-new-frecuencia">${segOpcFrec('anual')}</select>`)}
+        ${segCampo('Fecha del recibo', `<input id="sg-new-desde" type="date" value="${nuevoH.desde}" />`)}
+      </div>
+      <div class="form-actions"><button class="btn-save" onclick="segNuevo()">+ Añadir seguro</button></div>
     </div>`;
 }
 
@@ -4110,11 +4847,66 @@ function renderPatrimonio() {
 }
 
 // ── Pintado global de las secciones nuevas ──────────────────────────────────
+// Lee lo que hay escrito en los formularios antes de repintar, para no perderlo
+// (solo los campos que el usuario ha cambiado respecto a lo pintado; así un cambio que llega
+// del otro dispositivo sí se ve en los campos que no se han tocado)
+const VISTAS_REG = ['hipotecas', 'seguros', 'tarjetas'];
+function campoModificado(el) {
+  if (el.type === 'file') return false;
+  if (el.tagName === 'SELECT') {
+    let def = [...el.options].findIndex(o => o.defaultSelected);
+    if (def < 0) def = 0;
+    return el.selectedIndex !== def;
+  }
+  return el.value !== el.defaultValue;
+}
+function capturarBorradores() {
+  const borr = { vals: {} };
+  const dentro = el => VISTAS_REG.some(sec => el.closest('#view-' + sec));
+  for (const sec of VISTAS_REG) {
+    document.querySelectorAll(`#view-${sec} input[id], #view-${sec} select[id], #view-${sec} textarea[id]`)
+      .forEach(el => { if (campoModificado(el)) borr.vals[el.id] = el.value; });
+  }
+  const a = document.activeElement;
+  if (a && a.id && dentro(a)) {
+    let sel = null;
+    try { sel = [a.selectionStart, a.selectionEnd]; } catch (e) {}
+    borr._foco = { id: a.id, sel };
+  }
+  return borr;
+}
+function restaurarBorradores(borr) {
+  for (const id in (borr.vals || {})) {
+    const el = document.getElementById(id);
+    if (el && el.type !== 'file') el.value = borr.vals[id];
+  }
+  if (borr._foco) {
+    const el = document.getElementById(borr._foco.id);
+    if (el) {
+      el.focus({ preventScroll: true });
+      if (borr._foco.sel && borr._foco.sel[0] != null) {
+        try { el.setSelectionRange(borr._foco.sel[0], borr._foco.sel[1]); } catch (e) {}
+      }
+    }
+  }
+}
+
 function renderSeccionesNuevas() {
+  const borr = REG_FORM_RESET ? { vals: {} } : capturarBorradores();
+  REG_FORM_RESET = false;
+  segMigrar();
+  // Si el registro que se editaba se borró (p. ej. desde el otro dispositivo), salir de la edición
+  if (REG_EDIT && !regLoad(REG_EDIT.sec).some(x => x.id === REG_EDIT.id)) {
+    for (const id in borr.vals) if (id.startsWith(`r-${REG_EDIT.sec}-`)) delete borr.vals[id];
+    REG_EDIT = null;
+  }
   renderRegistro('hipotecas');
-  renderRegistro('seguros');
+  renderSeguros();
   renderRegistro('tarjetas');
-  if (REG_EDIT) rellenarFormulario(REG_EDIT.sec);
+  // Al empezar a editar se cargan los datos guardados; en los demás repintados, lo escrito
+  if (REG_EDIT && !Object.keys(borr.vals).some(id => id.startsWith(`r-${REG_EDIT.sec}-`))) rellenarFormulario(REG_EDIT.sec);
+  restaurarBorradores(borr);
+  segMarcarDocs();
   renderVencimientos();
   renderPatrimonio();
 }
