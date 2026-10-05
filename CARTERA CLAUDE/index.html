@@ -4060,6 +4060,18 @@ function renderRegistro(sec) {
 // Cada recibo se calcula solo con el precio del tramo en vigor en su fecha.
 
 const segNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+// Nombre "esencial" de una compañía, sin la forma jurídica: «ALLIANZ SEGUROS Y REASEGUROS, S.A.» → «allianz»
+const SEG_PALABRAS_JURIDICAS = new Set(['seguros', 'seguro', 'reaseguros', 'reaseguro', 'y', 'de', 'la', 'el', 'del',
+  'sa', 'sau', 's', 'a', 'u', 'sl', 'slu', 'cia', 'compania', 'sociedad', 'anonima', 'grupo', 'espana',
+  'aseguradora', 'aseguradoras']);
+const segCompaniaClave = c => segNorm(c).replace(/[^a-z0-9 ]+/g, ' ').split(' ')
+  .filter(p => p && !SEG_PALABRAS_JURIDICAS.has(p)).join(' ');
+// Misma compañía aunque esté escrita distinto (una abreviada y otra con la razón social completa)
+function segMismaCompania(a, b) {
+  const x = segCompaniaClave(a), y = segCompaniaClave(b);
+  if (!x || !y) return segNorm(a) === segNorm(b);
+  return x === y || x.startsWith(y + ' ') || y.startsWith(x + ' ');
+}
 let _segUltId = 0;
 const segId = () => (_segUltId = Math.max(Date.now(), _segUltId + 1));
 const segAnual = h => RNUM(h.prima) * 12 / (FREC_MESES[h.frecuencia] || 12);
@@ -4586,7 +4598,7 @@ function segTarjetaHTML(s, todos) {
                 const prev = i > 0 && arr[i - 1].ini ? arr[i - 1].h : null;
                 const dif = prev && t.ini ? segAnual(t.h) - segAnual(prev) : null;
                 const pct = dif != null && segAnual(prev) ? dif / segAnual(prev) * 100 : null;
-                const cambio = prev && segNorm(prev.compania) !== segNorm(t.h.compania);
+                const cambio = prev && !segMismaCompania(prev.compania, t.h.compania);
                 const vigente = t.h === act;
                 return `<tr${vigente ? ' class="seg-vigente"' : ''}>
                   <td>${t.ini ? fmtFecha(t.ini) : '<span class="neu">sin fecha</span>'}${vigente ? ' <span class="badge pos">vigente</span>' : ''}</td>
