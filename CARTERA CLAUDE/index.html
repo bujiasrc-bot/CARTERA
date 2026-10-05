@@ -3901,21 +3901,58 @@ function regSave(sec, items) {
   localStorage.setItem(REG_CONFIG[sec].key, JSON.stringify(items));
   renderSeccionesNuevas();
 }
+// Registro que se está editando (null = modo añadir). Sobrevive a los repintados.
+let REG_EDIT = null;   // { sec, id }
+
+// Guarda el formulario: añade un registro nuevo o actualiza el que se está editando
 function addRegistro(sec) {
   const cfg = REG_CONFIG[sec];
-  const r = { id: Date.now() };
+  const r = {};
   for (const c of cfg.campos) {
     const v = (document.getElementById(`r-${sec}-${c.k}`) || {}).value || '';
     r[c.k] = c.tipo === 'number' ? RNUM(v) : v.trim();
   }
   if (!r.nombre) { showDatosSaved('⚠️ Escribe un nombre'); return; }
   const items = regLoad(sec);
-  items.push(r);
-  regSave(sec, items);
-  showDatosSaved('Añadido ✓');
+  if (REG_EDIT && REG_EDIT.sec === sec) {
+    r.id = REG_EDIT.id;
+    const i = items.findIndex(x => x.id === REG_EDIT.id);
+    if (i >= 0) items[i] = r; else items.push(r);
+    REG_EDIT = null;
+    regSave(sec, items);
+    showDatosSaved('Cambios guardados ✓');
+  } else {
+    r.id = Date.now();
+    items.push(r);
+    regSave(sec, items);
+    showDatosSaved('Añadido ✓');
+  }
 }
+
+// Carga un registro en el formulario para corregirlo
+function editRegistro(sec, id) {
+  REG_EDIT = { sec, id };
+  renderSeccionesNuevas();
+  const form = document.querySelector('#view-' + sec + ' .update-form');
+  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function cancelarEdicion(sec) {
+  REG_EDIT = null;
+  renderSeccionesNuevas();
+}
+// Rellena los campos del formulario con los valores del registro que se edita
+function rellenarFormulario(sec) {
+  const rec = regLoad(sec).find(x => x.id === REG_EDIT.id);
+  if (!rec) { REG_EDIT = null; return; }
+  for (const c of REG_CONFIG[sec].campos) {
+    const el = document.getElementById(`r-${sec}-${c.k}`);
+    if (el) el.value = rec[c.k] != null ? rec[c.k] : '';
+  }
+}
+
 function delRegistro(sec, id) {
   if (!confirm('¿Eliminar este registro?')) return;
+  if (REG_EDIT && REG_EDIT.id === id) REG_EDIT = null;
   regSave(sec, regLoad(sec).filter(r => r.id !== id));
 }
 
@@ -3935,8 +3972,8 @@ function renderRegistro(sec) {
           <div class="stat-value"><span class="private">${v}</span></div>
         </div>`).join('')}
     </div>
-    <div class="update-form">
-      <div class="update-form-title">Añadir ${cfg.singular}</div>
+    <div class="update-form" ${REG_EDIT && REG_EDIT.sec === sec ? 'style="border-color:var(--accent)"' : ''}>
+      <div class="update-form-title">${REG_EDIT && REG_EDIT.sec === sec ? '✏️ Editando ' + cfg.singular : 'Añadir ' + cfg.singular}</div>
       <div class="update-form-sub">${cfg.ayuda}</div>
       <div class="form-grid">
         ${cfg.campos.map(c => `
@@ -3948,7 +3985,10 @@ function renderRegistro(sec) {
           </div>`).join('')}
       </div>
       <div class="form-actions">
-        <button class="btn-save" onclick="addRegistro('${sec}')">+ Añadir ${cfg.singular}</button>
+        ${REG_EDIT && REG_EDIT.sec === sec
+          ? `<button class="btn-save" onclick="addRegistro('${sec}')">💾 Guardar cambios</button>
+             <button class="btn-reset" onclick="cancelarEdicion('${sec}')">Cancelar</button>`
+          : `<button class="btn-save" onclick="addRegistro('${sec}')">+ Añadir ${cfg.singular}</button>`}
       </div>
     </div>
     <div class="chart-card">
@@ -3959,6 +3999,7 @@ function renderRegistro(sec) {
             <div class="gasto-nombre">${cfg.icono} ${REsc(r.nombre)}${r.banco || r.compania ? ' · ' + REsc(r.banco || r.compania) : ''}</div>
             <div class="gasto-fecha">${cfg.resumen(r).map(([l, v]) => `${l}: <span class="private">${REsc(v)}</span>`).join(' · ')}</div>
           </div>
+          <button class="btn-del-gasto" onclick="editRegistro('${sec}', ${r.id})" title="Editar">✏️</button>
           <button class="btn-del-gasto" onclick="delRegistro('${sec}', ${r.id})" title="Eliminar">🗑️</button>
         </div>`).join('') : '<div class="section-sub" style="margin:0">Todavía no hay registros.</div>'}
     </div>`;
@@ -4073,6 +4114,7 @@ function renderSeccionesNuevas() {
   renderRegistro('hipotecas');
   renderRegistro('seguros');
   renderRegistro('tarjetas');
+  if (REG_EDIT) rellenarFormulario(REG_EDIT.sec);
   renderVencimientos();
   renderPatrimonio();
 }
