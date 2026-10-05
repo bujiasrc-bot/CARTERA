@@ -88,6 +88,32 @@ body {
 }
 .nav-btn:hover { color: var(--text); }
 .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* Secciones principales (nivel 1) */
+.nav-sec {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted);
+  font-family: 'Syne', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 16px 12px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.nav-sec:hover { color: var(--text); }
+.nav-sec.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* Subpestañas (nivel 2) */
+.subnav {
+  display: none;
+  position: sticky; top: 49px; z-index: 99;
+  background: rgba(12,12,16,0.92);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  gap: 4px;
+  overflow-x: auto;
+}
+.subnav.visible { display: flex; }
+.subnav .nav-btn { padding: 12px 12px; font-size: 11px; }
 
 /* PAGES */
 .page { display: none; padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
@@ -433,6 +459,16 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()" title="Modo privado">👁</button>
   <button class="btn-privacy" id="btn-sync" onclick="toggleSync()" title="Sincronizar entre dispositivos">☁️</button>
   <button class="btn-privacy" id="btn-efectivo-toggle" onclick="toggleEfectivoVisible()" title="Efectivo">🗄️</button>
+  <button class="nav-sec active" data-sec="inversion" onclick="showSection('inversion')">📈 Inversión</button>
+  <button class="nav-sec" data-sec="hipotecas" onclick="showSection('hipotecas')">🏦 Hipotecas</button>
+  <button class="nav-sec" data-sec="seguros" onclick="showSection('seguros')">🛡️ Seguros</button>
+  <button class="nav-sec" data-sec="tarjetas" onclick="showSection('tarjetas')">💳 Tarjetas</button>
+  <button class="nav-sec" data-sec="vencimientos" onclick="showSection('vencimientos')">📅 Vencimientos</button>
+  <button class="nav-sec" data-sec="patrimonio" onclick="showSection('patrimonio')">🧾 Patrimonio</button>
+  <button class="nav-sec" data-sec="datos" onclick="showSection('datos')">✏️ Datos</button>
+</nav>
+<!-- Subpestañas de Inversión (las demás secciones no tienen subpestañas) -->
+<div class="subnav visible" id="subnav-inversion">
   <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
   <button class="nav-btn" onclick="showPage('inmuebles')">Inmuebles</button>
   <button class="nav-btn" onclick="showPage('bestinver')">Bestinver</button>
@@ -442,8 +478,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <button class="nav-btn" onclick="showPage('bbva')">BBVA PP</button>
   <button class="nav-btn" onclick="showPage('myinvestor')">MyInvestor</button>
   <button class="nav-btn" id="nav-btn-efectivo" style="display:none" onclick="showPage('efectivo')">Efectivo</button>
-  <button class="nav-btn" style="color:var(--accent);border-bottom:2px solid transparent" onclick="showPage('datos')">✏️ Datos</button>
-</nav>
+</div>
 
 <!-- ═══════════════════ DATOS ═══════════════════ -->
 <div id="page-datos" class="page">
@@ -1259,6 +1294,13 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     <button class="btn-reset" onclick="toggleEfectivoVisible()">🙈 Ocultar esta pestaña</button>
   </div>
 </div>
+
+<!-- ═══════════════════ SECCIONES NUEVAS (contenido generado por JS) ═══════════════════ -->
+<div id="page-hipotecas" class="page"><div id="view-hipotecas"></div></div>
+<div id="page-seguros" class="page"><div id="view-seguros"></div></div>
+<div id="page-tarjetas" class="page"><div id="view-tarjetas"></div></div>
+<div id="page-vencimientos" class="page"><div id="view-vencimientos"></div></div>
+<div id="page-patrimonio" class="page"><div id="view-patrimonio"></div></div>
 
 <script>
 // ─── DATOS BASE (valores de compra fijos) ───────────────────────────────────
@@ -3522,6 +3564,9 @@ backfillBolsaHist();
     'cartera_gastos_ext_v1',
     'cartera_best_aport_v1',
     'cartera_efectivo_v1',
+    'cartera_hipotecas_v1',
+    'cartera_seguros_v1',
+    'cartera_tarjetas_v1',
     'td_apikey'
   ];
 
@@ -3689,6 +3734,317 @@ backfillBolsaHist();
     }).catch(function (e) { console.warn('sync init:', e); badge('err'); });
   });
 })();
+</script>
+
+<script>
+// ═══════════════════ SECCIONES: HIPOTECAS · SEGUROS · TARJETAS · VENCIMIENTOS · PATRIMONIO ═══════════════════
+
+// ── Navegación de dos niveles ────────────────────────────────────────────────
+function showSection(sec) {
+  document.querySelectorAll('.nav-sec').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
+  const sub = document.getElementById('subnav-inversion');
+  if (sub) sub.classList.toggle('visible', sec === 'inversion');
+  const destino = { inversion: 'dashboard', hipotecas: 'hipotecas', seguros: 'seguros', tarjetas: 'tarjetas',
+                    vencimientos: 'vencimientos', patrimonio: 'patrimonio', datos: 'datos' }[sec];
+  showPage(destino);
+}
+
+// showPage pinta la sección nueva al entrar en ella
+const _showPageOrig = showPage;
+showPage = function (id) {
+  _showPageOrig(id);
+  if (['hipotecas','seguros','tarjetas','vencimientos','patrimonio'].includes(id)) renderSeccionesNuevas();
+};
+
+// ── Utilidades ───────────────────────────────────────────────────────────────
+const RNUM = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+const REsc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const startOfDay = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
+const parseFecha = s => { if (!s) return null; const [y,m,d] = s.split('-').map(Number); return isNaN(y) ? null : new Date(y, m-1, d); };
+const fmtFecha = d => d.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+// Próxima fecha de un cargo mensual que cae el día `dia` (ajustando meses cortos)
+function proximoMensual(dia) {
+  const hoy = startOfDay(new Date());
+  const d = Math.min(Math.max(parseInt(dia) || 1, 1), 31);
+  const diasMes = (y, m) => new Date(y, m + 1, 0).getDate();
+  let y = hoy.getFullYear(), m = hoy.getMonth();
+  let cand = new Date(y, m, Math.min(d, diasMes(y, m)));
+  if (cand < hoy) {
+    m++; if (m > 11) { m = 0; y++; }
+    cand = new Date(y, m, Math.min(d, diasMes(y, m)));
+  }
+  return cand;
+}
+
+// ── Configuración de cada registro ──────────────────────────────────────────
+// Para añadir un tipo nuevo basta con definir sus campos aquí.
+const REG_CONFIG = {
+  hipotecas: {
+    key: 'cartera_hipotecas_v1', icono: '🏦', titulo: 'Hipotecas', singular: 'hipoteca',
+    sub: 'Préstamos hipotecarios · capital pendiente y cuota mensual',
+    ayuda: 'El capital pendiente cuenta como deuda en el Patrimonio neto.',
+    campos: [
+      { k:'nombre', label:'Nombre', tipo:'text', ph:'ej: Hipoteca Galdós' },
+      { k:'banco', label:'Banco', tipo:'text', ph:'ej: BBVA' },
+      { k:'capitalInicial', label:'Capital inicial (€)', tipo:'number', ph:'ej: 150000' },
+      { k:'capitalPendiente', label:'Capital pendiente (€)', tipo:'number', ph:'ej: 120000' },
+      { k:'cuota', label:'Cuota mensual (€)', tipo:'number', ph:'ej: 650' },
+      { k:'tipo', label:'Tipo de interés (%)', tipo:'number', ph:'ej: 2.5' },
+      { k:'dia', label:'Día de pago (1-31)', tipo:'number', ph:'ej: 5' },
+      { k:'fin', label:'Fecha fin', tipo:'date' },
+    ],
+    deuda: r => RNUM(r.capitalPendiente),
+    vencimientos: r => [{ dia: r.dia, importe: RNUM(r.cuota), concepto: `Cuota ${r.nombre || 'hipoteca'}` }],
+    resumen: r => [['Pendiente', fmt(RNUM(r.capitalPendiente))], ['Cuota', fmt(RNUM(r.cuota))],
+                   ['Interés', (r.tipo || '—') + '%'], ['Fin', r.fin ? fmtFecha(parseFecha(r.fin)) : '—']],
+    stats: items => [
+      ['Préstamos', String(items.length)],
+      ['Pendiente total', fmt(items.reduce((s, r) => s + RNUM(r.capitalPendiente), 0))],
+      ['Cuotas / mes', fmt(items.reduce((s, r) => s + RNUM(r.cuota), 0))],
+    ],
+  },
+  seguros: {
+    key: 'cartera_seguros_v1', icono: '🛡️', titulo: 'Seguros', singular: 'seguro',
+    sub: 'Coche, hogar, vida, salud… · prima anual y fecha de renovación',
+    ayuda: 'Puedes añadir todos los seguros que quieras.',
+    campos: [
+      { k:'nombre', label:'Tipo / nombre', tipo:'text', ph:'ej: Seguro coche' },
+      { k:'compania', label:'Compañía', tipo:'text', ph:'ej: Ocaso' },
+      { k:'prima', label:'Prima anual (€)', tipo:'number', ph:'ej: 420' },
+      { k:'vence', label:'Fecha de renovación', tipo:'date' },
+    ],
+    deuda: null,
+    vencimientos: r => [{ fecha: parseFecha(r.vence), importe: RNUM(r.prima), concepto: `Renovación ${r.nombre || 'seguro'}${r.compania ? ' · ' + r.compania : ''}` }],
+    resumen: r => [['Prima/año', fmt(RNUM(r.prima))], ['Renueva', r.vence ? fmtFecha(parseFecha(r.vence)) : '—']],
+    stats: items => {
+      const prox = items.map(r => parseFecha(r.vence)).filter(Boolean).filter(d => d >= startOfDay(new Date())).sort((a,b) => a-b)[0];
+      return [
+        ['Seguros', String(items.length)],
+        ['Prima total / año', fmt(items.reduce((s, r) => s + RNUM(r.prima), 0))],
+        ['Próxima renovación', prox ? fmtFecha(prox) : '—'],
+      ];
+    },
+  },
+  tarjetas: {
+    key: 'cartera_tarjetas_v1', icono: '💳', titulo: 'Tarjetas', singular: 'tarjeta',
+    sub: 'Tarjetas de crédito y débito · saldo pendiente y día de pago',
+    ayuda: 'El saldo pendiente cuenta como deuda en el Patrimonio neto.',
+    campos: [
+      { k:'nombre', label:'Nombre', tipo:'text', ph:'ej: Visa oro' },
+      { k:'banco', label:'Banco', tipo:'text', ph:'ej: ING' },
+      { k:'limite', label:'Límite (€)', tipo:'number', ph:'ej: 3000' },
+      { k:'saldo', label:'Saldo pendiente (€)', tipo:'number', ph:'ej: 420' },
+      { k:'dia', label:'Día de pago (1-31)', tipo:'number', ph:'ej: 15' },
+    ],
+    deuda: r => RNUM(r.saldo),
+    vencimientos: r => [{ dia: r.dia, importe: RNUM(r.saldo), concepto: `Pago ${r.nombre || 'tarjeta'}` }],
+    resumen: r => [['Límite', fmt(RNUM(r.limite))], ['Saldo', fmt(RNUM(r.saldo))], ['Día pago', r.dia || '—']],
+    stats: items => {
+      const lim = items.reduce((s, r) => s + RNUM(r.limite), 0);
+      const saldo = items.reduce((s, r) => s + RNUM(r.saldo), 0);
+      return [
+        ['Tarjetas', String(items.length)],
+        ['Saldo total', fmt(saldo)],
+        ['Uso del límite', lim > 0 ? (saldo / lim * 100).toFixed(1) + '%' : '—'],
+      ];
+    },
+  },
+};
+
+// ── Almacenamiento (cada sección = su propia clave, sincronizada con Firebase) ──
+function regLoad(sec) {
+  try { return JSON.parse(localStorage.getItem(REG_CONFIG[sec].key)) || []; } catch (e) { return []; }
+}
+function regSave(sec, items) {
+  localStorage.setItem(REG_CONFIG[sec].key, JSON.stringify(items));
+  renderSeccionesNuevas();
+}
+function addRegistro(sec) {
+  const cfg = REG_CONFIG[sec];
+  const r = { id: Date.now() };
+  for (const c of cfg.campos) {
+    const v = (document.getElementById(`r-${sec}-${c.k}`) || {}).value || '';
+    r[c.k] = c.tipo === 'number' ? RNUM(v) : v.trim();
+  }
+  if (!r.nombre) { showDatosSaved('⚠️ Escribe un nombre'); return; }
+  const items = regLoad(sec);
+  items.push(r);
+  regSave(sec, items);
+  showDatosSaved('Añadido ✓');
+}
+function delRegistro(sec, id) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  regSave(sec, regLoad(sec).filter(r => r.id !== id));
+}
+
+// ── Render de una sección de registros (hipotecas, seguros, tarjetas) ───────
+function renderRegistro(sec) {
+  const cfg = REG_CONFIG[sec];
+  const el = document.getElementById('view-' + sec);
+  if (!el) return;
+  const items = regLoad(sec);
+  el.innerHTML = `
+    <div class="section-title">${cfg.icono} ${cfg.titulo}</div>
+    <div class="section-sub">${cfg.sub}</div>
+    <div class="stats-row">
+      ${cfg.stats(items).map(([l, v]) => `
+        <div class="stat-card" style="--accent-line:var(--accent)">
+          <div class="stat-label">${l}</div>
+          <div class="stat-value"><span class="private">${v}</span></div>
+        </div>`).join('')}
+    </div>
+    <div class="update-form">
+      <div class="update-form-title">Añadir ${cfg.singular}</div>
+      <div class="update-form-sub">${cfg.ayuda}</div>
+      <div class="form-grid">
+        ${cfg.campos.map(c => `
+          <div class="form-group">
+            <label>${c.label}</label>
+            <input id="r-${sec}-${c.k}" type="${c.tipo}" placeholder="${REsc(c.ph || '')}" ${c.tipo === 'number' ? 'step="any" min="0"' : ''} />
+          </div>`).join('')}
+      </div>
+      <div class="form-actions">
+        <button class="btn-save" onclick="addRegistro('${sec}')">+ Añadir ${cfg.singular}</button>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Registros</div>
+      ${items.length ? items.map(r => `
+        <div class="gasto-row">
+          <div class="gasto-info">
+            <div class="gasto-nombre">${cfg.icono} ${REsc(r.nombre)}${r.banco || r.compania ? ' · ' + REsc(r.banco || r.compania) : ''}</div>
+            <div class="gasto-fecha">${cfg.resumen(r).map(([l, v]) => `${l}: <span class="private">${REsc(v)}</span>`).join(' · ')}</div>
+          </div>
+          <button class="btn-del-gasto" onclick="delRegistro('${sec}', ${r.id})" title="Eliminar">🗑️</button>
+        </div>`).join('') : '<div class="section-sub" style="margin:0">Todavía no hay registros.</div>'}
+    </div>`;
+}
+
+// ── Vencimientos: todo lo que cae en los próximos 12 meses + renovaciones atrasadas ──
+function eventosVencimientos() {
+  const hoy = startOfDay(new Date());
+  const ev = [];
+  for (const sec of Object.keys(REG_CONFIG)) {
+    const cfg = REG_CONFIG[sec];
+    for (const r of regLoad(sec)) {
+      for (const v of cfg.vencimientos(r)) {
+        // Con fecha fija (seguros) usa esa fecha; si no la tiene, se omite.
+        // Sin fecha fija (cargos mensuales) calcula la próxima ocurrencia.
+        const fija = v.fecha !== undefined;
+        const fecha = fija ? v.fecha : proximoMensual(v.dia);
+        if (!fecha || isNaN(fecha)) continue;
+        ev.push({ fecha, concepto: v.concepto, importe: v.importe, icono: cfg.icono, recurrente: !fija });
+      }
+    }
+  }
+  return ev
+    .filter(e => (e.fecha - hoy) / 86400000 <= 365)
+    .sort((a, b) => a.fecha - b.fecha);
+}
+
+function renderVencimientos() {
+  const el = document.getElementById('view-vencimientos');
+  if (!el) return;
+  const hoy = startOfDay(new Date());
+  const ev = eventosVencimientos();
+  el.innerHTML = `
+    <div class="section-title">📅 Vencimientos</div>
+    <div class="section-sub">Cuotas, pagos de tarjeta y renovaciones de seguros · próximos 12 meses</div>
+    <div class="chart-card">
+      ${ev.length ? ev.map(e => {
+        const dias = Math.round((e.fecha - hoy) / 86400000);
+        const color = dias < 0 ? 'neg' : dias <= 30 ? 'neu' : '';
+        const etiqueta = dias < 0 ? 'Vencido' : dias === 0 ? 'Hoy' : `en ${dias} día${dias === 1 ? '' : 's'}`;
+        return `
+        <div class="cashflow-row">
+          <div>
+            <div class="cf-name">${e.icono} ${REsc(e.concepto)}</div>
+            <div class="cf-detail">${fmtFecha(e.fecha)}${e.recurrente ? ' · mensual' : ''}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="cf-amount"><span class="private">${e.importe ? fmt(e.importe) : '—'}</span></div>
+            <span class="badge ${color}">${etiqueta}</span>
+          </div>
+        </div>`;
+      }).join('') : '<div class="section-sub" style="margin:0">No hay vencimientos. Añade hipotecas, seguros o tarjetas para verlos aquí.</div>'}
+    </div>`;
+}
+
+// ── Patrimonio neto = activos − pasivos ─────────────────────────────────────
+function totalesPatrimonio() {
+  const keys = [...Object.keys(BASE), 'bestinver'];
+  const inversiones = keys.reduce((s, k) => s + actFor(k), 0);   // incluye inmuebles
+  const inmuebles = actFor('inmuebles');
+  const efectivo = loadEfectivo().items.reduce((s, m) => s + (m.importe || 0), 0);
+  const hipotecas = regLoad('hipotecas').reduce((s, r) => s + REG_CONFIG.hipotecas.deuda(r), 0);
+  const tarjetas = regLoad('tarjetas').reduce((s, r) => s + REG_CONFIG.tarjetas.deuda(r), 0);
+  const activos = inversiones + efectivo;
+  const pasivos = hipotecas + tarjetas;
+  return { inversiones, inmuebles, otrasInv: inversiones - inmuebles, efectivo, hipotecas, tarjetas,
+           activos, pasivos, neto: activos - pasivos };
+}
+
+function renderPatrimonio() {
+  const el = document.getElementById('view-patrimonio');
+  if (!el) return;
+  const t = totalesPatrimonio();
+  const ratio = t.activos > 0 ? (t.pasivos / t.activos * 100).toFixed(1) + '%' : '—';
+  const cls = v => v >= 0 ? 'pos' : 'neg';
+  const fila = (nombre, valor, extra = '') => `
+    <div class="cashflow-row">
+      <div class="cf-name">${nombre}</div>
+      <div class="cf-amount ${extra}"><span class="private">${fmt(valor)}</span></div>
+    </div>`;
+  el.innerHTML = `
+    <div class="section-title">🧾 Patrimonio neto</div>
+    <div class="section-sub">Lo que tienes menos lo que debes · se calcula solo con tus datos</div>
+    <div class="stats-row">
+      <div class="stat-card" style="--accent-line:var(--green)">
+        <div class="stat-label">Activos</div>
+        <div class="stat-value pos"><span class="private">${fmt(t.activos)}</span></div>
+      </div>
+      <div class="stat-card" style="--accent-line:var(--red)">
+        <div class="stat-label">Pasivos (deudas)</div>
+        <div class="stat-value neg"><span class="private">${fmt(t.pasivos)}</span></div>
+      </div>
+      <div class="stat-card" style="--accent-line:var(--accent)">
+        <div class="stat-label">Patrimonio neto</div>
+        <div class="stat-value ${cls(t.neto)}"><span class="private">${t.neto >= 0 ? '+' : ''}${fmt(t.neto)}</span></div>
+      </div>
+      <div class="stat-card" style="--accent-line:var(--yellow)">
+        <div class="stat-label">Deuda / activos</div>
+        <div class="stat-value">${ratio}</div>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title">Activos</div>
+      ${fila('📈 Inversiones (sin inmuebles)', t.otrasInv)}
+      ${fila('🏠 Inmuebles', t.inmuebles)}
+      ${fila('🗄️ Efectivo', t.efectivo)}
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Pasivos</div>
+      ${fila('🏦 Hipotecas (capital pendiente)', -t.hipotecas, 'neg')}
+      ${fila('💳 Tarjetas (saldo pendiente)', -t.tarjetas, 'neg')}
+    </div>`;
+}
+
+// ── Pintado global de las secciones nuevas ──────────────────────────────────
+function renderSeccionesNuevas() {
+  renderRegistro('hipotecas');
+  renderRegistro('seguros');
+  renderRegistro('tarjetas');
+  renderVencimientos();
+  renderPatrimonio();
+}
+
+// Cada vez que se repintan los datos (incl. sincronización), refrescar también estas secciones
+const _renderAllOrig = renderAll;
+renderAll = function () {
+  _renderAllOrig();
+  renderSeccionesNuevas();
+};
 </script>
 </body>
 </html>
