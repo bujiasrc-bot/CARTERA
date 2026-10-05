@@ -4105,11 +4105,16 @@ function segTramos(s) {
     .sort((a, b) => a.ini - b.ini);
   return hs.map((t, i) => ({ ...t, fin: hs[i + 1] ? hs[i + 1].ini : null }));
 }
+// Si el precio siguiente empieza poco después de un recibo previsto (menos de medio periodo,
+// p. ej. renovación cobrada el 3/04 en vez del 1/04), ese recibo lo sustituye el nuevo precio.
 function segCargos(s, desde, hasta) {
   const out = [];
   for (const t of segTramos(s)) {
+    const paso = FREC_MESES[t.h.frecuencia] || 12;
     const tope = t.fin && new Date(t.fin.getTime() - 1) < hasta ? new Date(t.fin.getTime() - 1) : hasta;
-    for (const f of fechasCargo(t.ini, FREC_MESES[t.h.frecuencia] || 12, desde, tope)) {
+    const margen = paso * 30.44 / 2 * 86400000;
+    for (const f of fechasCargo(t.ini, paso, desde, tope)) {
+      if (t.fin && f > t.ini && t.fin - f < margen) continue;
       out.push({ fecha: f, prima: RNUM(t.h.prima), compania: t.h.compania || '', frecuencia: t.h.frecuencia || 'anual' });
     }
   }
