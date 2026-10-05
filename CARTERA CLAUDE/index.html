@@ -237,6 +237,13 @@ body {
   transition: border-color 0.2s;
 }
 .form-group input:focus { border-color: var(--accent); }
+.form-group select {
+  width: 100%; background: var(--card2);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
+  padding: 10px 14px; outline: none;
+}
+.form-group select:focus { border-color: var(--accent); }
 .form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .btn-save {
   background: var(--accent); color: #0c0c10;
@@ -3763,18 +3770,26 @@ const startOfDay = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; 
 const parseFecha = s => { if (!s) return null; const [y,m,d] = s.split('-').map(Number); return isNaN(y) ? null : new Date(y, m-1, d); };
 const fmtFecha = d => d.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
 
-// Próxima fecha de un cargo mensual que cae el día `dia` (ajustando meses cortos)
-function proximoMensual(dia) {
-  const hoy = startOfDay(new Date());
-  const d = Math.min(Math.max(parseInt(dia) || 1, 1), 31);
+// Frecuencias de pago de los seguros y su paso en meses
+const FREC_MESES = { mensual: 1, trimestral: 3, semestral: 6, anual: 12 };
+
+// Día del mes válido (1-31)
+const diaValido = d => Math.min(Math.max(parseInt(d) || 1, 1), 31);
+
+// Fechas de cargo que caen cada `paso` meses desde `ancla`, dentro de [desde, hasta].
+// Si el mes no tiene ese día (p. ej. 31 en abril), se cobra el último día del mes.
+function fechasCargo(ancla, paso, desde, hasta) {
+  const out = [];
+  const dia = ancla.getDate();
   const diasMes = (y, m) => new Date(y, m + 1, 0).getDate();
-  let y = hoy.getFullYear(), m = hoy.getMonth();
-  let cand = new Date(y, m, Math.min(d, diasMes(y, m)));
-  if (cand < hoy) {
-    m++; if (m > 11) { m = 0; y++; }
-    cand = new Date(y, m, Math.min(d, diasMes(y, m)));
+  for (let i = 0; i < 1200; i++) {
+    const total = ancla.getMonth() + i * paso;
+    const y = ancla.getFullYear() + Math.floor(total / 12), m = total % 12;
+    const f = new Date(y, m, Math.min(dia, diasMes(y, m)));
+    if (f > hasta) break;
+    if (f >= desde) out.push(f);
   }
-  return cand;
+  return out;
 }
 
 // ── Configuración de cada registro ──────────────────────────────────────────
@@ -3795,7 +3810,8 @@ const REG_CONFIG = {
       { k:'fin', label:'Fecha fin', tipo:'date' },
     ],
     deuda: r => RNUM(r.capitalPendiente),
-    vencimientos: r => [{ dia: r.dia, importe: RNUM(r.cuota), concepto: `Cuota ${r.nombre || 'hipoteca'}` }],
+    proximos: (r, hoy, hasta) => fechasCargo(new Date(hoy.getFullYear(), hoy.getMonth(), diaValido(r.dia)), 1, hoy, hasta)
+      .map(f => ({ fecha: f, importe: RNUM(r.cuota), recurrente: 'mensual', concepto: `Cuota ${r.nombre || 'hipoteca'}` })),
     resumen: r => [['Pendiente', fmt(RNUM(r.capitalPendiente))], ['Cuota', fmt(RNUM(r.cuota))],
                    ['Interés', (r.tipo || '—') + '%'], ['Fin', r.fin ? fmtFecha(parseFecha(r.fin)) : '—']],
     stats: items => [
@@ -3806,23 +3822,47 @@ const REG_CONFIG = {
   },
   seguros: {
     key: 'cartera_seguros_v1', icono: '🛡️', titulo: 'Seguros', singular: 'seguro',
-    sub: 'Coche, hogar, vida, salud… · prima anual y fecha de renovación',
-    ayuda: 'Puedes añadir todos los seguros que quieras.',
+    sub: 'Coche, hogar, vida, salud… · recibo, frecuencia y cargos automáticos',
+    ayuda: 'Los recibos se registran solos según la frecuencia: no tienes que añadirlos a mano.',
     campos: [
       { k:'nombre', label:'Tipo / nombre', tipo:'text', ph:'ej: Seguro coche' },
       { k:'compania', label:'Compañía', tipo:'text', ph:'ej: Ocaso' },
-      { k:'prima', label:'Prima anual (€)', tipo:'number', ph:'ej: 420' },
-      { k:'vence', label:'Fecha de renovación', tipo:'date' },
+      { k:'prima', label:'Importe del recibo (€)', tipo:'number', ph:'ej: 35' },
+      { k:'frecuencia', label:'Frecuencia', tipo:'select', opciones: Object.keys(FREC_MESES) },
+      { k:'inicio', label:'Primer recibo / inicio', tipo:'date' },
     ],
     deuda: null,
-    vencimientos: r => [{ fecha: parseFecha(r.vence), importe: RNUM(r.prima), concepto: `Renovación ${r.nombre || 'seguro'}${r.compania ? ' · ' + r.compania : ''}` }],
-    resumen: r => [['Prima/año', fmt(RNUM(r.prima))], ['Renueva', r.vence ? fmtFecha(parseFecha(r.vence)) : '—']],
+    // Cargos futuros según la frecuencia, a partir de la fecha de inicio
+    proximos: (r, hoy, hasta) => {
+      const ini = parseFecha(r.inicio || r.vence);   // r.vence: registros antiguos
+      if (!ini) return [];
+      const paso = FREC_MESES[r.frecuencia] || 12;
+      return fechasCargo(ini, paso, hoy, hasta).map(f => ({
+        fecha: f, importe: RNUM(r.prima), recurrente: r.frecuencia || 'anual',
+        concepto: `${r.nombre || 'Seguro'}${r.compania ? ' · ' + r.compania : ''}`,
+      }));
+    },
+    // Recibos ya cargados desde la fecha de inicio (cuentan automáticamente)
+    pagado: r => {
+      const ini = parseFecha(r.inicio || r.vence);
+      if (!ini) return { n: 0, total: 0 };
+      const paso = FREC_MESES[r.frecuencia] || 12;
+      const n = fechasCargo(ini, paso, ini, startOfDay(new Date())).length;
+      return { n, total: n * RNUM(r.prima) };
+    },
+    resumen: r => {
+      const ini = parseFecha(r.inicio || r.vence);
+      const prox = ini ? fechasCargo(ini, FREC_MESES[r.frecuencia] || 12, startOfDay(new Date()), new Date(2100, 0, 1))[0] : null;
+      return [['Recibo', fmt(RNUM(r.prima))], ['Frecuencia', r.frecuencia || 'anual'],
+              ['Próximo', prox ? fmtFecha(prox) : '—'], ['Pagado', fmt(REG_CONFIG.seguros.pagado(r).total)]];
+    },
     stats: items => {
-      const prox = items.map(r => parseFecha(r.vence)).filter(Boolean).filter(d => d >= startOfDay(new Date())).sort((a,b) => a-b)[0];
+      const anual = items.reduce((s, r) => s + RNUM(r.prima) * (12 / (FREC_MESES[r.frecuencia] || 12)), 0);
+      const pagado = items.reduce((s, r) => s + REG_CONFIG.seguros.pagado(r).total, 0);
       return [
         ['Seguros', String(items.length)],
-        ['Prima total / año', fmt(items.reduce((s, r) => s + RNUM(r.prima), 0))],
-        ['Próxima renovación', prox ? fmtFecha(prox) : '—'],
+        ['Coste anual estimado', fmt(anual)],
+        ['Pagado hasta hoy', fmt(pagado)],
       ];
     },
   },
@@ -3838,7 +3878,8 @@ const REG_CONFIG = {
       { k:'dia', label:'Día de pago (1-31)', tipo:'number', ph:'ej: 15' },
     ],
     deuda: r => RNUM(r.saldo),
-    vencimientos: r => [{ dia: r.dia, importe: RNUM(r.saldo), concepto: `Pago ${r.nombre || 'tarjeta'}` }],
+    proximos: (r, hoy, hasta) => fechasCargo(new Date(hoy.getFullYear(), hoy.getMonth(), diaValido(r.dia)), 1, hoy, hasta)
+      .map(f => ({ fecha: f, importe: RNUM(r.saldo), recurrente: 'mensual', concepto: `Pago ${r.nombre || 'tarjeta'}` })),
     resumen: r => [['Límite', fmt(RNUM(r.limite))], ['Saldo', fmt(RNUM(r.saldo))], ['Día pago', r.dia || '—']],
     stats: items => {
       const lim = items.reduce((s, r) => s + RNUM(r.limite), 0);
@@ -3901,7 +3942,9 @@ function renderRegistro(sec) {
         ${cfg.campos.map(c => `
           <div class="form-group">
             <label>${c.label}</label>
-            <input id="r-${sec}-${c.k}" type="${c.tipo}" placeholder="${REsc(c.ph || '')}" ${c.tipo === 'number' ? 'step="any" min="0"' : ''} />
+            ${c.tipo === 'select'
+              ? `<select id="r-${sec}-${c.k}">${c.opciones.map(o => `<option value="${o}">${o.charAt(0).toUpperCase() + o.slice(1)}</option>`).join('')}</select>`
+              : `<input id="r-${sec}-${c.k}" type="${c.tipo}" placeholder="${REsc(c.ph || '')}" ${c.tipo === 'number' ? 'step="any" min="0"' : ''} />`}
           </div>`).join('')}
       </div>
       <div class="form-actions">
@@ -3925,22 +3968,17 @@ function renderRegistro(sec) {
 function eventosVencimientos() {
   const hoy = startOfDay(new Date());
   const ev = [];
+  const hasta = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 365);
   for (const sec of Object.keys(REG_CONFIG)) {
     const cfg = REG_CONFIG[sec];
     for (const r of regLoad(sec)) {
-      for (const v of cfg.vencimientos(r)) {
-        // Con fecha fija (seguros) usa esa fecha; si no la tiene, se omite.
-        // Sin fecha fija (cargos mensuales) calcula la próxima ocurrencia.
-        const fija = v.fecha !== undefined;
-        const fecha = fija ? v.fecha : proximoMensual(v.dia);
-        if (!fecha || isNaN(fecha)) continue;
-        ev.push({ fecha, concepto: v.concepto, importe: v.importe, icono: cfg.icono, recurrente: !fija });
+      for (const v of cfg.proximos(r, hoy, hasta)) {
+        if (!v.fecha || isNaN(v.fecha)) continue;
+        ev.push({ ...v, icono: cfg.icono, sec });
       }
     }
   }
-  return ev
-    .filter(e => (e.fecha - hoy) / 86400000 <= 365)
-    .sort((a, b) => a.fecha - b.fecha);
+  return ev.sort((a, b) => a.fecha - b.fecha);
 }
 
 function renderVencimientos() {
@@ -3960,7 +3998,7 @@ function renderVencimientos() {
         <div class="cashflow-row">
           <div>
             <div class="cf-name">${e.icono} ${REsc(e.concepto)}</div>
-            <div class="cf-detail">${fmtFecha(e.fecha)}${e.recurrente ? ' · mensual' : ''}</div>
+            <div class="cf-detail">${fmtFecha(e.fecha)} · ${e.recurrente}</div>
           </div>
           <div style="text-align:right">
             <div class="cf-amount"><span class="private">${e.importe ? fmt(e.importe) : '—'}</span></div>
