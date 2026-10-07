@@ -228,6 +228,33 @@ body {
 .dvc-in:focus { outline:none; border-color:var(--accent); }
 .dvc-reg .dvc-go { margin-left:0; border-color:var(--accent); color:var(--text); }
 
+/* Dividendos cobrados por posición (Bolsa) */
+.dcb-g { display:grid; grid-template-columns:repeat(auto-fit, minmax(118px, 1fr)); gap:8px; }
+.dcb-k { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:left; font-family:inherit; color:var(--text); min-width:0; display:block; width:100%; }
+.dcb-k:hover { border-color:var(--muted); }
+.dcb-k.on { border-color:var(--text); box-shadow:inset 0 0 0 1px var(--text); }
+.dcb-k.all { background:rgba(200,181,255,0.08); border-color:rgba(200,181,255,0.3); }
+.dcb-k.all.on { border-color:var(--text); }
+.dcb-k .tk { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:700; }
+.dcb-k .nm { font-size:11px; color:var(--muted); margin:1px 0 8px; }
+.dcb-k .l { font-size:11px; color:var(--muted); margin-top:4px; }
+.dcb-k .v { font-size:14px; font-weight:700; }
+.dcb-k .v.z { color:var(--muted); font-weight:400; }
+.dcb-k .pend { display:inline-block; margin-top:6px; font-size:11px; padding:1px 7px; border-radius:6px; background:rgba(107,207,255,0.12); color:var(--blue); }
+.dcb-p { margin-top:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+.dcb-ph { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; margin:0 0 4px; font-size:12px; color:var(--muted); }
+.dcb-ph b { color:var(--text); font-size:14px; font-weight:700; }
+.dcb-r { display:flex; align-items:center; gap:8px; padding:7px 0; font-size:13px; border-top:1px solid var(--border); }
+.dcb-r .d { color:var(--muted); min-width:150px; }
+.dcb-r .a { margin-left:auto; font-weight:700; color:var(--green); }
+.dcb-yr { display:flex; justify-content:space-between; padding:8px 0 0; margin-top:2px; border-top:1px solid var(--muted); font-size:13px; color:var(--muted); }
+.dcb-yr b { color:var(--text); font-weight:700; }
+.dcb-old { font-size:12px; color:var(--muted); padding-top:8px; }
+.dcb-old button { background:none; border:none; padding:0; cursor:pointer; color:var(--muted); font-family:inherit; font-size:12px; text-decoration:underline; }
+.dcb-em { font-size:13px; color:var(--muted); padding:6px 0; line-height:1.6; }
+.dcb-tot { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-size:13px; color:var(--muted); }
+.dcb-tot b { color:var(--accent); font-size:16px; font-weight:700; }
+
 /* PROGRESS BAR */
 .progress-wrap { margin-bottom: 12px; }
 .progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
@@ -2900,24 +2927,60 @@ function showDivDia(iso, evIn) {
   (delDia.length > 1 ? `<div class="dvc-ln" style="justify-content:flex-end"><span>Total del día <b class="private">≈ ${fmtDiv(delDia.reduce((s, e) => s + e.neto, 0))}</b></span></div>` : '');
 }
 
+// Dividendos cobrados: ficha "Todas" + una por posición (orden fijo). Al pulsar una ficha se despliegan sus
+// cobros del año en curso; los años anteriores quedan en una línea desplegable. Importes NETOS.
+const BOLSA_COB_ORDEN = ['scyr', 'san', 'tsm', 'itx', 'iag'];
+let BOLSA_COB_SEL = 'ALL', BOLSA_COB_OLD = false;
+function selCobDiv(k)  { BOLSA_COB_SEL = k; BOLSA_COB_OLD = false; renderBolsaDivCobrados(); }
+function toggleCobOld() { BOLSA_COB_OLD = !BOLSA_COB_OLD; renderBolsaDivCobrados(); }
+
 function renderBolsaDivCobrados() {
   const box = document.getElementById('bol-div-cobrados');
   if (!box) return;
-  const list = [...loadBolsaDivs().cobrados].sort((a, b) => b.fecha.localeCompare(a.fecha));
-  if (!list.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Todavía no has registrado cobros.</div>'; return; }
-  const total = list.reduce((s, c) => s + c.importe, 0);
-  box.innerHTML = list.map(c => {
-    const T = BOLSA_DIV_TK[c.ticker] || { tk: (c.ticker || '').toUpperCase(), nombre: '' };
-    const fecha = c.aprox ? `${BOLSA_MESES[+c.fecha.slice(5, 7) - 1]} ${c.fecha.slice(0, 4)} (fecha aprox.)` : isoDMY(c.fecha);
-    return `<div class="cashflow-row">
-      <div><div class="cf-name">${T.nombre} (${T.tk})</div><div class="cf-detail">${fecha}</div></div>
-      <div class="cf-amount pos euro-val"><span class="private">+${fmtDiv(c.importe)}</span></div>
-    </div>`;
-  }).join('') +
-  `<div class="cashflow-row">
-    <div><div class="cf-name" style="color:var(--accent)">TOTAL COBRADO (neto)</div></div>
-    <div class="cf-amount euro-val" style="color:var(--accent);font-size:18px"><span class="private">+${fmtDiv(total)}</span></div>
-  </div>`;
+  const yr = isoHoy().slice(0, 4);
+  const todos = loadBolsaDivs().cobrados;
+  const suma = l => l.reduce((s, c) => s + c.importe, 0);
+  const delAno = l => l.filter(c => c.fecha.slice(0, 4) === yr);
+  const del = k => todos.filter(c => c.ticker === k);
+  const mas = n => n ? '+' + fmtDiv(n) : '—';
+  const ev = bolsaDivEventos();                                     // pendientes y próximo cobro de cada valor
+  const fch = c => c.aprox ? `${BOLSA_MESES[+c.fecha.slice(5, 7) - 1]} ${c.fecha.slice(0, 4)} (fecha aprox.)` : isoDMY(c.fecha);
+
+  const fichas = ['ALL', ...BOLSA_COB_ORDEN].map(k => {
+    const todas = k === 'ALL', T = todas ? null : BOLSA_DIV_TK[k];
+    const lista = todas ? todos : del(k);
+    const y = suma(delAno(lista)), a = suma(lista);
+    const pend = todas ? 0 : ev.filter(e => e.key === k && e.tipo === 'pendiente').reduce((s, e) => s + e.neto, 0);
+    return `<button class="dcb-k${todas ? ' all' : ''}${BOLSA_COB_SEL === k ? ' on' : ''}" onclick="selCobDiv('${k}')">
+      <span class="tk">${todas ? 'Todas' : `<span class="dvc-dot" style="background:${T.color}"></span>${T.tk}`}</span>
+      <div class="nm">${todas ? BOLSA_COB_ORDEN.length + ' posiciones' : T.nombre}</div>
+      <div class="l">${yr}</div><div class="v${y ? '' : ' z'}"><span class="private">${mas(y)}</span></div>
+      <div class="l">Total</div><div class="v${a ? '' : ' z'}"><span class="private">${mas(a)}</span></div>
+      ${pend ? `<span class="pend private">pendiente ${fmtDiv(pend)}</span>` : ''}</button>`;
+  }).join('');
+
+  // Panel desplegado de la ficha elegida
+  const sel = BOLSA_COB_SEL, todas = sel === 'ALL', T = todas ? null : BOLSA_DIV_TK[sel];
+  const lista = [...(todas ? todos : del(sel))].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const cur = delAno(lista), old = lista.filter(c => c.fecha.slice(0, 4) !== yr);
+  const fila = c => {
+    const t = BOLSA_DIV_TK[c.ticker];
+    return `<div class="dcb-r">${todas ? `<span class="dvc-dot" style="background:${t ? t.color : '#888'}"></span>` : ''}<span class="d">${fch(c)}</span>${todas ? `<span>${t ? t.tk : (c.ticker || '').toUpperCase()}</span>` : ''}<span class="a private">+${fmtDiv(c.importe)}</span></div>`;
+  };
+  let h = `<div class="dcb-ph"><span><b>${todas ? 'Todas las posiciones' : T.tk + ' · ' + T.nombre}</b></span><span>Cobros de ${yr}${todas ? ' · por fecha' : ''}</span></div>`;
+  if (!cur.length) {
+    const prox = todas ? null : ev.find(e => e.key === sel);
+    h += `<div class="dcb-em">Todavía no has cobrado dividendos${todas ? '' : ' de ' + T.tk} en ${yr}.` +
+         (prox ? `<br>Próximo: ${prox.tipo === 'pendiente' ? 'cobro pendiente el ' + isoDMY(prox.cobro) : 'ex-dividendo ' + isoDMY(prox.ex)} · <span class="private">≈ ${fmtDiv(prox.neto)}</span>${prox.tipo === 'pendiente' ? '' : ' ' + prox.tipo}.` : '') + '</div>';
+  } else {
+    h += cur.map(fila).join('') + `<div class="dcb-yr"><span>Total ${yr}</span><b class="private">+${fmtDiv(suma(cur))}</b></div>`;
+  }
+  h += old.length
+    ? `<div class="dcb-old"><button onclick="toggleCobOld()">${BOLSA_COB_OLD ? '▾' : '▸'} Años anteriores (${old.length}) · <span class="private">+${fmtDiv(suma(old))}</span></button></div>` + (BOLSA_COB_OLD ? old.map(fila).join('') : '')
+    : '<div class="dcb-old">Años anteriores: sin cobros registrados</div>';
+
+  box.innerHTML = `<div class="dcb-g">${fichas}</div><div class="dcb-p">${h}</div>` +
+    `<div class="dcb-tot"><span>Total cobrado en ${yr} · <b class="private">${mas(suma(delAno(todos)))}</b></span><span>Total histórico · <b class="private">${mas(suma(todos))}</b></span></div>`;
 }
 
 // ── Datos → Bolsa → Dividendos ─────────────────────────────────────────────
