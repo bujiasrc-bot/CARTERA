@@ -199,6 +199,31 @@ body {
 .badge.neg { background: rgba(255,107,107,0.12); color: var(--red); }
 .badge.neu { background: rgba(255,184,108,0.12); color: var(--yellow); }
 
+/* Calendario de dividendos (Bolsa) */
+.dvc-leg { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:12px; color:var(--muted); margin:0 0 12px; }
+.dvc-leg .k { display:inline-flex; align-items:center; gap:6px; }
+.dvc-dot { width:12px; height:12px; border-radius:50%; display:inline-block; flex:none; }
+.dvc-grid { display:grid; gap:10px; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); }
+.dvc-m { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:10px 12px; min-width:0; }
+.dvc-m.now { border-color:var(--accent); }
+.dvc-h { display:flex; justify-content:space-between; align-items:baseline; margin:0 0 6px; }
+.dvc-h b { font-size:13px; font-weight:700; color:var(--text); text-transform:capitalize; }
+.dvc-h span { font-size:11px; color:var(--muted); }
+.dvc-w, .dvc-c { display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:2px; }
+.dvc-w span { font-size:10px; color:var(--muted); text-align:center; }
+.dvc-c i, .dvc-c button { height:24px; font-size:11px; font-style:normal; display:flex; align-items:center; justify-content:center; border-radius:50%; border:none; background:none; padding:0; color:var(--muted); font-family:inherit; }
+.dvc-c button { cursor:pointer; font-weight:700; color:#1a1a22; }
+.dvc-c .today { box-shadow:inset 0 0 0 1px var(--muted); }
+.dvc-c .sel { outline:2px solid var(--text); outline-offset:1px; }
+.dvc-c .dvc-est { box-shadow:inset 0 0 0 1.5px rgba(26,26,34,0.65); }
+.dvc-det { margin-top:14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:8px 14px; font-size:13px; line-height:1.6; color:var(--muted); }
+.dvc-ln { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 0; }
+.dvc-ln + .dvc-ln { border-top:1px solid var(--border); }
+.dvc-ln b { color:var(--text); font-weight:700; }
+.dvc-ln .sub { font-size:12px; }
+.dvc-go { margin-left:auto; background:none; border:1px solid var(--border); border-radius:8px; color:var(--muted); cursor:pointer; font-family:inherit; font-size:11px; padding:3px 10px; }
+.dvc-go:hover { color:var(--text); border-color:var(--muted); }
+
 /* PROGRESS BAR */
 .progress-wrap { margin-bottom: 12px; }
 .progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
@@ -2608,12 +2633,24 @@ const BOLSA_DIV_SEED = [
 ];
 // ret = retención aproximada para estimar el neto (España 19 %; TSM ~21 %, a corregir con el primer cobro real)
 const BOLSA_DIV_TK = {
-  scyr: { tk:'SCYR', nombre:'Sacyr',        yf:'SCYR.MC', usd:false, ret:0.19 },
-  san:  { tk:'SAN',  nombre:'Santander',    yf:'SAN.MC',  usd:false, ret:0.19 },
-  iag:  { tk:'IAG',  nombre:'IAG',          yf:'IAG.MC',  usd:false, ret:0.19 },
-  tsm:  { tk:'TSM',  nombre:'Taiwan Semi.', yf:'TSM',     usd:true,  ret:0.21 },
-  itx:  { tk:'ITX',  nombre:'Inditex',      yf:'ITX.MC',  usd:false, ret:0.19 },
+  scyr: { tk:'SCYR', nombre:'Sacyr',        yf:'SCYR.MC', usd:false, ret:0.19, color:'#c8b5ff', lag:2  },
+  san:  { tk:'SAN',  nombre:'Santander',    yf:'SAN.MC',  usd:false, ret:0.19, color:'#ffb86c', lag:4  },
+  iag:  { tk:'IAG',  nombre:'IAG',          yf:'IAG.MC',  usd:false, ret:0.19, color:'#6bcfff', lag:5  },
+  tsm:  { tk:'TSM',  nombre:'Taiwan Semi.', yf:'TSM',     usd:true,  ret:0.21, color:'#ff9de2', lag:23 },
+  itx:  { tk:'ITX',  nombre:'Inditex',      yf:'ITX.MC',  usd:false, ret:0.19, color:'#a8ff78', lag:4  },
 };
+// Yahoo solo da la fecha ex-dividendo. Día de cobro aproximado = ex-dividendo + retraso habitual (lag, en días),
+// pasado al siguiente día hábil. SCYR en enero paga a primeros de febrero (dividendo flexible): ~21 días.
+function isoHabil(iso) {
+  const d = new Date(iso + 'T00:00:00Z'), w = d.getUTCDay();
+  if (w === 6) d.setUTCDate(d.getUTCDate() + 2); else if (w === 0) d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+function bolsaDivCobroEst(key, ex) {
+  let lag = BOLSA_DIV_TK[key].lag;
+  if (key === 'scyr' && ex.slice(5, 7) === '01') lag = 21;
+  return isoHabil(isoSumaDias(ex, lag));
+}
 const BOLSA_MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
 const fmtDiv = n => (+n).toLocaleString('es-ES', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €';
@@ -2709,7 +2746,9 @@ function bolsaDivEventos() {
     const acc = bolsaAccionesElegibles(key, ex);
     if (!T || !acc) return null;
     const bruto = ps * acc * (T.usd ? fx : 1);
-    return { id, key, ex, pay: pay || '', ps, acc, bruto, neto: bruto * (1 - T.ret), tipo };
+    const cobro = pay || bolsaDivCobroEst(key, ex);                 // fecha de pago real si se conoce; si no, aproximada
+    return { id, key, ex, pay: pay || '', cobro, cobroShow: cobro < hoy ? hoy : cobro,   // cobroShow: un cobro pendiente se ve en "hoy"
+             ps, acc, bruto, neto: bruto * (1 - T.ret), tipo };
   };
   const ev = [];
   const hayCerca = (key, iso, dias) => ev.some(e => e.key === key && Math.abs(isoDias(e.ex, iso)) <= dias);
@@ -2735,11 +2774,6 @@ function bolsaDivEventos() {
   return ev.sort((a, b) => a.ex.localeCompare(b.ex));
 }
 
-function bolsaDivBadge(tipo) {
-  if (tipo === 'confirmado') return '<span class="badge pos">🟢 confirmado</span>';
-  if (tipo === 'pendiente')  return '<span class="badge" style="background:rgba(107,207,255,0.12);color:var(--blue)">🔵 pendiente de cobro</span>';
-  return '<span class="badge neu">🟡 estimado</span>';
-}
 function bolsaDivCuenta(ex, hoy) {
   const d = isoDias(hoy, ex);
   if (d > 1)  return `en ${d} días`;
@@ -2778,52 +2812,78 @@ function renderBolsaDivProx(ev, hoy) {
       (loadBolsaDivHist().ts ? 'Sin repartos previstos en los próximos 12 meses.' : 'Cargando estimaciones de Yahoo…') + '</div>';
     return;
   }
-  const total = ev.reduce((s, e) => s + e.neto, 0);
-  const rows = ev.map(e => {
-    const T = BOLSA_DIV_TK[e.key];
-    const btn = e.tipo === 'estimado' ? '' :
-      `<button onclick="registrarCobroDiv('${e.key}','${e.ex}')" style="margin-top:4px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;padding:3px 9px">✓ Registrar cobro</button>`;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1;min-width:210px">
-        <div class="cf-name">${T.tk} · ${T.nombre} ${bolsaDivBadge(e.tipo)}</div>
-        <div class="cf-detail">Ex-dividendo ${isoDMY(e.ex)} (<b>${bolsaDivCuenta(e.ex, hoy)}</b>)${e.pay ? ' · pago ' + isoDMY(e.pay) : ''} · ${fmtPS(e.ps)} ${T.usd ? '$' : '€'}/acc bruto × ${e.acc} acc.</div>
-      </div>
-      <div style="text-align:right">
-        <div class="cf-amount pos euro-val"><span class="private">≈ +${fmtDiv(e.neto)}</span></div>
-        <div class="cf-detail"><span class="private">bruto ${fmtDiv(e.bruto)}</span></div>
-        ${btn}
-      </div>
-    </div>`;
+  // 12 meses naturales desde el actual; cada cobro se coloca en su día de cobro (real o aproximado)
+  const y0 = +hoy.slice(0, 4), m0 = +hoy.slice(5, 7) - 1;
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const m = (m0 + i) % 12, y = y0 + Math.floor((m0 + i) / 12);
+    months.push({ m, y, key: y + '-' + String(m + 1).padStart(2, '0') });
+  }
+  months.forEach(M => { M.ev = ev.filter(e => e.cobroShow.slice(0, 7) === M.key); M.tot = M.ev.reduce((s, e) => s + e.neto, 0); });
+  const enVentana = months.reduce((a, M) => a.concat(M.ev), []);
+  if (!enVentana.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Sin cobros previstos en los próximos 12 meses.</div>'; return; }
+  const total = enVentana.reduce((s, e) => s + e.neto, 0);
+
+  // Color de la acción; si coinciden varias el mismo día, círculo partido en partes iguales
+  const fondo = list => {
+    if (list.length === 1) return BOLSA_DIV_TK[list[0].key].color;
+    const n = list.length;
+    return 'linear-gradient(135deg,' + list.map((e, i) => `${BOLSA_DIV_TK[e.key].color} ${i * 100 / n}% ${(i + 1) * 100 / n}%`).join(',') + ')';
+  };
+  const leg = Object.values(BOLSA_DIV_TK).map(T => `<span class="k"><span class="dvc-dot" style="background:${T.color}"></span>${T.tk}</span>`).join('') +
+    '<span class="k"><span class="dvc-dot" style="box-shadow:inset 0 0 0 1.5px var(--muted)"></span>con borde = estimado</span>' +
+    '<span class="k"><span class="dvc-dot" style="background:linear-gradient(135deg,#ffb86c 50%,#a8ff78 50%)"></span>partido = varias acciones el mismo día</span>';
+
+  const grid = months.map(M => {
+    const primero = (new Date(M.y, M.m, 1).getDay() + 6) % 7, nd = new Date(M.y, M.m + 1, 0).getDate();
+    let celdas = '';
+    for (let p = 0; p < primero; p++) celdas += '<i></i>';
+    for (let d = 1; d <= nd; d++) {
+      const iso = M.key + '-' + String(d).padStart(2, '0');
+      const delDia = M.ev.filter(e => e.cobroShow === iso);
+      if (delDia.length) {
+        const soloEst = delDia.every(e => e.tipo === 'estimado');
+        celdas += `<button class="dvc-day${soloEst ? ' dvc-est' : ''}" data-d="${iso}" onclick="showDivDia('${iso}')" title="${delDia.map(e => BOLSA_DIV_TK[e.key].tk).join(' + ')}" style="background:${fondo(delDia)}">${d}</button>`;
+      } else celdas += `<i class="${iso === hoy ? 'today' : ''}">${d}</i>`;
+    }
+    return `<div class="dvc-m${M.key === hoy.slice(0, 7) ? ' now' : ''}">
+      <div class="dvc-h"><b>${BOLSA_MESES[M.m]} ${String(M.y).slice(2)}</b><span class="private">${M.tot ? '≈ ' + fmtDiv(M.tot) : '—'}</span></div>
+      <div class="dvc-w">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(x => `<span>${x}</span>`).join('')}</div>
+      <div class="dvc-c">${celdas}</div></div>`;
   }).join('');
 
   box.innerHTML =
-    `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Próximos 12 meses: <b style="color:var(--text)" class="private">≈ ${fmtDiv(total)}</b> netos · ${ev.length} reparto${ev.length === 1 ? '' : 's'}</div>` +
-    rows +
-    '<div class="chart-wrap" style="margin-top:16px"><canvas id="chart-bol-div-meses"></canvas></div>' +
-    '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">Neto = bruto − retención aprox. (19 % valores españoles, 21 % TSM). Estimado = mismo importe y fecha que hace un año; confírmalo en Datos → Bolsa cuando la empresa lo anuncie. Solo cuentan los títulos comprados antes del ex-dividendo.</div>';
+    `<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Próximos 12 meses: <b style="color:var(--text)" class="private">≈ ${fmtDiv(total)}</b> netos · ${enVentana.length} cobro${enVentana.length === 1 ? '' : 's'}</div>` +
+    `<div class="dvc-leg">${leg}</div><div class="dvc-grid">${grid}</div><div class="dvc-det" id="bol-div-det"></div>` +
+    '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">Neto = bruto − retención aprox. (19 % valores españoles, 21 % TSM). El día de cobro es aproximado (ex-dividendo + retraso habitual de cada empresa) hasta que confirmes el reparto con su fecha de pago en Datos → Bolsa. Solo cuentan los títulos comprados antes del ex-dividendo.</div>';
 
-  // Gráfico por mes de cobro (si no hay fecha de pago se usa la del ex-dividendo)
-  const y0 = +hoy.slice(0, 4), m0 = +hoy.slice(5, 7) - 1;
-  const labels = [], conf = new Array(12).fill(0), est = new Array(12).fill(0);
-  for (let i = 0; i < 12; i++) labels.push(BOLSA_MESES[(m0 + i) % 12] + ' ' + String(y0 + Math.floor((m0 + i) / 12)).slice(2));
-  ev.forEach(e => {
-    const ref = e.pay || e.ex;
-    const idx = Math.min(11, Math.max(0, (+ref.slice(0, 4) - y0) * 12 + (+ref.slice(5, 7) - 1) - m0));
-    (e.tipo === 'estimado' ? est : conf)[idx] += e.neto;
-  });
-  const grid = { color:'rgba(255,255,255,0.04)' };
-  makeChart('chart-bol-div-meses', 'bar', {
-    labels,
-    datasets: [
-      { label:'Confirmado / pendiente', data:conf.map(v => +v.toFixed(2)), backgroundColor:'#7effd4cc', borderRadius:6, stack:'d' },
-      { label:'Estimado',               data:est.map(v => +v.toFixed(2)),  backgroundColor:'#ffb86ccc', borderRadius:6, stack:'d' }
-    ]
-  }, {
-    plugins:{ legend:{ display:true, labels:{ color:'#9e9eb0', font:{ family:'Syne' } } },
-              tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${fmtDiv(c.parsed.y)}` } } },
-    scales:{ x:{ stacked:true, grid, ticks:{ color:'#6b6b85', font:{ family:'Syne', size:10 } } },
-             y:{ stacked:true, grid, ticks:{ color:'#6b6b85', font:{ family:'Syne' }, callback:v => v + '€' } } }
-  });
+  // Día seleccionado: el que estaba; si ya no existe, el próximo cobro
+  const dias = enVentana.map(e => e.cobroShow).sort();
+  if (!BOLSA_DIV_SEL || !dias.includes(BOLSA_DIV_SEL)) BOLSA_DIV_SEL = dias.find(d => d >= hoy) || dias[0];
+  showDivDia(BOLSA_DIV_SEL, ev);
+}
+
+// Detalle de los cobros de un día del calendario
+let BOLSA_DIV_SEL = '';
+function showDivDia(iso, evIn) {
+  BOLSA_DIV_SEL = iso;
+  const hoy = isoHoy();
+  const delDia = (evIn || bolsaDivEventos()).filter(e => e.cobroShow === iso);
+  document.querySelectorAll('#bol-div-prox .dvc-day').forEach(b => b.classList.toggle('sel', b.dataset.d === iso));
+  const det = document.getElementById('bol-div-det');
+  if (!det) return;
+  const tipoTxt = { confirmado: 'confirmado', pendiente: 'pendiente de cobro', estimado: 'estimado' };
+  det.innerHTML = delDia.map(e => {
+    const T = BOLSA_DIV_TK[e.key];
+    const btn = e.tipo === 'estimado' ? '' : `<button class="dvc-go" onclick="registrarCobroDiv('${e.key}','${e.ex}')">✓ Registrar cobro</button>`;
+    return `<div class="dvc-ln">
+      <span class="dvc-dot" style="background:${T.color}"></span>
+      <span><b>${T.tk} · ${T.nombre}</b> <span class="sub">(${tipoTxt[e.tipo]})</span><br>
+        <span class="sub">${e.pay ? 'Cobro' : 'Cobro aprox.'} ${isoDMY(e.cobro)} · ex-dividendo ${isoDMY(e.ex)} (${bolsaDivCuenta(e.ex, hoy)}) · ${fmtPS(e.ps)} ${T.usd ? '$' : '€'}/acc × ${e.acc} acc.</span></span>
+      <span style="margin-left:auto;text-align:right"><b class="private">≈ ${fmtDiv(e.neto)}</b><br><span class="sub private">bruto ${fmtDiv(e.bruto)}</span></span>${btn}
+    </div>`;
+  }).join('') +
+  (delDia.length > 1 ? `<div class="dvc-ln" style="justify-content:flex-end"><span>Total del día <b class="private">≈ ${fmtDiv(delDia.reduce((s, e) => s + e.neto, 0))}</b></span></div>` : '');
 }
 
 function renderBolsaDivCobrados() {
