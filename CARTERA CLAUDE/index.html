@@ -731,6 +731,69 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       <button class="btn-auto-precio" onclick="rehacerHistBolsa(this)">📊 Rehacer histórico</button>
       <span id="bol-hist-status" style="font-size:11px;color:var(--muted)"></span>
     </div>
+
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;font-weight:700;margin-bottom:2px">Dividendos</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Los estimados salen solos del histórico de Yahoo. Aquí confirmas un reparto anunciado y registras lo cobrado (importe <b>neto</b>).</div>
+
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">Reparto anunciado (confirmar)</div>
+      <div class="datos-grid">
+        <div class="datos-field">
+          <label>Valor</label>
+          <select id="d-div-an-tk" class="nav-input">
+            <option value="scyr">SCYR · Sacyr</option>
+            <option value="san">SAN · Santander</option>
+            <option value="iag">IAG</option>
+            <option value="tsm">TSM · Taiwan Semi. (USD)</option>
+            <option value="itx">ITX · Inditex</option>
+          </select>
+        </div>
+        <div class="datos-field">
+          <label>Fecha ex-dividendo</label>
+          <input type="date" id="d-div-an-ex" class="nav-input" />
+        </div>
+        <div class="datos-field">
+          <label>Fecha de pago (opcional)</label>
+          <input type="date" id="d-div-an-pay" class="nav-input" />
+        </div>
+        <div class="datos-field">
+          <label>Bruto por acción (€; TSM en $)</label>
+          <input type="number" id="d-div-an-ps" placeholder="ej: 0,125" step="0.0001" class="nav-input" />
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn-datos-save" onclick="addDivAnunciado()">+ Añadir anunciado</button>
+        <button class="btn-auto-precio" onclick="actualizarEstimacionesDiv(this)">🔄 Actualizar estimaciones</button>
+        <span id="d-div-status" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+      <div id="d-div-anun-list" style="margin-top:10px"></div>
+
+      <div style="font-size:12px;font-weight:600;margin:16px 0 6px">Dividendo cobrado (neto)</div>
+      <div class="datos-grid">
+        <div class="datos-field">
+          <label>Valor</label>
+          <select id="d-div-cb-tk" class="nav-input">
+            <option value="scyr">SCYR · Sacyr</option>
+            <option value="san">SAN · Santander</option>
+            <option value="iag">IAG</option>
+            <option value="tsm">TSM · Taiwan Semi.</option>
+            <option value="itx">ITX · Inditex</option>
+          </select>
+        </div>
+        <div class="datos-field">
+          <label>Fecha de cobro</label>
+          <input type="date" id="d-div-cb-fecha" class="nav-input" />
+        </div>
+        <div class="datos-field">
+          <label>Importe neto (€)</label>
+          <input type="number" id="d-div-cb-imp" placeholder="ej: 57,92" step="0.01" class="nav-input" />
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn-datos-save" onclick="addDivCobrado()">+ Añadir cobro</button>
+      </div>
+      <div id="d-div-cob-list" style="margin-top:10px"></div>
+    </div>
   </div>
 
   <!-- INDEXA -->
@@ -1007,6 +1070,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 <div id="page-bolsa" class="page">
   <div class="section-title">Bolsa</div>
   <div class="section-sub">Acciones directas en BME · mercado español</div>
+  <div id="bol-div-alert"></div>
 
   <div class="stats-row">
     <div class="stat-card" style="--accent-line:var(--accent)">
@@ -1062,16 +1126,14 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </table>
   </div>
 
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">Próximos dividendos</div>
+    <div id="bol-div-prox"></div>
+  </div>
+
   <div class="chart-card">
     <div class="chart-title">Dividendos cobrados</div>
-    <div class="cashflow-row">
-      <div><div class="cf-name">Sacyr (SCYR)</div><div class="cf-detail">BME · Jul 2026</div></div>
-      <div class="cf-amount pos euro-val"><span class="private">+57,92 €</span></div>
-    </div>
-    <div class="cashflow-row">
-      <div><div class="cf-name">Sacyr (SCYR)</div><div class="cf-detail">BME · Feb 2026</div></div>
-      <div class="cf-amount pos euro-val"><span class="private">+34,65 €</span></div>
-    </div>
+    <div id="bol-div-cobrados"></div>
   </div>
 </div>
 
@@ -2324,6 +2386,7 @@ function renderBolsa() {
   }
 
   renderBolsaEvol();
+  renderBolsaDivs();
 }
 
 // ── BOLSA · HISTÓRICO Y EVOLUCIÓN ─────────────────────────────────────────────
@@ -2342,7 +2405,6 @@ const BOLSA_LOTES_EVOL = [
   { key:'scyr', tk:'SCYR (x100)', acc:100, coste:423.95,  fecha:'2026-09-16', usd:false, color:'#b5e0ff' },
   { key:'scyr', tk:'SCYR (x260)', acc:260, coste:1010.36, fecha:'2026-10-01', usd:false, color:'#8bd8ff' },
 ];
-const BOLSA_DIVS_EVOL = [ { d:'2026-02-15', imp:34.65 }, { d:'2026-07-01', imp:57.92 } ];
 
 function loadBolsaHist() {
   try { return JSON.parse(localStorage.getItem(BOLSA_HIST_KEY)) || { base:{}, snaps:{}, baseDone:false }; }
@@ -2476,9 +2538,10 @@ function renderBolsaEvol() {
     if (l.usd) p = p * (s.usdeur || 0.8639);
     return t + p * l.acc;
   }, 0));
+  const divsCobrados = loadBolsaDivs().cobrados;   // marcadores = dividendos realmente cobrados
   const divPts = serie.map((s, i) => {
     const prev = i > 0 ? serie[i - 1].d : '0000-00-00';
-    return BOLSA_DIVS_EVOL.some(dv => dv.d > prev && dv.d <= s.d) ? actLine[i] : null;
+    return divsCobrados.some(dv => dv.fecha > prev && dv.fecha <= s.d) ? actLine[i] : null;
   });
 
   wrap.innerHTML =
@@ -2529,6 +2592,339 @@ async function rehacerHistBolsa(btn) {
   } catch (e) {
     if (st) { st.style.color = 'var(--red)'; st.textContent = '✗ Sin conexión'; }
   }
+  if (btn) btn.disabled = false;
+}
+
+// ── BOLSA · DIVIDENDOS ────────────────────────────────────────────────────────
+// Cobrados + anunciados (confirmados): se sincronizan entre dispositivos (BOLSA_DIV_KEY).
+// Histórico de Yahoo con el que se estiman los próximos repartos: solo local (BOLSA_DIVHIST_KEY).
+// Los títulos con derecho a cada reparto salen de BOLSA_LOTES_EVOL (fecha de compra < fecha ex-dividendo).
+const BOLSA_DIV_KEY      = 'cartera_bolsa_divs_v1';
+const BOLSA_DIVHIST_KEY  = 'cartera_bolsa_divhist_v1';
+const BOLSA_DIV_SEED_VER = 1;
+const BOLSA_DIV_SEED = [
+  { id:'seed-scyr-20260215', ticker:'scyr', fecha:'2026-02-15', importe:34.65, aprox:true },   // solo se conocía el mes (feb 2026)
+  { id:'seed-scyr-20260701', ticker:'scyr', fecha:'2026-07-01', importe:57.92 },
+];
+// ret = retención aproximada para estimar el neto (España 19 %; TSM ~21 %, a corregir con el primer cobro real)
+const BOLSA_DIV_TK = {
+  scyr: { tk:'SCYR', nombre:'Sacyr',        yf:'SCYR.MC', usd:false, ret:0.19 },
+  san:  { tk:'SAN',  nombre:'Santander',    yf:'SAN.MC',  usd:false, ret:0.19 },
+  iag:  { tk:'IAG',  nombre:'IAG',          yf:'IAG.MC',  usd:false, ret:0.19 },
+  tsm:  { tk:'TSM',  nombre:'Taiwan Semi.', yf:'TSM',     usd:true,  ret:0.21 },
+  itx:  { tk:'ITX',  nombre:'Inditex',      yf:'ITX.MC',  usd:false, ret:0.19 },
+};
+const BOLSA_MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+const fmtDiv = n => (+n).toLocaleString('es-ES', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €';
+const fmtPS  = n => (+n).toLocaleString('es-ES', { minimumFractionDigits:2, maximumFractionDigits:4 });
+const isoHoy = () => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); };
+const isoDMY = iso => (iso || '').split('-').reverse().join('/');
+const isoDias = (a, b) => Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 864e5);   // días de a → b
+function isoSumaDias(iso, n) { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function isoMasAno(iso)      { const d = new Date(iso + 'T00:00:00Z'); d.setUTCFullYear(d.getUTCFullYear() + 1); return d.toISOString().slice(0, 10); }
+
+function saveBolsaDivs(d) {
+  try { localStorage.setItem(BOLSA_DIV_KEY, JSON.stringify({ ver: d.ver || BOLSA_DIV_SEED_VER, cobrados: d.cobrados, anunciados: d.anunciados })); } catch (e) {}
+}
+function loadBolsaDivs() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(BOLSA_DIV_KEY)); } catch (e) {}
+  if (!d || typeof d !== 'object') d = { ver: 0, cobrados: [], anunciados: [] };
+  if (!Array.isArray(d.cobrados))   d.cobrados = [];
+  if (!Array.isArray(d.anunciados)) d.anunciados = [];
+  // Alta "de fábrica" idempotente por id; si el usuario borra uno, no vuelve
+  if ((d.ver || 0) < BOLSA_DIV_SEED_VER) {
+    const have = new Set(d.cobrados.map(c => c.id));
+    BOLSA_DIV_SEED.forEach(c => { if (!have.has(c.id)) d.cobrados.push({ ...c }); });
+    d.ver = BOLSA_DIV_SEED_VER;
+    saveBolsaDivs(d);
+  }
+  return d;
+}
+
+function loadBolsaDivHist() {
+  try { return JSON.parse(localStorage.getItem(BOLSA_DIVHIST_KEY)) || { ts: 0, data: {} }; } catch (e) { return { ts: 0, data: {} }; }
+}
+
+// Títulos con derecho a un reparto: lotes comprados ANTES de la fecha ex-dividendo
+function bolsaAccionesElegibles(key, exISO) {
+  return BOLSA_LOTES_EVOL.filter(l => l.key === key && l.fecha < exISO).reduce((s, l) => s + l.acc, 0);
+}
+
+// Descarga de Yahoo (events=div, 2 años) los repartos de cada valor. Se refresca cada 7 días.
+async function refreshBolsaDivHist(force) {
+  const h = loadBolsaDivHist();
+  if (!force && h.ts && Date.now() - h.ts < 7 * 864e5) return true;
+
+  const proxies = [];
+  if (CARTERA_PROXY) {
+    const b = CARTERA_PROXY.replace(/\/+$/, ''); const s = b.indexOf('?') === -1 ? '?' : '&';
+    proxies.push(u => `${b}${s}url=${encodeURIComponent(u)}`);
+  }
+  proxies.push(u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`);
+  proxies.push(u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`);
+
+  async function fetchDivs(yf) {
+    const target = `https://query1.finance.yahoo.com/v8/finance/chart/${yf}?interval=1mo&range=2y&events=div`;
+    for (const px of proxies) {
+      try {
+        const res = await fetch(px(target), { signal: AbortSignal.timeout(10000) });
+        if (!res.ok) continue;
+        const j = JSON.parse(await res.text());
+        const r = j && j.chart && j.chart.result && j.chart.result[0];
+        if (!r) continue;
+        const ev = (r.events && r.events.dividends) || {};
+        return Object.values(ev)
+          .map(e => ({ d: new Date(e.date * 1000).toISOString().slice(0, 10), a: e.amount }))
+          .filter(e => e.a > 0).sort((x, y) => x.d.localeCompare(y.d));
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  const keys = Object.keys(BOLSA_DIV_TK);
+  const res = await Promise.all(keys.map(k => fetchDivs(BOLSA_DIV_TK[k].yf)));
+  const data = { ...(h.data || {}) };
+  let ok = 0;
+  keys.forEach((k, i) => { if (res[i]) { data[k] = res[i]; ok++; } });
+  if (!ok) return false;                                    // fallo total: se reintenta en la próxima carga
+  try { localStorage.setItem(BOLSA_DIVHIST_KEY, JSON.stringify({ ts: ok === keys.length ? Date.now() : (h.ts || 0), data })); } catch (e) {}
+  renderBolsaDivs();
+  return ok === keys.length;
+}
+
+// Lista unificada de repartos por venir / pendientes de cobro, ordenada por fecha ex-dividendo
+//  · confirmado: anunciado y metido a mano  · pendiente: ex-dividendo reciente (Yahoo) aún sin cobro registrado
+//  · estimado: mismo reparto de hace un año proyectado +1 año
+function bolsaDivEventos() {
+  const hoy  = isoHoy();
+  const divs = loadBolsaDivs();
+  const hist = loadBolsaDivHist().data || {};
+  const fx   = loadBolsaPrecios().usdeur || 0.8639;
+  const keys = Object.keys(BOLSA_DIV_TK);
+
+  const mk = (key, ex, pay, ps, tipo, id) => {
+    const T = BOLSA_DIV_TK[key];
+    const acc = bolsaAccionesElegibles(key, ex);
+    if (!T || !acc) return null;
+    const bruto = ps * acc * (T.usd ? fx : 1);
+    return { id, key, ex, pay: pay || '', ps, acc, bruto, neto: bruto * (1 - T.ret), tipo };
+  };
+  const ev = [];
+  const hayCerca = (key, iso, dias) => ev.some(e => e.key === key && Math.abs(isoDias(e.ex, iso)) <= dias);
+
+  divs.anunciados.forEach(a => { const e = mk(a.ticker, a.ex, a.pay, a.ps, 'confirmado', a.id); if (e) ev.push(e); });
+
+  keys.forEach(key => (hist[key] || []).forEach(h => {
+    const dd = isoDias(h.d, hoy);                             // días desde el ex-dividendo
+    if (dd < 0 || dd > 45) return;
+    if (hayCerca(key, h.d, 20)) return;
+    if (divs.cobrados.some(c => c.ticker === key && c.fecha >= h.d && isoDias(h.d, c.fecha) <= 60)) return;
+    const e = mk(key, h.d, '', h.a, 'pendiente', 'pend-' + key + '-' + h.d); if (e) ev.push(e);
+  }));
+
+  const desde = isoSumaDias(hoy, -365);
+  keys.forEach(key => (hist[key] || []).forEach(h => {
+    if (h.d <= desde || h.d > hoy) return;
+    const ex2 = isoMasAno(h.d);
+    if (ex2 <= hoy || hayCerca(key, ex2, 45)) return;
+    const e = mk(key, ex2, '', h.a, 'estimado', 'est-' + key + '-' + ex2); if (e) ev.push(e);
+  }));
+
+  return ev.sort((a, b) => a.ex.localeCompare(b.ex));
+}
+
+function bolsaDivBadge(tipo) {
+  if (tipo === 'confirmado') return '<span class="badge pos">🟢 confirmado</span>';
+  if (tipo === 'pendiente')  return '<span class="badge" style="background:rgba(107,207,255,0.12);color:var(--blue)">🔵 pendiente de cobro</span>';
+  return '<span class="badge neu">🟡 estimado</span>';
+}
+function bolsaDivCuenta(ex, hoy) {
+  const d = isoDias(hoy, ex);
+  if (d > 1)  return `en ${d} días`;
+  if (d === 1) return 'mañana';
+  if (d === 0) return 'hoy';
+  return `hace ${-d} día${d === -1 ? '' : 's'}`;
+}
+
+function renderBolsaDivs() {
+  const hoy = isoHoy();
+  const ev  = bolsaDivEventos();
+  renderBolsaDivAlert(ev, hoy);
+  renderBolsaDivProx(ev, hoy);
+  renderBolsaDivCobrados();
+}
+
+function renderBolsaDivAlert(ev, hoy) {
+  const box = document.getElementById('bol-div-alert');
+  if (!box) return;
+  const cerca = ev.filter(e => e.tipo === 'pendiente' || (isoDias(hoy, e.ex) >= 0 && isoDias(hoy, e.ex) <= 14));
+  if (!cerca.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div style="background:rgba(255,184,108,0.1);border:1px solid rgba(255,184,108,0.35);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;line-height:1.7">' +
+    cerca.slice(0, 4).map(e => {
+      const T = BOLSA_DIV_TK[e.key];
+      const que = e.tipo === 'pendiente' ? `ex-dividendo ${bolsaDivCuenta(e.ex, hoy)} · cobro pendiente`
+                : `ex-dividendo ${bolsaDivCuenta(e.ex, hoy)} (${isoDMY(e.ex)})${e.tipo === 'estimado' ? ' · estimado' : ''}`;
+      return `🔔 <b>${T.tk}</b> · ${que} · <span class="private">≈ ${fmtDiv(e.neto)} netos</span>`;
+    }).join('<br>') + '</div>';
+}
+
+function renderBolsaDivProx(ev, hoy) {
+  const box = document.getElementById('bol-div-prox');
+  if (!box) return;
+  if (!ev.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">' +
+      (loadBolsaDivHist().ts ? 'Sin repartos previstos en los próximos 12 meses.' : 'Cargando estimaciones de Yahoo…') + '</div>';
+    return;
+  }
+  const total = ev.reduce((s, e) => s + e.neto, 0);
+  const rows = ev.map(e => {
+    const T = BOLSA_DIV_TK[e.key];
+    const btn = e.tipo === 'estimado' ? '' :
+      `<button onclick="registrarCobroDiv('${e.key}','${e.ex}')" style="margin-top:4px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;padding:3px 9px">✓ Registrar cobro</button>`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:210px">
+        <div class="cf-name">${T.tk} · ${T.nombre} ${bolsaDivBadge(e.tipo)}</div>
+        <div class="cf-detail">Ex-dividendo ${isoDMY(e.ex)} (<b>${bolsaDivCuenta(e.ex, hoy)}</b>)${e.pay ? ' · pago ' + isoDMY(e.pay) : ''} · ${fmtPS(e.ps)} ${T.usd ? '$' : '€'}/acc bruto × ${e.acc} acc.</div>
+      </div>
+      <div style="text-align:right">
+        <div class="cf-amount pos euro-val"><span class="private">≈ +${fmtDiv(e.neto)}</span></div>
+        <div class="cf-detail"><span class="private">bruto ${fmtDiv(e.bruto)}</span></div>
+        ${btn}
+      </div>
+    </div>`;
+  }).join('');
+
+  box.innerHTML =
+    `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Próximos 12 meses: <b style="color:var(--text)" class="private">≈ ${fmtDiv(total)}</b> netos · ${ev.length} reparto${ev.length === 1 ? '' : 's'}</div>` +
+    rows +
+    '<div class="chart-wrap" style="margin-top:16px"><canvas id="chart-bol-div-meses"></canvas></div>' +
+    '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">Neto = bruto − retención aprox. (19 % valores españoles, 21 % TSM). Estimado = mismo importe y fecha que hace un año; confírmalo en Datos → Bolsa cuando la empresa lo anuncie. Solo cuentan los títulos comprados antes del ex-dividendo.</div>';
+
+  // Gráfico por mes de cobro (si no hay fecha de pago se usa la del ex-dividendo)
+  const y0 = +hoy.slice(0, 4), m0 = +hoy.slice(5, 7) - 1;
+  const labels = [], conf = new Array(12).fill(0), est = new Array(12).fill(0);
+  for (let i = 0; i < 12; i++) labels.push(BOLSA_MESES[(m0 + i) % 12] + ' ' + String(y0 + Math.floor((m0 + i) / 12)).slice(2));
+  ev.forEach(e => {
+    const ref = e.pay || e.ex;
+    const idx = Math.min(11, Math.max(0, (+ref.slice(0, 4) - y0) * 12 + (+ref.slice(5, 7) - 1) - m0));
+    (e.tipo === 'estimado' ? est : conf)[idx] += e.neto;
+  });
+  const grid = { color:'rgba(255,255,255,0.04)' };
+  makeChart('chart-bol-div-meses', 'bar', {
+    labels,
+    datasets: [
+      { label:'Confirmado / pendiente', data:conf.map(v => +v.toFixed(2)), backgroundColor:'#7effd4cc', borderRadius:6, stack:'d' },
+      { label:'Estimado',               data:est.map(v => +v.toFixed(2)),  backgroundColor:'#ffb86ccc', borderRadius:6, stack:'d' }
+    ]
+  }, {
+    plugins:{ legend:{ display:true, labels:{ color:'#9e9eb0', font:{ family:'Syne' } } },
+              tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${fmtDiv(c.parsed.y)}` } } },
+    scales:{ x:{ stacked:true, grid, ticks:{ color:'#6b6b85', font:{ family:'Syne', size:10 } } },
+             y:{ stacked:true, grid, ticks:{ color:'#6b6b85', font:{ family:'Syne' }, callback:v => v + '€' } } }
+  });
+}
+
+function renderBolsaDivCobrados() {
+  const box = document.getElementById('bol-div-cobrados');
+  if (!box) return;
+  const list = [...loadBolsaDivs().cobrados].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  if (!list.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Todavía no has registrado cobros.</div>'; return; }
+  const total = list.reduce((s, c) => s + c.importe, 0);
+  box.innerHTML = list.map(c => {
+    const T = BOLSA_DIV_TK[c.ticker] || { tk: (c.ticker || '').toUpperCase(), nombre: '' };
+    const fecha = c.aprox ? `${BOLSA_MESES[+c.fecha.slice(5, 7) - 1]} ${c.fecha.slice(0, 4)} (fecha aprox.)` : isoDMY(c.fecha);
+    return `<div class="cashflow-row">
+      <div><div class="cf-name">${T.nombre} (${T.tk})</div><div class="cf-detail">${fecha}</div></div>
+      <div class="cf-amount pos euro-val"><span class="private">+${fmtDiv(c.importe)}</span></div>
+    </div>`;
+  }).join('') +
+  `<div class="cashflow-row">
+    <div><div class="cf-name" style="color:var(--accent)">TOTAL COBRADO (neto)</div></div>
+    <div class="cf-amount euro-val" style="color:var(--accent);font-size:18px"><span class="private">+${fmtDiv(total)}</span></div>
+  </div>`;
+}
+
+// ── Datos → Bolsa → Dividendos ─────────────────────────────────────────────
+function renderBolsaDivDatos() {
+  const an = document.getElementById('d-div-anun-list');
+  const cb = document.getElementById('d-div-cob-list');
+  if (!an && !cb) return;
+  const d = loadBolsaDivs();
+  const fila = 'display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;margin-bottom:6px;font-size:12px;flex-wrap:wrap';
+  const del = (fn, id) => `<button onclick="${fn}('${id}')" title="Eliminar" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;line-height:1">&times;</button>`;
+  if (an) an.innerHTML = d.anunciados.length
+    ? [...d.anunciados].sort((a, b) => a.ex.localeCompare(b.ex)).map(a => {
+        const T = BOLSA_DIV_TK[a.ticker] || { tk: a.ticker, usd: false };
+        return `<div style="${fila}"><span style="color:var(--muted);min-width:78px">${isoDMY(a.ex)}</span><span style="font-weight:600;min-width:48px">${T.tk}</span><span>${fmtPS(a.ps)} ${T.usd ? '$' : '€'}/acc bruto</span>${a.pay ? `<span style="color:var(--muted)">pago ${isoDMY(a.pay)}</span>` : ''}${del('deleteDivAnunciado', a.id)}</div>`;
+      }).join('')
+    : '<div style="font-size:12px;color:var(--muted)">Sin repartos anunciados.</div>';
+  if (cb) cb.innerHTML = d.cobrados.length
+    ? [...d.cobrados].sort((a, b) => b.fecha.localeCompare(a.fecha)).map(c => {
+        const T = BOLSA_DIV_TK[c.ticker] || { tk: c.ticker };
+        return `<div style="${fila}"><span style="color:var(--muted);min-width:78px">${c.aprox ? BOLSA_MESES[+c.fecha.slice(5, 7) - 1] + ' ' + c.fecha.slice(0, 4) : isoDMY(c.fecha)}</span><span style="font-weight:600;min-width:48px">${T.tk}</span><span class="private" style="font-weight:600">+${fmtDiv(c.importe)}</span>${del('deleteDivCobrado', c.id)}</div>`;
+      }).join('')
+    : '<div style="font-size:12px;color:var(--muted)">Sin cobros registrados.</div>';
+}
+
+function addDivAnunciado() {
+  const tk  = document.getElementById('d-div-an-tk').value;
+  const ex  = document.getElementById('d-div-an-ex').value;
+  const pay = document.getElementById('d-div-an-pay').value;
+  const ps  = parseFloat(document.getElementById('d-div-an-ps').value);
+  if (!ex || isNaN(ps) || ps <= 0) { showDatosSaved('Revisa fecha ex-dividendo e importe'); return; }
+  const d = loadBolsaDivs();
+  d.anunciados.push({ id: 'an-' + Date.now(), ticker: tk, ex, pay: pay || '', ps: +ps.toFixed(4) });
+  saveBolsaDivs(d);
+  ['d-div-an-ex', 'd-div-an-pay', 'd-div-an-ps'].forEach(id => { document.getElementById(id).value = ''; });
+  renderAll(); renderBolsaDivDatos();
+  showDatosSaved(bolsaAccionesElegibles(tk, ex) ? 'Reparto anunciado añadido ✓' : 'Añadido, pero sin títulos con derecho en esa fecha');
+}
+function deleteDivAnunciado(id) {
+  const d = loadBolsaDivs(); d.anunciados = d.anunciados.filter(a => a.id !== id); saveBolsaDivs(d);
+  renderAll(); renderBolsaDivDatos(); showDatosSaved('Reparto eliminado ✓');
+}
+function addDivCobrado() {
+  const tk    = document.getElementById('d-div-cb-tk').value;
+  const fecha = document.getElementById('d-div-cb-fecha').value || isoHoy();
+  const imp   = parseFloat(document.getElementById('d-div-cb-imp').value);
+  if (isNaN(imp) || imp <= 0) { showDatosSaved('Revisa el importe neto'); return; }
+  const d = loadBolsaDivs();
+  d.cobrados.push({ id: 'cb-' + Date.now(), ticker: tk, fecha, importe: +imp.toFixed(2) });
+  saveBolsaDivs(d);
+  document.getElementById('d-div-cb-fecha').value = ''; document.getElementById('d-div-cb-imp').value = '';
+  renderAll(); renderBolsaDivDatos(); showDatosSaved('Cobro añadido ✓');
+}
+function deleteDivCobrado(id) {
+  const d = loadBolsaDivs(); d.cobrados = d.cobrados.filter(c => c.id !== id); saveBolsaDivs(d);
+  renderAll(); renderBolsaDivDatos(); showDatosSaved('Cobro eliminado ✓');
+}
+// Botón "✓ Registrar cobro" de un reparto confirmado/pendiente: lo pasa a "cobrados" con el neto real
+function registrarCobroDiv(key, ex) {
+  const e = bolsaDivEventos().find(x => x.key === key && x.ex === ex && x.tipo !== 'estimado');
+  if (!e) return;
+  const resp = prompt(`Importe NETO cobrado de ${BOLSA_DIV_TK[key].tk} (€)`, e.neto.toFixed(2).replace('.', ','));
+  if (resp === null) return;
+  const imp = parseFloat(String(resp).replace(',', '.'));
+  if (isNaN(imp) || imp <= 0) { showDatosSaved('Importe no válido'); return; }
+  const hoy = isoHoy();
+  const d = loadBolsaDivs();
+  d.cobrados.push({ id: 'cb-' + Date.now(), ticker: key, fecha: (e.pay && e.pay <= hoy) ? e.pay : hoy, importe: +imp.toFixed(2) });
+  if (e.tipo === 'confirmado') d.anunciados = d.anunciados.filter(a => a.id !== e.id);
+  saveBolsaDivs(d);
+  renderAll(); renderBolsaDivDatos(); showDatosSaved('Cobro registrado ✓');
+}
+async function actualizarEstimacionesDiv(btn) {
+  const st = document.getElementById('d-div-status');
+  if (btn) btn.disabled = true;
+  if (st) { st.style.color = 'var(--muted)'; st.textContent = 'Descargando repartos de Yahoo…'; }
+  let ok = false;
+  try { ok = await refreshBolsaDivHist(true); } catch (e) {}
+  const n = Object.values(loadBolsaDivHist().data || {}).reduce((s, a) => s + a.length, 0);
+  if (st) { st.style.color = n ? (ok ? 'var(--green)' : 'var(--yellow)') : 'var(--red)';
+            st.textContent = n ? `${ok ? '✓' : '⚠ parcial:'} ${n} repartos históricos` : '✗ No se pudo descargar (reintenta más tarde)'; }
+  renderBolsaDivs();
   if (btn) btn.disabled = false;
 }
 
@@ -3169,6 +3565,7 @@ function initDatosPage() {
   if (bp.tsm) document.getElementById('d-tsm').value  = bp.tsm;
   if (bp.itx)  document.getElementById('d-itx').value  = bp.itx;
   renderDatosBolsaResult();
+  renderBolsaDivDatos();
 
   // Simples
   const idx      = document.getElementById('d-indexa');
@@ -3621,6 +4018,7 @@ autoUpdateBolsaOnLoad();
 // Histórico de bolsa: foto del día + backfill único de Yahoo (en segundo plano)
 pushBolsaSnapshot();
 backfillBolsaHist();
+refreshBolsaDivHist();   // repartos de Yahoo para estimar dividendos (cada 7 días)
 
 </script>
 
@@ -3643,6 +4041,7 @@ backfillBolsaHist();
     'cartera_valores_v3', 'cartera_valores_v3_ts',
     'cartera_inm_valores_v1',
     'cartera_bolsa_precios_v1', 'cartera_bolsa_ts',
+    'cartera_bolsa_divs_v1',
     'cartera_gastos_ext_v1',
     'cartera_best_aport_v1',
     'cartera_efectivo_v1',
