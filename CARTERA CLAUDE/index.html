@@ -2657,9 +2657,9 @@ async function rehacerHistBolsa(btn) {
 // Los títulos con derecho a cada reparto salen de BOLSA_LOTES_EVOL (fecha de compra < fecha ex-dividendo).
 const BOLSA_DIV_KEY      = 'cartera_bolsa_divs_v1';
 const BOLSA_DIVHIST_KEY  = 'cartera_bolsa_divhist_v1';
-const BOLSA_DIV_SEED_VER = 1;
+const BOLSA_DIV_SEED_VER = 2;
 const BOLSA_DIV_SEED = [
-  { id:'seed-scyr-20260215', ticker:'scyr', fecha:'2026-02-15', importe:34.65, aprox:true },   // solo se conocía el mes (feb 2026)
+  { id:'seed-scyr-20260129', ticker:'scyr', fecha:'2026-01-29', importe:34.65 },
   { id:'seed-scyr-20260701', ticker:'scyr', fecha:'2026-07-01', importe:57.92 },
 ];
 // ret = retención aproximada para estimar el neto (España 19 %; TSM ~21 %, a corregir con el primer cobro real)
@@ -2703,6 +2703,8 @@ function loadBolsaDivs() {
   if (!Array.isArray(d.anunciados)) d.anunciados = [];
   // Alta "de fábrica" idempotente por id; si el usuario borra uno, no vuelve
   if ((d.ver || 0) < BOLSA_DIV_SEED_VER) {
+    // v2: el cobro de SCYR de enero se guardó como "feb 2026 (aprox.)"; la fecha real es el 29/01/2026
+    d.cobrados.forEach(c => { if (c.id === 'seed-scyr-20260215') { c.id = 'seed-scyr-20260129'; c.fecha = '2026-01-29'; delete c.aprox; } });
     const have = new Set(d.cobrados.map(c => c.id));
     BOLSA_DIV_SEED.forEach(c => { if (!have.has(c.id)) d.cobrados.push({ ...c }); });
     d.ver = BOLSA_DIV_SEED_VER;
