@@ -228,6 +228,30 @@ body {
 .dvc-in:focus { outline:none; border-color:var(--accent); }
 .dvc-reg .dvc-go { margin-left:0; border-color:var(--accent); color:var(--text); }
 
+/* Posiciones de Bolsa: una ficha por acción */
+.bpos-res { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 12px; }
+.bpos-res b { color:var(--text); font-weight:700; }
+.bpos-up { color:var(--green) !important; }
+.bpos-dn { color:var(--red) !important; }
+.bpos-mut { color:var(--muted); font-size:11px; }
+.bpos-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; }
+.bpos-card { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:12px 14px; min-width:0; }
+.bpos-t { display:flex; align-items:center; gap:7px; font-size:14px; font-weight:700; }
+.bpos-t small { font-size:11px; font-weight:400; color:var(--muted); }
+.bpos-w { margin-left:auto; font-size:11px; font-weight:400; color:var(--muted); }
+.bpos-big { font-size:28px; font-weight:700; margin:8px 0 0; line-height:1.1; }
+.bpos-sub { font-size:13px; margin:2px 0 10px; }
+.bpos-br { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); margin:3px 0; }
+.bpos-br .l { width:58px; flex:none; }
+.bpos-br .tr { flex:1; height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; }
+.bpos-br .fl { display:block; height:100%; border-radius:4px; }
+.bpos-br .v { width:68px; text-align:right; flex:none; color:var(--text); }
+.bpos-ft { font-size:11px; color:var(--muted); margin-top:8px; line-height:1.5; }
+.bpos-more { background:none; border:none; padding:0; margin-top:6px; cursor:pointer; color:var(--muted); font-family:inherit; font-size:12px; text-decoration:underline; }
+.bpos-lots { margin-top:6px; border-top:1px solid var(--border); padding-top:4px; }
+.bpos-lots[hidden] { display:none; }
+.bpos-lots > div { display:flex; justify-content:space-between; gap:8px; font-size:12px; color:var(--muted); padding:2px 0; }
+
 /* Dividendos cobrados por posición (Bolsa) */
 .dcb-g { display:grid; grid-template-columns:repeat(auto-fit, minmax(118px, 1fr)); gap:8px; }
 .dcb-k { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:left; font-family:inherit; color:var(--text); min-width:0; display:block; width:100%; }
@@ -1147,39 +1171,14 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
     </div>
   </div>
 
-  <div class="grid2">
-    <div class="chart-card">
-      <div class="chart-title">Invertido vs Actual por valor</div>
-      <div class="chart-wrap"><canvas id="chart-bol-compare"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Distribución por valor</div>
-      <div class="chart-wrap donut" style="position:relative">
-        <canvas id="chart-bol-sector"></canvas>
-      </div>
-    </div>
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">Posiciones en cartera</div>
+    <div id="bol-pos"></div>
   </div>
 
   <div class="chart-card" style="margin-bottom:16px">
     <div class="chart-title">Evolución de la inversión</div>
     <div id="bol-evol-wrap"></div>
-  </div>
-
-  <div class="chart-card" style="margin-bottom:16px">
-    <div class="chart-title">Posiciones en cartera</div>
-    <table class="inv-table">
-      <thead><tr><th>Ticker</th><th>Nombre</th><th>Sector</th><th>Acciones</th><th>P. Compra</th><th>P. Actual</th><th>Total inv.</th><th>Saldo act.</th><th>P/G €</th><th>P/G %</th><th>Rent. anual.</th></tr></thead>
-      <tbody id="bol-tabla-body">
-        <tr><td>SCYR</td><td>Sacyr</td><td>Infraes.</td><td>715</td><td><span class="private">3,77€</span></td><td><span class="private">4,56€</span></td><td><span class="private">2.696€</span></td><td><span class="private">3.260€</span></td><td class="pos"><span class="private">+565€</span></td><td><span class="badge pos">+20.9%</span></td><td><span class="badge pos">+27.2%</span></td></tr>
-        <tr><td>SAN</td><td>Santander</td><td>Banca</td><td>229</td><td><span class="private">10,61€</span></td><td><span class="private">10,62€</span></td><td><span class="private">2.430€</span></td><td><span class="private">2.432€</span></td><td class="pos"><span class="private">+2€</span></td><td><span class="badge neu">+0.1%</span></td><td><span class="badge neu">+0.2%</span></td></tr>
-        <tr><td>IAG</td><td>IAG</td><td>Aerolíneas</td><td>350</td><td><span class="private">4,02€</span></td><td><span class="private">4,58€</span></td><td><span class="private">1.407€</span></td><td><span class="private">1.603€</span></td><td class="pos"><span class="private">+196€</span></td><td><span class="badge pos">+13.9%</span></td><td><span class="badge pos">+25.1%</span></td></tr>
-        <tr><td>SAN</td><td>Santander</td><td>Banca</td><td>190</td><td><span class="private">10,03€</span></td><td><span class="private">10,62€</span></td><td><span class="private">1.906€</span></td><td><span class="private">2.018€</span></td><td class="pos"><span class="private">+112€</span></td><td><span class="badge pos">+5.9%</span></td><td><span class="badge pos">+21.0%</span></td></tr>
-        <tr><td>ITX</td><td>Inditex</td><td>Textil</td><td>20</td><td><span class="private">57,48€</span></td><td><span class="private">57,48€</span></td><td><span class="private">1.150€</span></td><td><span class="private">1.150€</span></td><td class="pos"><span class="private">+0€</span></td><td><span class="badge neu">+0.0%</span></td><td><span class="badge neu">—</span></td></tr>
-        <tr><td>ITX</td><td>Inditex</td><td>Textil</td><td>26</td><td><span class="private">54,58€</span></td><td><span class="private">54,58€</span></td><td><span class="private">1.419€</span></td><td><span class="private">1.419€</span></td><td class="pos"><span class="private">+0€</span></td><td><span class="badge neu">+0.0%</span></td><td><span class="badge neu">—</span></td></tr>
-        <tr><td>SCYR</td><td>Sacyr</td><td>Infraes.</td><td>100</td><td><span class="private">4,24€</span></td><td><span class="private">4,24€</span></td><td><span class="private">424€</span></td><td><span class="private">424€</span></td><td class="pos"><span class="private">+0€</span></td><td><span class="badge neu">+0.0%</span></td><td><span class="badge neu">—</span></td></tr>
-        <tr><td>SCYR</td><td>Sacyr</td><td>Infraes.</td><td>260</td><td><span class="private">3,89€</span></td><td><span class="private">3,89€</span></td><td><span class="private">1.010€</span></td><td><span class="private">1.010€</span></td><td class="pos"><span class="private">+0€</span></td><td><span class="badge neu">+0.0%</span></td><td><span class="badge neu">—</span></td></tr>
-      </tbody>
-    </table>
   </div>
 
   <div class="chart-card" style="margin-bottom:16px">
@@ -2367,32 +2366,8 @@ function renderBolsa() {
   const actItx1  = pItx   * 20;
   const actItx2  = pItx   * 26;
 
-  makeChart('chart-bol-compare', 'bar', {
-    labels: ['SCYR (x715)', 'SAN (x229)', 'IAG', 'SAN (x190)', 'TSM (x4)', 'ITX (x20)', 'ITX (x26)', 'SCYR (x100)', 'SCYR (x260)'],
-    datasets: [
-      { label:'Invertido', data:[2695.55, 2429.69, 1407, 1905.7, 1473.47, 1149.60, 1419.08, 423.95, 1010.36], backgroundColor:'rgba(107,108,133,0.6)', borderRadius:6 },
-      { label:'Actual',    data:[actScyr1, actSan1, actIag, actSan2, actTsm, actItx1, actItx2, actScyr2, actScyr3], backgroundColor:'#6bcfffcc', borderRadius:6 }
-    ]
-  }, { plugins:{legend:{display:true,labels:{color:'#9e9eb0',font:{family:'Syne'}}}},
-       scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne',size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6b6b85',font:{family:'Syne'},callback:v=>v+'€'}}} });
-
-  // Distribución por valor (peso % sobre el valor de mercado total, lotes fusionados)
-  const valNames = ['SCYR', 'SAN', 'IAG', 'TSM', 'ITX'];
-  const valData  = [actScyr1 + actScyr2 + actScyr3, actSan1 + actSan2, actIag, actTsm, actItx1 + actItx2];
-  const valTot   = valData.reduce((a, b) => a + b, 0) || 1;
-  const valPesos = valData.map(v => v / valTot * 100);
-  const valLabels = valNames.map((n, i) => `${n} · ${valPesos[i].toFixed(1)}%`);
-  makeChart('chart-bol-sector', 'doughnut', {
-    labels: valLabels,
-    datasets:[{ data: valData, backgroundColor:['#c8b5ffcc','#ffb86ccc','#6bcfffcc','#ff9de2cc','#a8ff78cc'], borderColor:'#0c0c10', borderWidth:3 }]
-  }, { cutout:'60%',
-       plugins:{ legend:{ display:true, labels:{ color:'#9e9eb0', font:{ family:'Syne' } } },
-       tooltip:{ callbacks:{ label: c => ` ${fmt(c.parsed)} · ${(c.parsed / valTot * 100).toFixed(1)}%` } } } });
-
-  // Actualizar tabla de posiciones
-  const tbody = document.getElementById('bol-tabla-body');
-  if (tbody) {
-    // invEur = precio compra × nº acciones (coste original en €); actEur = valor de mercado en €
+  {
+    // Una fila por compra (lote). invEur = precio compra × nº acciones (coste original en €); actEur = valor de mercado en €
     const rows = [
       { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:715, pComp:3.77,   precio:pScyr,   invEur:3.77*715,   actEur:actScyr1, fecha:'16/12/2025' },
       { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:229, pComp:10.61,  precio:pSan,    invEur:10.61*229,  actEur:actSan1,  fecha:'25/02/2026' },
@@ -2404,45 +2379,69 @@ function renderBolsa() {
       { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:100, pComp:4.24,   precio:pScyr,   invEur:423.95,     actEur:actScyr2, fecha:'16/09/2026' },
       { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:260, pComp:3.886,  precio:pScyr,   invEur:1010.36,    actEur:actScyr3, fecha:'01/10/2026' },
     ];
-    tbody.innerHTML = rows.map(r => {
-      const pg    = r.actEur - r.invEur;
-      const pgPct = (pg / r.invEur * 100).toFixed(1);
-      const color = pg >= 0 ? 'pos' : 'neg';
-      const cur   = r.usd ? '$' : '€';
-      const pComp = r.pComp.toFixed(2).replace('.', ',') + ' ' + cur;
-      const pAct  = r.precio.toFixed(2).replace('.', ',') + ' ' + cur
-                  + (r.usd ? ' <span style="font-size:10px;color:var(--muted)">USD</span>' : '');
-
-      // Rentabilidad anualizada (TIR simple: única entrada + valor actual, sin dividendos)
-      const [dd, mm, yyyy] = r.fecha.split('/').map(Number);
-      const fechaCompra = new Date(yyyy, mm - 1, dd);
-      const dias = Math.max(0, (Date.now() - fechaCompra) / 86400000);
-      let anualHtml = '<span class="badge neu">—</span>';
-      if (dias >= 7 && r.invEur > 0 && r.actEur > 0) {
-        const anos = dias / 365.25;
-        const anualPct = (Math.pow(r.actEur / r.invEur, 1 / anos) - 1) * 100;
-        const colorA = anualPct >= 0 ? 'pos' : 'neg';
-        anualHtml = `<span class="badge ${colorA}">${anualPct >= 0 ? '+' : ''}${anualPct.toFixed(1)}%</span>`;
-      }
-
-      return `<tr>
-        <td>${r.ticker}<div style="font-size:10px;color:var(--muted);font-weight:400">${r.fecha}</div></td>
-        <td>${r.nombre}</td>
-        <td>${r.sector}</td>
-        <td>${r.acc}</td>
-        <td><span class="private">${pComp}</span></td>
-        <td><span class="private">${pAct}</span></td>
-        <td><span class="private">${fmt(r.invEur)}</span></td>
-        <td><span class="private">${fmt(r.actEur)}</span></td>
-        <td class="${color}"><span class="private">${pg>=0?'+':''}${fmt(pg)}</span></td>
-        <td><span class="badge ${color}">${pg>=0?'+':''}${pgPct}%</span></td>
-        <td>${anualHtml}</td>
-      </tr>`;
-    }).join('');
+    renderBolsaPos(rows);
   }
 
   renderBolsaEvol();
   renderBolsaDivs();
+}
+
+// ── BOLSA · POSICIONES (una ficha por acción; las compras quedan plegadas) ────
+// Fusiona los lotes de cada valor: pagaste vs vale hoy, resultado grande en % y €, peso sobre el total de la bolsa.
+let BOLSA_POS_ULT = [];
+const BOLSA_POS_ABIERTAS = new Set();
+function togglePosLotes(tk) {
+  if (BOLSA_POS_ABIERTAS.has(tk)) BOLSA_POS_ABIERTAS.delete(tk); else BOLSA_POS_ABIERTAS.add(tk);
+  renderBolsaPos(BOLSA_POS_ULT);
+}
+function renderBolsaPos(rows) {
+  BOLSA_POS_ULT = rows;
+  const box = document.getElementById('bol-pos');
+  if (!box) return;
+  const n0  = v => fmt(Math.round(v)).replace(' €', '');            // con punto de millares (1.401), igual que el resto de la app
+  const sg  = v => v >= 0 ? '+' : '−';
+  const pct = v => sg(v) + Math.abs(v).toFixed(1).replace('.', ',') + ' %';
+  const e0  = v => sg(v) + n0(Math.abs(v)) + ' €';
+  const cl  = v => v >= 0 ? 'bpos-up' : 'bpos-dn';
+  const px  = (v, usd) => v.toFixed(2).replace('.', ',') + (usd ? ' $' : ' €');
+
+  const grupos = {};
+  rows.forEach(r => {
+    const g = grupos[r.ticker] || (grupos[r.ticker] = { tk: r.ticker, nombre: r.nombre, usd: !!r.usd, precio: r.precio, acc: 0, inv: 0, val: 0, costeAcc: 0, lotes: [] });
+    g.acc += r.acc; g.inv += r.invEur; g.val += r.actEur; g.costeAcc += r.pComp * r.acc; g.lotes.push(r);
+  });
+  const lista = Object.values(grupos);
+  const totVal = lista.reduce((s, g) => s + g.val, 0) || 1;
+  const totInv = lista.reduce((s, g) => s + g.inv, 0) || 1;
+  lista.forEach(g => { g.pg = g.val - g.inv; g.pc = g.pg / g.inv * 100; g.w = g.val / totVal * 100; });
+  lista.sort((a, b) => b.val - a.val);
+
+  const mejor = [...lista].sort((a, b) => b.pc - a.pc)[0], peor = [...lista].sort((a, b) => a.pc - b.pc)[0];
+  const verdes = lista.filter(g => g.pg >= 0).length, pgTot = totVal - totInv;
+  const resumen = `<div class="bpos-res">Tu bolsa vale <b class="private">${n0(totVal)} €</b> y llevas <b class="${cl(pgTot)} private">${e0(pgTot)} (${pct(pgTot / totInv * 100)})</b>. <b>${verdes} de ${lista.length}</b> acciones van en verde. La mejor: <b>${mejor.tk} ${pct(mejor.pc)}</b>. La peor: <b>${peor.tk} ${pct(peor.pc)}</b>.</div>`;
+
+  const fichas = lista.map(g => {
+    const T = BOLSA_DIV_TK[g.tk.toLowerCase()] || { color: '#9e9eb0' };
+    const mx = Math.max(g.inv, g.val), abierta = BOLSA_POS_ABIERTAS.has(g.tk);
+    const lotes = g.lotes.map(r => {
+      const pg = r.actEur - r.invEur, pc = pg / r.invEur * 100;
+      const [dd, mm, yy] = r.fecha.split('/').map(Number);
+      const dias = Math.max(0, (Date.now() - new Date(yy, mm - 1, dd)) / 86400000);
+      const anual = (dias >= 7 && r.invEur > 0 && r.actEur > 0) ? (Math.pow(r.actEur / r.invEur, 365.25 / dias) - 1) * 100 : null;
+      return `<div><span>${r.fecha} · ${r.acc} acc. a ${px(r.pComp, r.usd)}</span><span><span class="${cl(pg)}">${pct(pc)}</span>${anual === null ? '' : ` <span class="bpos-mut">${pct(anual)}/año</span>`}</span></div>`;
+    }).join('');
+    return `<div class="bpos-card">
+      <div class="bpos-t"><span class="dvc-dot" style="background:${T.color}"></span>${g.tk} <small>${g.nombre}</small><span class="bpos-w">${Math.round(g.w)} % de tu bolsa</span></div>
+      <div class="bpos-big ${cl(g.pg)}">${pct(g.pc)}</div>
+      <div class="bpos-sub ${cl(g.pg)} private">${e0(g.pg)} de ${g.pg >= 0 ? 'ganancia' : 'pérdida'}</div>
+      <div class="bpos-br"><span class="l">Pagaste</span><span class="tr"><span class="fl" style="width:${g.inv / mx * 100}%;background:rgba(255,255,255,0.28)"></span></span><span class="v private">${n0(g.inv)} €</span></div>
+      <div class="bpos-br"><span class="l">Vale hoy</span><span class="tr"><span class="fl" style="width:${g.val / mx * 100}%;background:${g.pg >= 0 ? 'var(--green)' : 'var(--red)'}"></span></span><span class="v private">${n0(g.val)} €</span></div>
+      <div class="bpos-ft">${g.acc} acc. · coste medio <span class="private">${px(g.costeAcc / g.acc, g.usd)}</span> · hoy ${px(g.precio, g.usd)}</div>
+      <button class="bpos-more" onclick="togglePosLotes('${g.tk}')">${abierta ? 'Ocultar compras' : 'Ver ' + g.lotes.length + ' compra' + (g.lotes.length > 1 ? 's' : '')}</button>
+      <div class="bpos-lots"${abierta ? '' : ' hidden'}>${lotes}</div>
+    </div>`;
+  }).join('');
+  box.innerHTML = resumen + `<div class="bpos-grid">${fichas}</div>`;
 }
 
 // ── BOLSA · HISTÓRICO Y EVOLUCIÓN ─────────────────────────────────────────────
@@ -2684,7 +2683,7 @@ function bolsaDivCobroEst(key, ex) {
 }
 const BOLSA_MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
-const fmtDiv = n => (+n).toLocaleString('es-ES', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €';
+const fmtDiv = n => { const [i, d] = (+n).toFixed(2).split('.'); return i.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + d + ' €'; };   // 1.234,56 € (el locale es-ES no agrupa los 4 dígitos)
 const fmtPS  = n => (+n).toLocaleString('es-ES', { minimumFractionDigits:2, maximumFractionDigits:4 });
 const isoHoy = () => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0'); };
 const isoDMY = iso => (iso || '').split('-').reverse().join('/');
