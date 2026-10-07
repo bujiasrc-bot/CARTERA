@@ -223,6 +223,10 @@ body {
 .dvc-ln .sub { font-size:12px; }
 .dvc-go { margin-left:auto; background:none; border:1px solid var(--border); border-radius:8px; color:var(--muted); cursor:pointer; font-family:inherit; font-size:11px; padding:3px 10px; }
 .dvc-go:hover { color:var(--text); border-color:var(--muted); }
+.dvc-reg { flex-basis:100%; display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12px; padding-top:6px; }
+.dvc-in { background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:inherit; font-size:13px; padding:4px 8px; color-scheme:dark; }
+.dvc-in:focus { outline:none; border-color:var(--accent); }
+.dvc-reg .dvc-go { margin-left:0; border-color:var(--accent); color:var(--text); }
 
 /* PROGRESS BAR */
 .progress-wrap { margin-bottom: 12px; }
@@ -2807,6 +2811,9 @@ function renderBolsaDivAlert(ev, hoy) {
 function renderBolsaDivProx(ev, hoy) {
   const box = document.getElementById('bol-div-prox');
   if (!box) return;
+  // Si estás escribiendo el importe real, no repintar (una actualización de precios te borraría lo escrito)
+  const ae = document.activeElement;
+  if (ae && ae.tagName === 'INPUT' && box.contains(ae)) return;
   if (!ev.length) {
     box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">' +
       (loadBolsaDivHist().ts ? 'Sin repartos previstos en los próximos 12 meses.' : 'Cargando estimaciones de Yahoo…') + '</div>';
@@ -2875,12 +2882,19 @@ function showDivDia(iso, evIn) {
   const tipoTxt = { confirmado: 'confirmado', pendiente: 'pendiente de cobro', estimado: 'estimado' };
   det.innerHTML = delDia.map(e => {
     const T = BOLSA_DIV_TK[e.key];
-    const btn = e.tipo === 'estimado' ? '' : `<button class="dvc-go" onclick="registrarCobroDiv('${e.key}','${e.ex}')">✓ Registrar cobro</button>`;
+    // Cobro ya previsto/pendiente: se puede escribir el importe REAL que abona el broker (la previsión es solo orientativa)
+    const reg = e.tipo === 'estimado' ? '' : `<div class="dvc-reg">
+        <span>Importe real cobrado (neto)</span>
+        <input type="number" inputmode="decimal" step="0.01" min="0" class="dvc-in" style="width:96px" id="dvc-imp-${e.key}-${e.ex}" value="${e.neto.toFixed(2)}"> €
+        <span>· Fecha</span>
+        <input type="date" class="dvc-in" id="dvc-f-${e.key}-${e.ex}" value="${(e.pay && e.pay <= hoy) ? e.pay : hoy}">
+        <button class="dvc-go" onclick="registrarCobroDiv('${e.key}','${e.ex}')">✓ Registrar cobro</button>
+      </div>`;
     return `<div class="dvc-ln">
       <span class="dvc-dot" style="background:${T.color}"></span>
       <span><b>${T.tk} · ${T.nombre}</b> <span class="sub">(${tipoTxt[e.tipo]})</span><br>
         <span class="sub">${e.pay ? 'Cobro' : 'Cobro aprox.'} ${isoDMY(e.cobro)} · ex-dividendo ${isoDMY(e.ex)} (${bolsaDivCuenta(e.ex, hoy)}) · ${fmtPS(e.ps)} ${T.usd ? '$' : '€'}/acc × ${e.acc} acc.</span></span>
-      <span style="margin-left:auto;text-align:right"><b class="private">≈ ${fmtDiv(e.neto)}</b><br><span class="sub private">bruto ${fmtDiv(e.bruto)}</span></span>${btn}
+      <span style="margin-left:auto;text-align:right"><span class="sub">previsto</span> <b class="private">≈ ${fmtDiv(e.neto)}</b><br><span class="sub private">bruto ${fmtDiv(e.bruto)}</span></span>${reg}
     </div>`;
   }).join('') +
   (delDia.length > 1 ? `<div class="dvc-ln" style="justify-content:flex-end"><span>Total del día <b class="private">≈ ${fmtDiv(delDia.reduce((s, e) => s + e.neto, 0))}</b></span></div>` : '');
@@ -2964,13 +2978,13 @@ function deleteDivCobrado(id) {
 function registrarCobroDiv(key, ex) {
   const e = bolsaDivEventos().find(x => x.key === key && x.ex === ex && x.tipo !== 'estimado');
   if (!e) return;
-  const resp = prompt(`Importe NETO cobrado de ${BOLSA_DIV_TK[key].tk} (€)`, e.neto.toFixed(2).replace('.', ','));
-  if (resp === null) return;
-  const imp = parseFloat(String(resp).replace(',', '.'));
-  if (isNaN(imp) || imp <= 0) { showDatosSaved('Importe no válido'); return; }
   const hoy = isoHoy();
+  const impEl = document.getElementById(`dvc-imp-${key}-${ex}`), fEl = document.getElementById(`dvc-f-${key}-${ex}`);
+  const imp = parseFloat(String(impEl ? impEl.value : '').replace(',', '.'));
+  if (isNaN(imp) || imp <= 0) { showDatosSaved('Escribe el importe neto cobrado'); return; }
+  const fecha = (fEl && fEl.value) || ((e.pay && e.pay <= hoy) ? e.pay : hoy);
   const d = loadBolsaDivs();
-  d.cobrados.push({ id: 'cb-' + Date.now(), ticker: key, fecha: (e.pay && e.pay <= hoy) ? e.pay : hoy, importe: +imp.toFixed(2) });
+  d.cobrados.push({ id: 'cb-' + Date.now(), ticker: key, fecha, importe: +imp.toFixed(2) });
   if (e.tipo === 'confirmado') d.anunciados = d.anunciados.filter(a => a.id !== e.id);
   saveBolsaDivs(d);
   renderAll(); renderBolsaDivDatos(); showDatosSaved('Cobro registrado ✓');
