@@ -228,6 +228,29 @@ body {
 .dvc-in:focus { outline:none; border-color:var(--accent); }
 .dvc-reg .dvc-go { margin-left:0; border-color:var(--accent); color:var(--text); }
 
+/* IBEX 35 (Bolsa) */
+.ibx-h { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; margin:0 0 10px; }
+.ibx-n { font-size:28px; font-weight:700; color:var(--text); line-height:1.1; }
+.ibx-d { font-size:14px; font-weight:700; }
+.ibx-c { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; margin:0 0 8px; }
+.ibx-c .g { display:inline-flex; gap:4px; align-items:center; flex-wrap:wrap; }
+.ibx-c .lb { font-size:12px; color:var(--muted); }
+.ibx-b { background:none; border:1px solid var(--border); border-radius:8px; color:var(--muted); cursor:pointer; font-family:inherit; font-size:12px; padding:4px 10px; }
+.ibx-b:hover { color:var(--text); border-color:var(--muted); }
+.ibx-b.on { color:var(--text); border-color:var(--muted); background:rgba(255,255,255,0.06); }
+.ibx-b.off { opacity:0.35; pointer-events:none; }
+.ibx-m { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin:10px 0 12px; }
+.ibx-m > div { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:8px 12px; }
+.ibx-m .l { font-size:11px; color:var(--muted); }
+.ibx-m .v { font-size:16px; font-weight:700; color:var(--text); margin-top:1px; }
+.ibx-m .s { font-size:11px; color:var(--muted); margin-top:1px; }
+.ibx-k { display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:10px; font-size:12px; color:var(--muted); align-items:center; }
+.ibx-k .sw { display:inline-block; width:14px; height:3px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+.ibx-k .dt { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+.ibx-r { margin-top:10px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:13px; color:var(--muted); line-height:1.6; }
+.ibx-r b { color:var(--text); font-weight:700; }
+.ibx-f { font-size:11px; color:var(--muted); margin-top:8px; line-height:1.5; }
+
 /* Posiciones de Bolsa: una ficha por acción */
 .bpos-res { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 12px; }
 .bpos-res b { color:var(--text); font-weight:700; }
@@ -1179,6 +1202,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="chart-card" style="margin-bottom:16px">
     <div class="chart-title">Evolución de la inversión</div>
     <div id="bol-evol-wrap"></div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title">IBEX 35</div>
+    <div id="bol-ibex"></div>
   </div>
 
   <div class="chart-card" style="margin-bottom:16px">
@@ -2383,6 +2411,7 @@ function renderBolsa() {
   }
 
   renderBolsaEvol();
+  renderBolsaIbex();
   renderBolsaDivs();
 }
 
@@ -3064,6 +3093,212 @@ async function actualizarEstimacionesDiv(btn) {
             st.textContent = n ? `${ok ? '✓' : '⚠ parcial:'} ${n} repartos históricos` : '✗ No se pudo descargar (reintenta más tarde)'; }
   renderBolsaDivs();
   if (btn) btn.disabled = false;
+}
+
+// ── BOLSA · IBEX 35 ───────────────────────────────────────────────────────────
+// Datos de Yahoo (^IBEX), solo locales (no se sincronizan): diarios para ≤ 1 año y para comparar con tu bolsa,
+// mensuales (histórico completo desde 1993) para los periodos largos. Índice de precio: no incluye dividendos.
+const IBEX_KEY = 'cartera_ibex_v1';
+let IBEX_RNG = 'first', IBEX_YEAR = 2010, IBEX_MODE = 'solo';
+const IBEX_LBL = { '1m':'1 mes', '6m':'6 meses', '1a':'1 año', '5a':'5 años', '10a':'10 años', 'max':'Máx', 'first':'Mi 1ª compra' };
+const IBEX_LARGOS = ['1a', '5a', '10a', 'max', 'year'];
+
+function loadIbex() {
+  try { const d = JSON.parse(localStorage.getItem(IBEX_KEY)); if (d && Array.isArray(d.daily) && Array.isArray(d.monthly)) return d; } catch (e) {}
+  return { ts: 0, tsM: 0, rng: '', daily: [], monthly: [] };
+}
+const ibxN   = v => fmt(Math.round(v)).replace(' €', '');            // 19.158 (con punto de millares)
+const ibxPct = (v, d) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(d === undefined ? 1 : d).replace('.', ',') + ' %';
+const ibxCl  = v => v >= 0 ? 'bpos-up' : 'bpos-dn';
+const ibxYM  = d => BOLSA_MESES[+d.slice(5, 7) - 1] + ' ' + d.slice(0, 4);
+const ibxFin = ym => new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7), 0)).toISOString().slice(0, 10);   // último día del mes
+const ibxAnos = (a, b) => (Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 31557600000;
+const ibxPrimera = () => BOLSA_LOTES_EVOL.reduce((m, l) => l.fecha < m ? l.fecha : m, '9999-12-31');
+
+async function refreshIbex(force) {
+  const h = loadIbex();
+  const hoy = isoHoy();
+  const anos = Math.max(1, Math.ceil(ibxAnos(ibxPrimera(), hoy)) + 1);          // años de diario necesarios para cubrir tu 1ª compra
+  const rng = anos + 'y';
+  const needD = force || !h.daily.length || h.rng !== rng || Date.now() - h.ts > 12 * 3600e3;
+  const needM = force || !h.monthly.length || Date.now() - h.tsM > 7 * 864e5;
+  if (!needD && !needM) return true;
+
+  const proxies = [];
+  if (CARTERA_PROXY) {
+    const b = CARTERA_PROXY.replace(/\/+$/, ''); const s = b.indexOf('?') === -1 ? '?' : '&';
+    proxies.push(u => `${b}${s}url=${encodeURIComponent(u)}`);
+  }
+  proxies.push(u => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`);
+  proxies.push(u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`);
+  async function get(target) {
+    for (const px of proxies) {
+      try {
+        const res = await fetch(px(target), { signal: AbortSignal.timeout(20000) });
+        if (!res.ok) continue;
+        const r = JSON.parse(await res.text())?.chart?.result?.[0];
+        if (r && r.timestamp) return r;
+      } catch (e) {}
+    }
+    return null;
+  }
+  const base = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EIBEX?';
+  const [rd, rm] = await Promise.all([
+    needD ? get(base + `interval=1d&range=${rng}`) : null,
+    needM ? get(base + 'interval=1mo&range=max') : null
+  ]);
+  let ok = true;
+  if (needD) {
+    if (rd) {
+      const m = {};
+      rd.timestamp.forEach((t, i) => { const c = rd.indicators.quote[0].close[i]; if (c != null) m[new Date(t * 1000).toISOString().slice(0, 10)] = Math.round(c * 100) / 100; });
+      const desde = [isoSumaDias(hoy, -366), isoSumaDias(ibxPrimera(), -7)].sort()[0];
+      h.daily = Object.keys(m).sort().filter(d => d >= desde).map(d => [d, m[d]]);
+      h.ts = Date.now(); h.rng = rng;
+    } else ok = false;
+  }
+  if (needM) {
+    if (rm) {
+      // Yahoo marca cada barra mensual a las 23:00/22:00 UTC del día anterior al 1: hay que sumar 12 h para obtener el mes correcto
+      const m = {};
+      rm.timestamp.forEach((t, i) => { const c = rm.indicators.quote[0].close[i]; if (c != null) m[new Date((t + 12 * 3600) * 1000).toISOString().slice(0, 7)] = Math.round(c); });
+      h.monthly = Object.keys(m).sort().map(k => [k, m[k]]);
+      h.tsM = Date.now();
+    } else ok = false;
+  }
+  if (h.daily.length) { try { localStorage.setItem(IBEX_KEY, JSON.stringify(h)); } catch (e) {} }
+  renderBolsaIbex();
+  return ok;
+}
+
+// Rentabilidad sobre el dinero invertido en cada momento: tu bolsa vs el IBEX con tus mismas compras (mismos euros, mismos días)
+function ibexCompare() {
+  const ib = loadIbex();
+  if (!ib.daily.length) return [];
+  const mapa = {}; ib.daily.forEach(p => { mapa[p[0]] = p[1]; });
+  const dias = ib.daily.map(p => p[0]);
+  const en = d => mapa[dias.find(q => q >= d) || dias[dias.length - 1]];
+  const out = [];
+  bolsaHistSerie().forEach(s => {
+    if (!mapa[s.d]) return;
+    let inv = 0, val = 0, uds = 0;
+    BOLSA_LOTES_EVOL.forEach(l => {
+      if (s.d < l.fecha) return;
+      inv += l.coste;
+      let p = s[l.key]; if (p == null) return;
+      if (l.usd) p *= (s.usdeur || 0.8639);
+      val += p * l.acc; uds += l.coste / en(l.fecha);
+    });
+    if (inv) out.push([s.d, (val / inv - 1) * 100, (uds * mapa[s.d] / inv - 1) * 100]);
+  });
+  return out;
+}
+
+// Serie del periodo elegido: diaria (≤ 1 año / desde tu 1ª compra) o mensual (largos); base = valor desde el que se mide la variación
+function ibexSerie(ib, hoy) {
+  const diario = ['1m', '6m', '1a', 'first'].includes(IBEX_RNG);
+  if (diario) {
+    const f = IBEX_RNG === '1m' ? isoSumaDias(hoy, -31) : IBEX_RNG === '6m' ? isoSumaDias(hoy, -183) : IBEX_RNG === '1a' ? isoSumaDias(hoy, -366) : ibxPrimera();
+    const pts = ib.daily.filter(p => p[0] >= f);
+    return pts.length ? { diario: true, pts, base: pts[0][1], baseDate: pts[0][0] } : null;
+  }
+  const [y, m] = hoy.split('-');
+  const ini = IBEX_RNG === '5a' ? (y - 5) + '-' + m : IBEX_RNG === '10a' ? (y - 10) + '-' + m : IBEX_RNG === 'max' ? '1900-01' : IBEX_YEAR + '-01';
+  const pts = ib.monthly.filter(p => p[0] >= ini).map(p => [p[0] + '-01', p[1]]);
+  const prev = ib.monthly.filter(p => p[0] < ini);
+  if (!pts.length) return null;
+  const pp = prev[prev.length - 1];
+  return { diario: false, pts, base: pp ? pp[1] : pts[0][1], baseDate: ibxFin(pp ? pp[0] : pts[0][0].slice(0, 7)) };
+}
+
+function setIbexRng(v)  { IBEX_RNG = v; renderBolsaIbex(); }
+function setIbexYear(v) { IBEX_YEAR = +v; IBEX_RNG = 'year'; renderBolsaIbex(); }
+function setIbexMode(v) { IBEX_MODE = v; if (v === 'cmp' && IBEX_LARGOS.includes(IBEX_RNG)) IBEX_RNG = 'first'; renderBolsaIbex(); }
+
+function renderBolsaIbex() {
+  const box = document.getElementById('bol-ibex');
+  if (!box) return;
+  const ae = document.activeElement;
+  if (ae && ae.tagName === 'SELECT' && box.contains(ae)) return;          // no repintar mientras se abre el selector de año
+  const ib = loadIbex();
+  if (!ib.daily.length) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Cargando datos del IBEX 35…</div>'; return; }
+
+  const cmp = IBEX_MODE === 'cmp';
+  const hoy = ib.daily[ib.daily.length - 1][0];
+  const last = ib.daily[ib.daily.length - 1][1], prev = ib.daily.length > 1 ? ib.daily[ib.daily.length - 2][1] : last;
+  const dia = (last / prev - 1) * 100;
+
+  const botones = Object.keys(IBEX_LBL).map(k => {
+    const off = cmp && IBEX_LARGOS.includes(k);
+    return `<button class="ibx-b${IBEX_RNG === k ? ' on' : ''}${off ? ' off' : ''}" onclick="setIbexRng('${k}')">${IBEX_LBL[k]}</button>`;
+  }).join('');
+  const aniosOpt = (() => { let o = ''; for (let y = +hoy.slice(0, 4); y >= 1994; y--) o += `<option value="${y}"${y === IBEX_YEAR ? ' selected' : ''}>${y}</option>`; return o; })();
+  const modos = [['solo', 'Solo IBEX'], ['cmp', 'Comparar con tu bolsa']].map(i => `<button class="ibx-b${IBEX_MODE === i[0] ? ' on' : ''}" onclick="setIbexMode('${i[0]}')">${i[1]}</button>`).join('');
+
+  let stats = '', leyenda = '', resumen = '', nota = '', cfg;
+  const grid = { color: 'rgba(255,255,255,0.04)' }, tk = '#6b6b85';
+
+  if (!cmp) {
+    const S = ibexSerie(ib, hoy);
+    if (!S) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Todavía no hay datos de ese periodo.</div>'; return; }
+    const vals = S.pts.map(p => p[1]), fechas = S.pts.map(p => p[0]);
+    const chg = (last / S.base - 1) * 100, anos = ibxAnos(S.baseDate, hoy);
+    let imx = 0, imn = 0; vals.forEach((v, i) => { if (v > vals[imx]) imx = i; if (v < vals[imn]) imn = i; });
+    const desdeTxt = S.diario ? isoDMY(S.baseDate) : (IBEX_RNG === 'max' ? ibxYM(S.baseDate) : ibxYM(S.baseDate));
+    stats = `<div><div class="l">Variación del periodo</div><div class="v ${ibxCl(chg)}">${ibxPct(chg)}</div><div class="s">desde ${desdeTxt}</div></div>` +
+      (anos >= 1 ? `<div><div class="l">Rentabilidad anual media</div><div class="v ${ibxCl(chg)}">${ibxPct((Math.pow(last / S.base, 1 / anos) - 1) * 100)}</div><div class="s">en ${anos.toFixed(1).replace('.', ',')} años, sin dividendos</div></div>` : '') +
+      `<div><div class="l">Máximo del periodo</div><div class="v">${ibxN(vals[imx])}</div><div class="s">${S.diario ? isoDMY(fechas[imx]) : ibxYM(fechas[imx])}</div></div>` +
+      `<div><div class="l">Mínimo del periodo</div><div class="v">${ibxN(vals[imn])}</div><div class="s">${S.diario ? isoDMY(fechas[imn]) : ibxYM(fechas[imn])}</div></div>`;
+
+    const verCompras = S.diario && IBEX_RNG !== '1a';
+    const ds = [{ label: 'IBEX 35', data: vals, borderColor: '#6bcfff', backgroundColor: 'rgba(107,207,255,0.10)', fill: true, borderWidth: 2, pointRadius: 0, tension: 0.2, order: 2 }];
+    if (verCompras) {
+      const mk = S.pts.map(() => null), mc = S.pts.map(() => '#9e9eb0');
+      BOLSA_LOTES_EVOL.forEach(l => {
+        const i = S.pts.findIndex(p => p[0] >= l.fecha);
+        if (i >= 0 && l.fecha >= S.pts[0][0]) { mk[i] = S.pts[i][1]; mc[i] = (BOLSA_DIV_TK[l.key] || {}).color || '#9e9eb0'; }
+      });
+      ds.push({ label: 'Tus compras', data: mk, showLine: false, pointRadius: 5, pointHoverRadius: 6, pointBackgroundColor: mc, pointBorderColor: '#0c0c10', pointBorderWidth: 1, order: 1 });
+    }
+    const paso = anos > 40 ? 5 : anos > 20 ? 3 : anos > 10 ? 2 : 1;
+    const xTicks = S.diario ? { color: tk, maxTicksLimit: 7, font: { family: 'Syne', size: 11 } }
+      : { color: tk, font: { family: 'Syne', size: 11 }, autoSkip: false, maxRotation: 0, callback: (v, i) => { const d = fechas[i]; return d.slice(5, 7) === '01' && (+d.slice(0, 4)) % paso === 0 ? d.slice(0, 4) : ''; } };
+    cfg = { labels: S.diario ? fechas.map(d => d.slice(8) + '/' + d.slice(5, 7)) : fechas.map(d => d.slice(0, 4) + '-' + d.slice(5, 7)),
+      datasets: ds,
+      options: { interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          title: it => { const d = fechas[it[0].dataIndex]; return S.diario ? isoDMY(d) : ibxYM(d); },
+          label: c => c.dataset.label === 'IBEX 35' ? ibxN(c.parsed.y) + ' puntos' : 'Una de tus compras' } } },
+        scales: { x: { grid, ticks: xTicks }, y: { grid, ticks: { color: tk, font: { family: 'Syne' }, callback: v => ibxN(v) } } } } };
+    leyenda = verCompras
+      ? '<span><span class="sw" style="background:#6bcfff"></span>IBEX 35</span>' + Object.values(BOLSA_DIV_TK).map(T => `<span><span class="dt" style="background:${T.color}"></span>${T.tk}</span>`).join('') + '<span>Los puntos son tus compras</span>'
+      : '<span><span class="sw" style="background:#6bcfff"></span>IBEX 35</span>';
+    nota = S.diario ? '' : 'Cierres mensuales. Es el índice de precio: no incluye los dividendos de las empresas que lo componen.';
+  } else {
+    const f = IBEX_RNG === '1m' ? isoSumaDias(hoy, -31) : IBEX_RNG === '6m' ? isoSumaDias(hoy, -183) : ibxPrimera();
+    const cp = ibexCompare().filter(p => p[0] >= f);
+    if (cp.length < 2) { box.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">Todavía no hay datos suficientes para comparar.</div>'; return; }
+    cfg = { labels: cp.map(p => p[0].slice(8) + '/' + p[0].slice(5, 7)),
+      datasets: [
+        { label: 'Tu bolsa', data: cp.map(p => +p[1].toFixed(2)), borderColor: '#7effd4', borderWidth: 2.5, pointRadius: 0, tension: 0.2 },
+        { label: 'IBEX con tus mismas compras', data: cp.map(p => +p[2].toFixed(2)), borderColor: '#9e9eb0', borderWidth: 2, borderDash: [5, 4], pointRadius: 0, tension: 0.2 }],
+      options: { interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${ibxPct(c.parsed.y)}` } } },
+        scales: { x: { grid, ticks: { color: tk, maxTicksLimit: 7, font: { family: 'Syne', size: 11 } } }, y: { grid, ticks: { color: tk, font: { family: 'Syne' }, callback: v => v + ' %' } } } } };
+    leyenda = '<span><span class="sw" style="background:#7effd4"></span>Tu bolsa</span><span><span class="sw" style="background:#9e9eb0"></span>IBEX con tus mismas compras</span>';
+    const l = cp[cp.length - 1], dif = l[1] - l[2];
+    resumen = `<div class="ibx-r">Tu bolsa <b class="${ibxCl(l[1])}">${ibxPct(l[1])}</b> · IBEX con tus mismas compras <b>${ibxPct(l[2])}</b> · vas <b class="${ibxCl(dif)}">${Math.abs(dif).toFixed(1).replace('.', ',')} puntos ${dif >= 0 ? 'por encima' : 'por debajo'}</b></div>`;
+    nota = 'Rentabilidad sobre el dinero invertido en cada momento. Se supone que los mismos euros se hubieran metido en el IBEX el mismo día de cada compra. No incluye dividendos en ninguno de los dos.';
+  }
+
+  box.innerHTML =
+    `<div class="ibx-h"><span class="ibx-n">${ibxN(last)}</span><span class="ibx-d ${ibxCl(dia)}">${ibxPct(dia, 2)} hoy</span></div>` +
+    `<div class="ibx-c"><span class="g">${botones}</span><span class="g"><span class="lb">Desde el año</span><select class="dvc-in" onchange="setIbexYear(this.value)"${cmp ? ' disabled' : ''}>${aniosOpt}</select></span></div>` +
+    `<div class="ibx-c"><span class="g">${modos}</span>${cmp ? '<span class="lb">La comparación solo existe desde tu primera compra (' + isoDMY(ibxPrimera()) + ').</span>' : ''}</div>` +
+    (stats ? `<div class="ibx-m">${stats}</div>` : '') +
+    '<div class="chart-wrap"><canvas id="chart-bol-ibex"></canvas></div>' +
+    `<div class="ibx-k">${leyenda}</div>` + resumen + (nota ? `<div class="ibx-f">${nota}</div>` : '');
+  makeChart('chart-bol-ibex', 'line', { labels: cfg.labels, datasets: cfg.datasets }, cfg.options);
 }
 
 // ── INDEXA ───────────────────────────────────────────────────────────────────
@@ -4157,6 +4392,7 @@ autoUpdateBolsaOnLoad();
 pushBolsaSnapshot();
 backfillBolsaHist();
 refreshBolsaDivHist();   // repartos de Yahoo para estimar dividendos (cada 7 días)
+refreshIbex();           // IBEX 35: diario cada 12 h, mensual (histórico completo) cada 7 días
 
 </script>
 
