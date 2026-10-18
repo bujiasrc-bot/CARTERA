@@ -14,6 +14,16 @@ if (typeof Chart === 'undefined') {
 }
 </script>
 
+<!-- SheetJS: lee Excel/CSV del extracto bancario en el navegador (Movimientos) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+if (typeof XLSX === 'undefined') {
+  var sx = document.createElement('script');
+  sx.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+  document.head.appendChild(sx);
+}
+</script>
+
 <!-- Firebase (sincronización PC ↔ móvil) -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -690,6 +700,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <button class="nav-sec" data-sec="hipotecas" onclick="showSection('hipotecas')">🏦 Hipotecas</button>
   <button class="nav-sec" data-sec="seguros" onclick="showSection('seguros')">🛡️ Seguros</button>
   <button class="nav-sec" data-sec="tarjetas" onclick="showSection('tarjetas')">💳 Tarjetas</button>
+  <button class="nav-sec" data-sec="movimientos" onclick="showSection('movimientos')">💵 Movimientos</button>
   <button class="nav-sec" data-sec="vencimientos" onclick="showSection('vencimientos')">📅 Vencimientos</button>
   <button class="nav-sec" data-sec="patrimonio" onclick="showSection('patrimonio')">🧾 Patrimonio</button>
   <button class="nav-sec" data-sec="datos" onclick="showSection('datos')">✏️ Datos</button>
@@ -1573,6 +1584,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 <div id="page-hipotecas" class="page"><div id="view-hipotecas"></div></div>
 <div id="page-seguros" class="page"><div id="view-seguros"></div></div>
 <div id="page-tarjetas" class="page"><div id="view-tarjetas"></div></div>
+<div id="page-movimientos" class="page"><div id="view-movimientos"></div></div>
 <div id="page-vencimientos" class="page"><div id="view-vencimientos"></div></div>
 <div id="page-patrimonio" class="page"><div id="view-patrimonio"></div></div>
 
@@ -4647,6 +4659,8 @@ refreshIbex();           // IBEX 35: diario cada 12 h, mensual (histórico compl
     'cartera_hipotecas_v1',
     'cartera_seguros_v1',
     'cartera_tarjetas_v1',
+    'cartera_movimientos_v1',
+    'cartera_mov_reglas_v1',
     'td_apikey'
   ];
 
@@ -4825,7 +4839,7 @@ function showSection(sec) {
   const sub = document.getElementById('subnav-inversion');
   if (sub) sub.classList.toggle('visible', sec === 'inversion');
   const destino = { inversion: 'dashboard', hipotecas: 'hipotecas', seguros: 'seguros', tarjetas: 'tarjetas',
-                    vencimientos: 'vencimientos', patrimonio: 'patrimonio', datos: 'datos' }[sec];
+                    movimientos: 'movimientos', vencimientos: 'vencimientos', patrimonio: 'patrimonio', datos: 'datos' }[sec];
   showPage(destino);
 }
 
@@ -4833,7 +4847,7 @@ function showSection(sec) {
 const _showPageOrig = showPage;
 showPage = function (id) {
   _showPageOrig(id);
-  if (['hipotecas','seguros','tarjetas','vencimientos','patrimonio'].includes(id)) renderSeccionesNuevas();
+  if (['hipotecas','seguros','tarjetas','movimientos','vencimientos','patrimonio'].includes(id)) renderSeccionesNuevas();
 };
 
 // ── Utilidades ───────────────────────────────────────────────────────────────
@@ -5922,6 +5936,7 @@ function renderSeccionesNuevas() {
   if (REG_EDIT && !Object.keys(borr.vals).some(id => id.startsWith(`r-${REG_EDIT.sec}-`))) rellenarFormulario(REG_EDIT.sec);
   restaurarBorradores(borr);
   segMarcarDocs();
+  renderMovimientos();
   renderVencimientos();
   renderPatrimonio();
 }
@@ -5932,6 +5947,326 @@ renderAll = function () {
   _renderAllOrig();
   renderSeccionesNuevas();
 };
+</script>
+
+<script>
+// ═══════════════════ MOVIMIENTOS: importar extracto bancario y clasificar ═══════════════════
+// Todo se procesa en el navegador con SheetJS: el archivo nunca sale de este dispositivo.
+// Solo se guardan los movimientos ya clasificados (localStorage + sincronización), nunca el
+// archivo original.
+
+const MOV_KEY = 'cartera_movimientos_v1';
+const MOV_REGLAS_KEY = 'cartera_mov_reglas_v1';
+const MOV_MAPEO_KEY = 'cartera_mov_mapeo_v1';
+
+// Categorías: `sec` = vincula a una ficha de Hipotecas/Tarjetas/Seguros ya dada de alta;
+// `lista` = opciones fijas (p. ej. qué inmueble). Sin ninguna de las dos = categoría simple.
+const MOV_CATS = {
+  nomina:    { label: 'Nómina / pensión',          icono: '💰', signo: 1 },
+  alquiler:  { label: 'Alquiler recibido',          icono: '🏠', signo: 1,  lista: [{ id:'mesias', label:'Mesías' }, { id:'casa', label:'Casa (vivienda habitual)' }] },
+  hipoteca:  { label: 'Hipoteca',                   icono: '🏦', signo: -1, sec: 'hipotecas' },
+  tarjeta:   { label: 'Tarjeta',                    icono: '💳', signo: -1, sec: 'tarjetas' },
+  seguro:    { label: 'Seguro',                     icono: '🛡️', signo: -1, sec: 'seguros' },
+  coche:     { label: 'Préstamo coche',             icono: '🚗', signo: -1 },
+  inmueble:  { label: 'Gasto de inmueble',          icono: '🏠', signo: -1, lista: [{ id:'mesias', label:'Mesías' }, { id:'casa', label:'Casa (vivienda habitual)' }] },
+  inversion: { label: 'Aportación a inversión',     icono: '📈', signo: -1, lista: [{ id:'indexa', label:'Indexa Capital' }, { id:'bestinver', label:'Bestinver' }, { id:'bolsa', label:'Bolsa' }, { id:'otros', label:'Otra' }] },
+  paypal:    { label: 'PayPal / compras online',    icono: '🛒', signo: -1 },
+  ingreso:   { label: 'Otro ingreso',                icono: '⬆️', signo: 1 },
+  gasto:     { label: 'Otro gasto',                  icono: '⬇️', signo: -1 },
+  ignorar:   { label: 'Ignorar (no contar)',         icono: '🚫', signo: 0 },
+};
+
+// Reglas de fábrica: solo vocabulario genérico de banca española, nada propio de esta cuenta
+// (los nombres de personas/compañías/importes que identifiques tú se guardan con "recordar",
+// solo en tu localStorage/Firebase — nunca aquí, porque este archivo es público en GitHub).
+const MOV_REGLAS_DEFECTO = [
+  { patron: 'HIPOTECA', categoria: 'hipoteca' },
+  { patron: 'NOMINA', categoria: 'nomina' },
+  { patron: 'PENSION', categoria: 'nomina' },
+  { patron: 'ALQUILER', categoria: 'alquiler' },
+  { patron: 'ADEUDO MENSUAL DE TARJETA', categoria: 'tarjeta' },
+  { patron: 'PAYPAL', categoria: 'paypal' },
+];
+
+const MOV_UI = { filas: null, pendientes: null, resumen: null };
+
+// ── Utilidades de parseo ─────────────────────────────────────────────────────
+const movNorm = s => String(s || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+
+function parseImporteEs(v) {
+  if (typeof v === 'number') return v;
+  if (v == null) return NaN;
+  let s = String(v).trim().replace(/[€\s]/g, '');
+  if (!s) return NaN;
+  if (/,\d{1,2}$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');  // 1.234,56 → 1234.56
+  else if (/\.\d{1,2}$/.test(s)) { /* ya tiene punto decimal (formato de SheetJS): nada que hacer */ }
+  else s = s.replace(/\./g, '').replace(',', '.');                      // miles con punto, sin decimales
+  return parseFloat(s);
+}
+function parseFechaTexto(v) {
+  if (v instanceof Date && !isNaN(v)) return startOfDay(v);
+  const s = String(v || '').trim();
+  let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m) { let y = +m[3]; if (y < 100) y += 2000; return new Date(y, +m[2] - 1, +m[1]); }
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  const d = new Date(s);
+  return isNaN(d) ? null : startOfDay(d);
+}
+// Fila donde empieza la tabla real (los extractos de banco suelen traer un título y
+// la fecha de generación del informe antes de la cabecera con las columnas)
+function movDetectarInicio(filas) {
+  for (let i = 0; i < Math.min(filas.length, 15); i++) {
+    const n = filas[i].map(c => movNorm(c));
+    const hits = ['FECHA', 'CONCEPTO', 'IMPORTE'].filter(k => n.some(h => h.includes(k))).length;
+    if (hits >= 2) return i;
+  }
+  return 0;
+}
+function movAdivinarColumnas(cab) {
+  const n = cab.map(h => movNorm(h));
+  const buscar = (...claves) => { const i = n.findIndex(h => claves.some(k => h.includes(k))); return i >= 0 ? i : 0; };
+  return { fecha: buscar('FECHA OPERACION', 'F.OPERACION', 'FECHA'), concepto: buscar('CONCEPTO', 'DESCRIPCION'), importe: buscar('IMPORTE', 'CANTIDAD') };
+}
+
+// ── Almacenamiento ───────────────────────────────────────────────────────────
+function movLoad() { try { return JSON.parse(localStorage.getItem(MOV_KEY)) || []; } catch (e) { return []; } }
+function movSave(items) { localStorage.setItem(MOV_KEY, JSON.stringify(items)); renderSeccionesNuevas(); }
+function movReglas() {
+  try {
+    const r = JSON.parse(localStorage.getItem(MOV_REGLAS_KEY));
+    if (r) return r;
+  } catch (e) {}
+  return MOV_REGLAS_DEFECTO;
+}
+function movReglaGuardar(patron, categoria, destino, importe) {
+  const reglas = movReglas().slice();
+  const i = reglas.findIndex(r => r.patron === patron && r.importe === importe);
+  const r = { patron, categoria, destino: destino || null, importe: importe != null ? importe : undefined };
+  if (i >= 0) reglas[i] = r; else reglas.push(r);
+  localStorage.setItem(MOV_REGLAS_KEY, JSON.stringify(reglas));
+}
+// Clasifica un movimiento: coincidencia de texto, y si varias reglas comparten el mismo
+// texto (p. ej. una transferencia genérica a la misma persona por motivos distintos), el
+// importe exacto decide cuál aplica.
+function movClasificar(textoCompleto, importe) {
+  const n = movNorm(textoCompleto);
+  const candidatas = movReglas().filter(r => n.includes(r.patron));
+  if (!candidatas.length) return null;
+  const exacta = candidatas.find(r => r.importe != null && Math.abs(r.importe - importe) < 0.01);
+  return exacta || candidatas.find(r => r.importe == null) || candidatas[0];
+}
+function movPatronSugerido(concepto) {
+  return movNorm(concepto).replace(/\d+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 40);
+}
+function movNombreFicha(cat, destino) {
+  if (!destino) return '';
+  if (cat.sec) return (regLoad(cat.sec).find(x => String(x.id) === String(destino)) || {}).nombre || '';
+  if (cat.lista) return (cat.lista.find(x => x.id === destino) || {}).label || '';
+  return '';
+}
+
+// ── Importar archivo ─────────────────────────────────────────────────────────
+function movArchivo(input) {
+  const file = (input.files || [])[0];
+  input.value = '';
+  if (!file) return;
+  if (typeof XLSX === 'undefined') { showDatosSaved('⚠️ No se pudo cargar el lector de Excel, revisa tu conexión'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const todas = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+      const noVacias = todas.filter(f => f.some(c => String(c).trim() !== ''));
+      const inicio = movDetectarInicio(noVacias);
+      MOV_UI.filas = noVacias.slice(inicio);
+      MOV_UI.pendientes = null;
+      renderSeccionesNuevas();
+    } catch (err) {
+      console.warn('importar movimientos:', err);
+      showDatosSaved('⚠️ No se pudo leer el archivo');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function movCancelarImport() { MOV_UI.filas = null; MOV_UI.pendientes = null; renderSeccionesNuevas(); }
+
+function movConfirmarMapeo() {
+  const cf = +document.getElementById('mov-col-fecha').value;
+  const cc = +document.getElementById('mov-col-concepto').value;
+  const ci = +document.getElementById('mov-col-importe').value;
+  const cabecera = document.getElementById('mov-col-cabecera').checked;
+  try { localStorage.setItem(MOV_MAPEO_KEY, JSON.stringify({ cf, cc, ci, cabecera })); } catch (e) {}
+
+  const filas = MOV_UI.filas || [];
+  const existentes = new Set(movLoad().map(m => `${m.fecha}|${movNorm(m.concepto)}|${m.importe}`));
+  const pend = [];
+  let omitidos = 0, duplicados = 0;
+  filas.forEach((fila, idx) => {
+    if (cabecera && idx === 0) return;
+    const fecha = parseFechaTexto(fila[cf]);
+    const importe = parseImporteEs(fila[ci]);
+    const concepto = String(fila[cc] || '').trim();
+    if (!fecha || isNaN(importe) || !concepto) { omitidos++; return; }
+    const fp = `${toISO(fecha)}|${movNorm(concepto)}|${importe}`;
+    if (existentes.has(fp)) { duplicados++; return; }
+    existentes.add(fp);
+    const textoFila = fila.join(' | ');
+    const regla = movClasificar(textoFila, importe);
+    const categoria = regla ? regla.categoria : (importe >= 0 ? 'ingreso' : 'gasto');
+    pend.push({ fecha, concepto, importe, categoria, destino: regla ? regla.destino : null });
+  });
+  MOV_UI.pendientes = pend;
+  MOV_UI.resumen = { detectados: pend.length, omitidos, duplicados };
+  renderSeccionesNuevas();
+}
+
+function movGuardarPendientes() {
+  const pend = MOV_UI.pendientes || [];
+  const guardados = movLoad();
+  let n = 0;
+  pend.forEach((p, i) => {
+    const catSel = document.getElementById(`mov-cat-${i}`);
+    const categoria = catSel ? catSel.value : p.categoria;
+    if (categoria === 'ignorar') return;
+    const destSel = document.getElementById(`mov-dest-${i}`);
+    const destino = destSel && destSel.value ? destSel.value : null;
+    const recordar = (document.getElementById(`mov-rec-${i}`) || {}).checked;
+    guardados.push({ id: Date.now() + i, fecha: toISO(p.fecha), concepto: p.concepto, importe: p.importe, categoria, destino, origen: 'import' });
+    n++;
+    if (recordar) {
+      const patron = movPatronSugerido(p.concepto);
+      if (patron.length >= 4) movReglaGuardar(patron, categoria, destino, p.importe);
+    }
+  });
+  movSave(guardados);
+  MOV_UI.filas = null; MOV_UI.pendientes = null;
+  showDatosSaved(`${n} movimiento(s) guardado(s) ✓`);
+}
+function movBorrar(id) {
+  if (!confirm('¿Eliminar este movimiento?')) return;
+  movSave(movLoad().filter(m => m.id !== id));
+}
+function movUIRecat(i, categoria) { MOV_UI.pendientes[i].categoria = categoria; renderSeccionesNuevas(); }
+function movUIDestino(i, destino) { MOV_UI.pendientes[i].destino = destino || null; }
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function movMapeoHTML() {
+  const filas = MOV_UI.filas;
+  const guess = movAdivinarColumnas(filas[0] || []);
+  let guardado = null;
+  try { guardado = JSON.parse(localStorage.getItem(MOV_MAPEO_KEY)); } catch (e) {}
+  const cf = (guardado && guardado.cf < filas[0].length) ? guardado.cf : guess.fecha;
+  const cc = (guardado && guardado.cc < filas[0].length) ? guardado.cc : guess.concepto;
+  const ci = (guardado && guardado.ci < filas[0].length) ? guardado.ci : guess.importe;
+  const cabecera = guardado ? guardado.cabecera : true;
+  const opciones = sel => (filas[0] || []).map((h, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>Columna ${i + 1}${h ? ': ' + REsc(String(h).slice(0, 24)) : ''}</option>`).join('');
+  const previa = filas.slice(0, 5).map(f => `<tr>${f.map(c => `<td style="padding:4px 8px;font-size:11px;color:var(--muted);white-space:nowrap">${REsc(String(c).slice(0, 24))}</td>`).join('')}</tr>`).join('');
+  return `
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title">Indica qué es cada columna</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Columna de fecha</label><select id="mov-col-fecha">${opciones(cf)}</select></div>
+        <div class="form-group"><label>Columna de concepto</label><select id="mov-col-concepto">${opciones(cc)}</select></div>
+        <div class="form-group"><label>Columna de importe</label><select id="mov-col-importe">${opciones(ci)}</select></div>
+      </div>
+      <label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;margin:8px 0 14px">
+        <input type="checkbox" id="mov-col-cabecera" ${cabecera ? 'checked' : ''} /> La primera fila es un título, no un movimiento
+      </label>
+      <div style="overflow-x:auto;margin-bottom:14px"><table style="border-collapse:collapse">${previa}</table></div>
+      <div class="form-actions">
+        <button class="btn-save" onclick="movConfirmarMapeo()">Continuar</button>
+        <button class="btn-reset" onclick="movCancelarImport()">Cancelar</button>
+      </div>
+    </div>`;
+}
+function movRevisionHTML() {
+  const pend = MOV_UI.pendientes;
+  const r = MOV_UI.resumen || {};
+  const filasHTML = pend.map((p, i) => {
+    const cat = MOV_CATS[p.categoria] || MOV_CATS.gasto;
+    const opcionesCat = Object.keys(MOV_CATS).map(k => `<option value="${k}" ${k === p.categoria ? 'selected' : ''}>${MOV_CATS[k].icono} ${MOV_CATS[k].label}</option>`).join('');
+    let selDestino = '';
+    if (cat.sec) {
+      const fichas = regLoad(cat.sec);
+      selDestino = `<select id="mov-dest-${i}" onchange="movUIDestino(${i}, this.value)" style="margin-top:4px"><option value="">(sin vincular a una ficha)</option>${fichas.map(f => `<option value="${f.id}" ${String(f.id) === String(p.destino) ? 'selected' : ''}>${REsc(f.nombre)}</option>`).join('')}</select>`;
+    } else if (cat.lista) {
+      selDestino = `<select id="mov-dest-${i}" onchange="movUIDestino(${i}, this.value)" style="margin-top:4px"><option value="">(sin especificar)</option>${cat.lista.map(o => `<option value="${o.id}" ${o.id === p.destino ? 'selected' : ''}>${REsc(o.label)}</option>`).join('')}</select>`;
+    }
+    return `
+      <div class="gasto-row" style="align-items:flex-start;flex-wrap:wrap;gap:10px">
+        <div class="gasto-info" style="min-width:220px">
+          <div class="gasto-nombre">${REsc(p.concepto)}</div>
+          <div class="gasto-fecha">${fmtFecha(p.fecha)} · <span class="${p.importe >= 0 ? 'pos' : 'neg'}">${p.importe >= 0 ? '+' : ''}${fmt(p.importe)}</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <select id="mov-cat-${i}" onchange="movUIRecat(${i}, this.value)">${opcionesCat}</select>
+          ${selDestino}
+        </div>
+        <label style="font-size:11px;color:var(--muted);display:flex;gap:4px;align-items:center;margin-left:auto">
+          <input type="checkbox" id="mov-rec-${i}" checked /> recordar
+        </label>
+      </div>`;
+  }).join('');
+  return `
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title">Revisa antes de guardar</div>
+      <div class="section-sub" style="margin-bottom:10px">
+        ${r.detectados} movimiento(s) nuevo(s)${r.duplicados ? ` · ${r.duplicados} ya estaban importados (omitidos)` : ''}${r.omitidos ? ` · ${r.omitidos} fila(s) sin datos válidos` : ''}
+      </div>
+      ${filasHTML || '<div class="section-sub" style="margin:0">No hay movimientos nuevos que importar.</div>'}
+      <div class="form-actions" style="margin-top:14px">
+        <button class="btn-save" onclick="movGuardarPendientes()">💾 Guardar ${pend.length} movimiento(s)</button>
+        <button class="btn-reset" onclick="movCancelarImport()">Cancelar</button>
+      </div>
+    </div>`;
+}
+function renderMovimientos() {
+  const el = document.getElementById('view-movimientos');
+  if (!el) return;
+  const items = movLoad();
+  const hoy = new Date();
+  const esteMes = items.filter(m => { const f = parseFecha(m.fecha); return f && f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth(); });
+  const ingresosMes = esteMes.filter(m => (MOV_CATS[m.categoria] || {}).signo > 0).reduce((s, m) => s + Math.abs(m.importe), 0);
+  const gastosMes = esteMes.filter(m => (MOV_CATS[m.categoria] || {}).signo < 0).reduce((s, m) => s + Math.abs(m.importe), 0);
+
+  let bloque;
+  if (MOV_UI.pendientes) bloque = movRevisionHTML();
+  else if (MOV_UI.filas) bloque = movMapeoHTML();
+  else bloque = `
+    <div class="update-form">
+      <div class="update-form-title">Importar extracto</div>
+      <div class="update-form-sub">Descarga tus movimientos de tu banco en Excel o CSV y súbelos aquí. No se envían a ningún sitio: se procesan en tu navegador.</div>
+      <input type="file" accept=".csv,.xlsx,.xls" onchange="movArchivo(this)" style="color:var(--text)" />
+    </div>`;
+
+  el.innerHTML = `
+    <div class="section-title">💵 Movimientos</div>
+    <div class="section-sub">Importa tu extracto bancario y clasifica cada movimiento por categoría</div>
+    <div class="stats-row">
+      <div class="stat-card" style="--accent-line:var(--green)"><div class="stat-label">Ingresos este mes</div><div class="stat-value pos"><span class="private">${fmt(ingresosMes)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos este mes</div><div class="stat-value neg"><span class="private">${fmt(gastosMes)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--accent)"><div class="stat-label">Movimientos guardados</div><div class="stat-value">${items.length}</div></div>
+    </div>
+    ${bloque}
+    <div class="chart-card">
+      <div class="chart-title">Últimos movimientos</div>
+      ${items.length ? [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60).map(m => {
+        const cat = MOV_CATS[m.categoria] || MOV_CATS.gasto;
+        const ficha = movNombreFicha(cat, m.destino);
+        return `
+        <div class="gasto-row">
+          <div class="gasto-info">
+            <div class="gasto-nombre">${cat.icono} ${REsc(m.concepto)}${ficha ? ' · ' + REsc(ficha) : ''}</div>
+            <div class="gasto-fecha">${fmtFecha(parseFecha(m.fecha))} · ${cat.label}</div>
+          </div>
+          <span class="gasto-importe ${m.importe >= 0 ? 'pos' : 'neg'} private" style="font-weight:700">${m.importe >= 0 ? '+' : ''}${fmt(m.importe)}</span>
+          <button class="btn-del-gasto" onclick="movBorrar(${m.id})" title="Eliminar">🗑️</button>
+        </div>`;
+      }).join('') : '<div class="section-sub" style="margin:0">Todavía no has importado movimientos.</div>'}
+    </div>`;
+}
 </script>
 </body>
 </html>
