@@ -271,6 +271,48 @@ body {
 .bpos-br .v { width:68px; text-align:right; flex:none; color:var(--text); }
 .bpos-ft { font-size:11px; color:var(--muted); margin-top:8px; line-height:1.5; }
 .bpos-more { background:none; border:none; padding:0; margin-top:6px; cursor:pointer; color:var(--muted); font-family:inherit; font-size:12px; text-decoration:underline; }
+.bpos-act { display:flex; flex-wrap:wrap; gap:4px 16px; }
+
+/* Simulador de venta (Bolsa) */
+.sim-intro { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; font-size:13px; color:var(--muted); }
+.sim-open { background:none; border:1px solid var(--accent); border-radius:8px; color:var(--text); cursor:pointer; font-family:inherit; font-size:12px; padding:5px 12px; }
+.sim-g { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin:0 0 6px; }
+.sim-g label { display:block; font-size:11px; color:var(--muted); margin:0 0 3px; }
+.sim-g .dvc-in { width:100%; box-sizing:border-box; }
+.sim-lk { background:none; border:none; padding:0; margin-top:4px; cursor:pointer; color:var(--accent); font-family:inherit; font-size:12px; display:block; }
+.sim-lk:hover { text-decoration:underline; }
+.sim-src { margin:8px 0 10px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:13px; }
+.sim-src[hidden] { display:none; }
+.sim-src .r { display:grid; grid-template-columns:1fr 96px 96px; gap:8px; padding:5px 0; border-top:1px solid var(--border); color:var(--muted); align-items:center; }
+.sim-src .r.hd { border-top:none; font-size:11px; padding-top:0; }
+.sim-src .r span:nth-child(n+2) { text-align:right; }
+.sim-src .r.tt { font-weight:700; color:var(--text); border-top:1px solid var(--muted); }
+.sim-src small { display:block; font-size:11px; }
+.sim-src .nt { font-size:12px; margin-top:8px; line-height:1.5; color:var(--muted); }
+.sim-src .ed { font-size:12px; margin-top:6px; color:var(--yellow); }
+.sim-ch { display:flex; gap:6px; margin:6px 0 10px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--muted); }
+.sim-ch button { background:none; border:1px solid var(--border); border-radius:8px; color:var(--muted); cursor:pointer; font-family:inherit; font-size:12px; padding:3px 10px; }
+.sim-ch button:hover { color:var(--text); border-color:var(--muted); }
+.sim-s { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-size:15px; line-height:1.6; color:var(--muted); margin:6px 0 12px; }
+.sim-s b { color:var(--text); font-weight:700; }
+.sim-bar { display:flex; height:22px; border-radius:6px; overflow:hidden; gap:2px; }
+.sim-bar span { display:block; min-width:2px; }
+.sim-lg { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:6px 12px; margin:10px 0 14px; }
+.sim-lg > div { font-size:12px; color:var(--muted); }
+.sim-lg i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; }
+.sim-lg b { display:block; font-weight:700; color:var(--text); font-size:14px; margin-left:16px; }
+.sim-tk { width:100%; border-collapse:collapse; font-size:13px; margin:0 0 12px; }
+.sim-tk td { padding:6px 0; border-top:1px solid var(--border); color:var(--muted); }
+.sim-tk td:last-child { text-align:right; color:var(--text); }
+.sim-tk tr.t td { font-weight:700; color:var(--text); border-top:1px solid var(--muted); }
+.sim-h { font-size:12px; color:var(--muted); margin:12px 0 4px; }
+.sim-lot { display:flex; justify-content:space-between; gap:8px; font-size:12px; color:var(--muted); padding:5px 0; border-top:1px solid var(--border); flex-wrap:wrap; }
+.sim-lot b { color:var(--text); font-weight:700; }
+.sim-al { margin-top:10px; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.6; }
+.sim-al.w { background:rgba(255,184,108,0.12); color:var(--yellow); }
+.sim-al.i { background:rgba(255,255,255,0.03); border:1px solid var(--border); color:var(--muted); }
+.sim-ft { font-size:11px; color:var(--muted); margin-top:10px; line-height:1.5; }
+.sim-close { background:none; border:none; padding:0; cursor:pointer; color:var(--muted); font-family:inherit; font-size:12px; text-decoration:underline; margin-top:8px; }
 .bpos-lots { margin-top:6px; border-top:1px solid var(--border); padding-top:4px; }
 .bpos-lots[hidden] { display:none; }
 .bpos-lots > div { display:flex; justify-content:space-between; gap:8px; font-size:12px; color:var(--muted); padding:2px 0; }
@@ -1197,6 +1239,11 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
   <div class="chart-card" style="margin-bottom:16px">
     <div class="chart-title">Posiciones en cartera</div>
     <div id="bol-pos"></div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px" id="bol-sim-card">
+    <div class="chart-title">Simulador de venta</div>
+    <div id="bol-sim"></div>
   </div>
 
   <div class="chart-card" style="margin-bottom:16px">
@@ -2412,6 +2459,7 @@ function renderBolsa() {
 
   renderBolsaEvol();
   renderBolsaIbex();
+  renderBolsaSim();
   renderBolsaDivs();
 }
 
@@ -2466,7 +2514,7 @@ function renderBolsaPos(rows) {
       <div class="bpos-br"><span class="l">Pagaste</span><span class="tr"><span class="fl" style="width:${g.inv / mx * 100}%;background:rgba(255,255,255,0.28)"></span></span><span class="v private">${n0(g.inv)} €</span></div>
       <div class="bpos-br"><span class="l">Vale hoy</span><span class="tr"><span class="fl" style="width:${g.val / mx * 100}%;background:${g.pg >= 0 ? 'var(--green)' : 'var(--red)'}"></span></span><span class="v private">${n0(g.val)} €</span></div>
       <div class="bpos-ft">${g.acc} acc. · coste medio <span class="private">${px(g.costeAcc / g.acc, g.usd)}</span> · hoy ${px(g.precio, g.usd)}</div>
-      <button class="bpos-more" onclick="togglePosLotes('${g.tk}')">${abierta ? 'Ocultar compras' : 'Ver ' + g.lotes.length + ' compra' + (g.lotes.length > 1 ? 's' : '')}</button>
+      <div class="bpos-act"><button class="bpos-more" onclick="togglePosLotes('${g.tk}')">${abierta ? 'Ocultar compras' : 'Ver ' + g.lotes.length + ' compra' + (g.lotes.length > 1 ? 's' : '')}</button><button class="bpos-more" onclick="simularVenta('${g.tk}')">Simular venta</button></div>
       <div class="bpos-lots"${abierta ? '' : ' hidden'}>${lotes}</div>
     </div>`;
   }).join('');
@@ -3299,6 +3347,183 @@ function renderBolsaIbex() {
     '<div class="chart-wrap"><canvas id="chart-bol-ibex"></canvas></div>' +
     `<div class="ibx-k">${leyenda}</div>` + resumen + (nota ? `<div class="ibx-f">${nota}</div>` : '');
   makeChart('chart-bol-ibex', 'line', { labels: cfg.labels, datasets: cfg.datasets }, cfg.options);
+}
+
+// ── BOLSA · SIMULADOR DE VENTA ────────────────────────────────────────────────
+// Estimación orientativa (no es asesoramiento fiscal). Ventas por FIFO (lo que exige Hacienda para valores homogéneos),
+// plusvalía = venta − comisiones − coste de compra (sin las comisiones de compra, que la app no guarda), tributación en la
+// base del ahorro y regla de los 2 meses para pérdidas. Los lotes salen de las fichas de posiciones (BOLSA_POS_ULT).
+const SIM_TRAMOS = [[6000, 0.19], [50000, 0.21], [200000, 0.23], [300000, 0.27], [Infinity, 0.28]];   // base del ahorro 2025-2026: revisar cada año
+let SIM_OPEN = false, SIM_DET = false, SIM_MANC = false, SIM_MANO = false, SIM_MANP = false, SIM_TK_INI = '';
+
+const simEu  = (n, d = 0) => { const s = Math.abs(n).toFixed(d).split('.'); s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return s.join(',') + ' €'; };
+const simSg  = (n, d = 0) => (n >= 0 ? '+' : '−') + simEu(n, d);
+const simPv  = s => `<span class="private">${s}</span>`;
+const simId  = id => document.getElementById(id);
+function simImpuesto(x) { let t = 0, prev = 0; for (const [lim, r] of SIM_TRAMOS) { if (x > prev) t += (Math.min(x, lim) - prev) * r; prev = lim; } return t; }
+function simMenos2m(iso) { const d = new Date(iso + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() - 2); return d.toISOString().slice(0, 10); }
+
+function simTickers() { const v = new Set(BOLSA_POS_ULT.map(r => r.ticker)); return BOLSA_COB_ORDEN.map(k => k.toUpperCase()).filter(t => v.has(t)); }
+function simLotes(tk) {
+  return BOLSA_POS_ULT.filter(r => r.ticker === tk)
+    .map(r => { const [d, m, y] = r.fecha.split('/'); return { d: `${y}-${m}-${d}`, acc: r.acc, coste: r.invEur }; })
+    .sort((a, b) => a.d.localeCompare(b.d));
+}
+function simPrecio(tk) {                                                       // precio de hoy en € (TSM se convierte al cambio actual)
+  const r = BOLSA_POS_ULT.find(x => x.ticker === tk);
+  return r ? (r.usd ? r.precio * (loadBolsaPrecios().usdeur || 0.8639) : r.precio) : 0;
+}
+function simOtros() {                                                          // dividendos cobrados este año, en bruto (neto ÷ (1 − retención))
+  const yr = isoHoy().slice(0, 4);
+  return loadBolsaDivs().cobrados.filter(c => c.fecha.slice(0, 4) === yr).sort((a, b) => a.fecha.localeCompare(b.fecha)).map(c => {
+    const T = BOLSA_DIV_TK[c.ticker] || { nombre: c.ticker, tk: (c.ticker || '').toUpperCase(), ret: 0.19 };
+    return { txt: `Dividendo ${T.nombre} (${T.tk})`, fecha: c.fecha, neto: c.importe, bruto: c.importe / (1 - T.ret) };
+  });
+}
+const simOtrosAuto = () => Math.round(simOtros().reduce((s, x) => s + x.bruto, 0) * 100) / 100;
+
+function simularVenta(tk) {                                                    // botón "Simular venta" de cada ficha
+  SIM_OPEN = true; SIM_TK_INI = tk;
+  const box = simId('bol-sim'); if (box) box.dataset.b = '';
+  renderBolsaSim();
+  const card = simId('bol-sim-card'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function abrirSim()  { SIM_OPEN = true; renderBolsaSim(); }
+function cerrarSim() { SIM_OPEN = false; renderBolsaSim(); }
+
+function renderBolsaSim() {
+  const box = simId('bol-sim');
+  if (!box) return;
+  if (!SIM_OPEN) {
+    if (box.dataset.b !== '0') {
+      box.dataset.b = '0';
+      box.innerHTML = '<div class="sim-intro"><span>Calcula cuánto cobrarías y cuánto pagarías a Hacienda si vendes parte de una posición.</span><button class="sim-open" onclick="abrirSim()">Abrir simulador</button></div>';
+    }
+    return;
+  }
+  if (!BOLSA_POS_ULT.length) return;
+  if (box.dataset.b !== '1') { simBuild(box); box.dataset.b = '1'; simPick(SIM_TK_INI); SIM_TK_INI = ''; return; }
+  const ae = document.activeElement;
+  if (ae && box.contains(ae)) return;                                          // no repintar mientras escribes
+  simCalc();
+}
+
+function simBuild(box) {
+  const opts = simTickers().map(t => `<option value="${t}">${t} · ${(BOLSA_DIV_TK[t.toLowerCase()] || {}).nombre || ''}</option>`).join('');
+  const yr = isoHoy().slice(0, 4);
+  box.innerHTML = `
+    <div class="sim-g">
+      <div><label>Acción</label><select id="sim-tk" class="dvc-in" onchange="simPick()">${opts}</select></div>
+      <div><label>Acciones a vender</label><input id="sim-q" class="dvc-in" type="number" min="0" step="1" inputmode="numeric" oninput="simCalc()"></div>
+      <div><label id="sim-pl">Precio de venta (€)</label><input id="sim-p" class="dvc-in" type="number" min="0" step="0.01" inputmode="decimal" oninput="SIM_MANP=true;simCalc()"></div>
+      <div><label>Comisiones y gastos (€)</label><input id="sim-c" class="dvc-in" type="number" min="0" step="0.01" inputmode="decimal" oninput="SIM_MANC=true;simCalc()"></div>
+      <div><label>Otros ingresos del ahorro ${yr} (€ brutos)</label><input id="sim-o" class="dvc-in" type="number" min="0" step="0.01" inputmode="decimal" oninput="SIM_MANO=true;simCalc()"><button class="sim-lk" id="sim-tg" onclick="simTg()">▸ De dónde salen</button></div>
+    </div>
+    <div id="sim-src" class="sim-src" hidden></div>
+    <div class="sim-ch"><span>Atajos:</span><button onclick="simQ(1)">Todas</button><button onclick="simQ(0.5)">La mitad</button><button onclick="simQ('l1')">Solo la 1ª compra</button><span id="sim-have"></span></div>
+    <div class="sim-s" id="sim-sum"></div>
+    <div class="sim-bar" id="sim-bar"></div>
+    <div class="sim-lg" id="sim-lg"></div>
+    <table class="sim-tk" id="sim-tk2"></table>
+    <p class="sim-h">Qué compras se venden (siempre las más antiguas primero, método FIFO)</p>
+    <div id="sim-lots"></div>
+    <div id="sim-al"></div>
+    <p class="sim-ft">Estimación orientativa, no es asesoramiento fiscal. Tramos del ahorro: 19 % hasta 6.000 €, 21 % hasta 50.000 €, 23 % hasta 200.000 €, 27 % hasta 300.000 € y 28 % por encima. Las comisiones de compra no están en la app, así que la plusvalía real será algo menor. El impuesto se paga en la declaración de la renta, no al vender.</p>
+    <button class="sim-close" onclick="cerrarSim()">Cerrar simulador</button>`;
+}
+
+function simPick(tk) {                                                         // al elegir acción: valores por defecto
+  const sel = simId('sim-tk'); if (!sel) return;
+  if (tk && [...sel.options].some(o => o.value === tk)) sel.value = tk;
+  const lotes = simLotes(sel.value);
+  SIM_MANC = false; SIM_MANP = false;
+  simId('sim-q').value = lotes.length ? lotes[0].acc : 0;
+  simCalc();
+}
+function simQ(f) {
+  const lotes = simLotes(simId('sim-tk').value), total = lotes.reduce((s, l) => s + l.acc, 0);
+  SIM_MANC = false;
+  simId('sim-q').value = f === 'l1' ? (lotes[0] ? lotes[0].acc : 0) : Math.max(1, Math.round(total * f));
+  simCalc();
+}
+function simTg()  { SIM_DET = !SIM_DET; simCalc(); }
+function simRst() { SIM_MANO = false; simCalc(); }
+
+function simSrcHtml(auto, actual) {
+  const it = simOtros();
+  let h = '<div class="r hd"><span>Concepto</span><span>Cobrado (neto)</span><span>Bruto</span></div>';
+  h += it.length ? it.map(x => `<div class="r"><span>${x.txt}<small>${isoDMY(x.fecha)}</small></span><span class="private">${simEu(x.neto, 2)}</span><span class="private">${simEu(x.bruto, 2)}</span></div>`).join('')
+                 : '<div class="r"><span>Todavía no has cobrado dividendos este año</span><span></span><span></span></div>';
+  h += `<div class="r tt"><span>Total que usa el simulador</span><span></span><span class="private">${simEu(auto, 2)}</span></div>`;
+  h += '<div class="nt">Los dividendos se cuentan en bruto, antes de la retención (19 % en valores españoles): bruto = neto ÷ 0,81. Si tienes el dato exacto en el certificado fiscal de tu bróker, escríbelo arriba. Los intereses o las ganancias de otras ventas de este año no se registran en la app: súmalos tú en el campo.</div>';
+  if (SIM_MANO && Math.abs(actual - auto) > 0.005) h += `<div class="ed">Has cambiado el valor a mano (calculado: ${simEu(auto, 2)}). <button class="sim-lk" style="display:inline" onclick="simRst()">Restablecer</button></div>`;
+  return h;
+}
+
+function simCalc() {
+  const sel = simId('sim-tk'); if (!sel) return;
+  const tk = sel.value, lotes = simLotes(tk), have = lotes.reduce((s, l) => s + l.acc, 0);
+  const foco = id => document.activeElement === simId(id);
+  const usd = (BOLSA_POS_ULT.find(x => x.ticker === tk) || {}).usd;
+  simId('sim-pl').textContent = 'Precio de venta (€)' + (usd ? ' · al cambio de hoy' : '');
+  if (!SIM_MANP && !foco('sim-p')) simId('sim-p').value = simPrecio(tk).toFixed(2);
+  const auto = simOtrosAuto();
+  if (!SIM_MANO && !foco('sim-o')) simId('sim-o').value = auto;
+  const q = Math.min(have, Math.max(0, Math.floor(+simId('sim-q').value || 0)));
+  const p = +simId('sim-p').value || 0, O = +simId('sim-o').value || 0;
+  const gross = q * p;
+  if (!SIM_MANC && !foco('sim-c')) simId('sim-c').value = q ? (3 + gross * 0.0025).toFixed(2) : '0';
+  const com = +simId('sim-c').value || 0;
+
+  simId('sim-tg').textContent = SIM_DET ? '▾ Ocultar detalle' : '▸ De dónde salen';
+  const src = simId('sim-src'); src.hidden = !SIM_DET; if (SIM_DET) src.innerHTML = simSrcHtml(auto, O);
+  simId('sim-have').textContent = `Tienes ${have} acciones de ${tk}`;
+
+  if (!q || !p) {
+    simId('sim-sum').innerHTML = 'Elige cuántas acciones quieres vender.';
+    ['sim-bar', 'sim-lg', 'sim-tk2', 'sim-lots', 'sim-al'].forEach(i => { simId(i).innerHTML = ''; });
+    return;
+  }
+  let rem = q, cost = 0, gains = 0, losses = 0, lossSh = 0;
+  const usados = [], quedan = [];
+  lotes.forEach(l => {
+    const u = Math.min(rem, l.acc);
+    if (u > 0) { const c = l.coste * u / l.acc, v = u * p, r = v - c; usados.push({ d: l.d, u, t: l.acc, c, r }); cost += c; if (r >= 0) gains += r; else { losses += -r; lossSh += u; } rem -= u; }
+    if (l.acc - u > 0) quedan.push([l.d, l.acc - u]);
+  });
+  const recientes = quedan.filter(l => l[0] >= simMenos2m(isoHoy())).reduce((s, l) => s + l[1], 0);
+  const diferida = (losses > 0 && recientes > 0) ? Math.min(1, recientes / lossSh) * losses : 0;      // regla de los 2 meses
+  const res = gains - (losses - diferida) - com;
+  let imp = 0, tipo = 0;
+  if (res > 0) { imp = simImpuesto(O + res) - simImpuesto(O); tipo = imp / res; }
+  const neto = gross - com, despues = neto - imp, plusv = gains - losses - com, ganNeta = plusv - imp;
+
+  simId('sim-sum').innerHTML = `Si vendes <b>${q} ${tk}</b> a ${simEu(p, 2)}: te llegan <b>${simPv(simEu(neto))}</b> a la cuenta, ${imp > 0 ? `pagas <b>${simPv(simEu(imp))}</b> a Hacienda en la renta, ` : ''}y tu ganancia neta es <b class="${ganNeta >= 0 ? 'bpos-up' : 'bpos-dn'}">${simPv(simSg(ganNeta))}</b>.`;
+  let seg = [];
+  if (cost > 0) seg.push(['Recuperas lo que pagaste', cost, 'rgba(255,255,255,0.28)']);
+  if (ganNeta > 0) seg.push(['Ganancia neta', ganNeta, 'var(--green)']);
+  if (imp > 0) seg.push(['Hacienda (estimado)', imp, 'var(--red)']);
+  if (com > 0) seg.push(['Comisiones y gastos', com, 'var(--yellow)']);
+  if (ganNeta < 0) seg = [['Recuperas lo que pagaste', gross - com, 'rgba(255,255,255,0.28)'], ['Pérdida', -ganNeta, 'var(--red)'], ['Comisiones y gastos', com, 'var(--yellow)']];
+  const tot = seg.reduce((s, x) => s + x[1], 0) || 1;
+  simId('sim-bar').innerHTML = seg.map(s => `<span style="width:${s[1] / tot * 100}%;background:${s[2]}"></span>`).join('');
+  simId('sim-lg').innerHTML = seg.map(s => `<div><i style="background:${s[2]}"></i>${s[0]}<b>${simPv(simEu(s[1]))}</b></div>`).join('');
+  simId('sim-tk2').innerHTML =
+    `<tr><td>Venta bruta (${q} × ${simEu(p, 2)})</td><td>${simPv(simEu(gross))}</td></tr>` +
+    `<tr><td>Comisiones y gastos</td><td>${simPv('−' + simEu(com, 2))}</td></tr>` +
+    `<tr><td>Lo que pagaste por ellas</td><td>${simPv('−' + simEu(cost))}</td></tr>` +
+    `<tr class="t"><td>Plusvalía${plusv >= 0 ? '' : ' (pérdida)'}</td><td class="${plusv >= 0 ? 'bpos-up' : 'bpos-dn'}">${simPv(simSg(plusv))}</td></tr>` +
+    `<tr><td>Impuesto estimado${imp > 0 ? ' (' + (tipo * 100).toFixed(0) + ' %)' : ''}</td><td>${simPv('−' + simEu(imp))}</td></tr>` +
+    `<tr class="t"><td>Te quedan, ya con impuestos</td><td>${simPv(simEu(despues))}</td></tr>`;
+  simId('sim-lots').innerHTML = usados.map(u => {
+    const pc = u.r / u.c * 100;
+    return `<div class="sim-lot"><span>${isoDMY(u.d)} · <b>${u.u}${u.u < u.t ? ' de ' + u.t : ''} acc.</b> · pagaste ${simPv(simEu(u.c / u.u, 2))} cada una</span><span class="${u.r >= 0 ? 'bpos-up' : 'bpos-dn'}">${simPv(simSg(u.r))} (${pc >= 0 ? '+' : '−'}${Math.abs(pc).toFixed(1).replace('.', ',')} %)</span></div>`;
+  }).join('');
+  let al = '';
+  if (diferida > 0) al += `<div class="sim-al w">Regla de los 2 meses: vendes con pérdida y has comprado ${tk} hace menos de 2 meses; te quedan ${recientes} de esas acciones. Hacienda no te deja contar <b>${simPv(simEu(diferida))}</b> de la pérdida ahora: se aplaza hasta que vendas esas acciones.</div>`;
+  if (res <= 0 && diferida === 0 && losses > 0) al += '<div class="sim-al i">No pagas impuestos. La pérdida se puede compensar con ganancias de este año y de los 4 siguientes.</div>';
+  if (res > 0) al += `<div class="sim-al i">Tu base del ahorro este año sería ${simPv(simEu(O + res))} (${simPv(simEu(O))} de otros ingresos + ${simPv(simEu(res))} de esta venta), así que se grava al ${(tipo * 100).toFixed(0)} %. La pagarías en la declaración de la renta (abril-junio del año siguiente).</div>`;
+  simId('sim-al').innerHTML = al;
 }
 
 // ── INDEXA ───────────────────────────────────────────────────────────────────
