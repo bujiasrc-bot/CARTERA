@@ -3437,7 +3437,7 @@ function simPick(tk) {                                                         /
   if (tk && [...sel.options].some(o => o.value === tk)) sel.value = tk;
   const lotes = simLotes(sel.value);
   SIM_MANC = false; SIM_MANP = false;
-  simId('sim-q').value = lotes.length ? lotes[0].acc : 0;
+  simId('sim-q').value = lotes.reduce((s, l) => s + l.acc, 0);                 // por defecto: vender todas las acciones de esa posición
   simCalc();
 }
 function simQ(f) {
