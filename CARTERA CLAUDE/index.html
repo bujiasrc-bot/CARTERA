@@ -5976,9 +5976,12 @@ const MOV_CATS = {
   ignorar:   { label: 'Ignorar (no contar)',         icono: '🚫', signo: 0 },
 };
 
-// Reglas de fábrica: solo vocabulario genérico de banca española, nada propio de esta cuenta
-// (los nombres de personas/compañías/importes que identifiques tú se guardan con "recordar",
-// solo en tu localStorage/Firebase — nunca aquí, porque este archivo es público en GitHub).
+// Reglas de fábrica. Las genéricas (vocabulario de banca, sin dato personal) reconocen
+// cualquier cuenta. Las que solo distinguen por importe exacto (comunidad, IBI, coche) son
+// propias de esta cuenta, pero un importe suelto no identifica a nadie por sí mismo — no se
+// guarda aquí el NOMBRE de ninguna persona ni compañía poco común, solo cifras y términos
+// bancarios genéricos. La comparación de importe es al céntimo (±0,01 €, ver movClasificar),
+// así que un -40,00 € nunca se confunde con un -40,50 €.
 const MOV_REGLAS_DEFECTO = [
   { patron: 'HIPOTECA', categoria: 'hipoteca' },
   { patron: 'NOMINA', categoria: 'nomina' },
@@ -5986,6 +5989,12 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'ALQUILER', categoria: 'alquiler' },
   { patron: 'ADEUDO MENSUAL DE TARJETA', categoria: 'tarjeta' },
   { patron: 'PAYPAL', categoria: 'paypal' },
+  { patron: 'OCASO', categoria: 'seguro' },
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', importe: -48.61 },
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', importe: -213.52 },
+  { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
+  { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inmueble', destino: 'mesias', importe: -40.00 },
+  { patron: 'TRANSFERENCIA REALIZADA', categoria: 'coche', destino: null, importe: -282.52 },
 ];
 
 const MOV_UI = { filas: null, pendientes: null, resumen: null };
@@ -6032,15 +6041,17 @@ function movAdivinarColumnas(cab) {
 // ── Almacenamiento ───────────────────────────────────────────────────────────
 function movLoad() { try { return JSON.parse(localStorage.getItem(MOV_KEY)) || []; } catch (e) { return []; } }
 function movSave(items) { localStorage.setItem(MOV_KEY, JSON.stringify(items)); renderSeccionesNuevas(); }
-function movReglas() {
-  try {
-    const r = JSON.parse(localStorage.getItem(MOV_REGLAS_KEY));
-    if (r) return r;
-  } catch (e) {}
-  return MOV_REGLAS_DEFECTO;
+// Reglas que ha guardado el usuario con "recordar" (solo esas, nunca las de fábrica:
+// así una actualización futura de MOV_REGLAS_DEFECTO llega a todo el mundo sin que la
+// copia guardada la tape).
+function movReglasGuardadas() {
+  try { return JSON.parse(localStorage.getItem(MOV_REGLAS_KEY)) || []; } catch (e) { return []; }
 }
+// Reglas de fábrica + las del usuario, en ese orden: si coinciden en patrón e importe,
+// las del usuario (al ir después) ganan — ver movClasificar.
+function movReglas() { return [...MOV_REGLAS_DEFECTO, ...movReglasGuardadas()]; }
 function movReglaGuardar(patron, categoria, destino, importe) {
-  const reglas = movReglas().slice();
+  const reglas = movReglasGuardadas();
   const i = reglas.findIndex(r => r.patron === patron && r.importe === importe);
   const r = { patron, categoria, destino: destino || null, importe: importe != null ? importe : undefined };
   if (i >= 0) reglas[i] = r; else reglas.push(r);
@@ -6061,8 +6072,17 @@ function movClasificar(textoCompleto, importe) {
   const n = movNormBuscable(textoCompleto);
   const candidatas = movReglas().filter(r => n.includes(r.patron));
   if (!candidatas.length) return null;
-  const exacta = candidatas.find(r => r.importe != null && Math.abs(r.importe - importe) < 0.01);
-  return exacta || candidatas.find(r => r.importe == null) || candidatas[0];
+  // Una regla sin importe (p. ej. "HIPOTECA") vale para cualquier cantidad; una regla CON
+  // importe solo vale si coincide al céntimo (±0,01€) — si no coincide, esa regla queda
+  // descartada del todo para este movimiento (nunca se usa "de todos modos").
+  const validas = candidatas.filter(r => r.importe == null || Math.abs(r.importe - importe) < 0.01);
+  if (!validas.length) return null;
+  // Entre las que sí valen, se prefiere la coincidencia exacta de importe sobre la genérica,
+  // y entre varias igual de buenas, la última de la lista: las reglas propias van después de
+  // las de fábrica, así que una corrección tuya siempre pisa a la regla de fábrica.
+  const exactas = validas.filter(r => r.importe != null);
+  const grupo = exactas.length ? exactas : validas;
+  return grupo[grupo.length - 1];
 }
 function movPatronSugerido(texto) {
   return movNormBuscable(texto).slice(0, 60);
