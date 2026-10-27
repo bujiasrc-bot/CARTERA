@@ -6001,7 +6001,7 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'coche', destino: null, importe: -282.52 },
 ];
 
-const MOV_UI = { filas: null, pendientes: null, resumen: null };
+const MOV_UI = { filas: null, pendientes: null, resumen: null, editando: null };
 
 // ── Utilidades de parseo ─────────────────────────────────────────────────────
 const movNorm = s => String(s || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
@@ -6280,6 +6280,26 @@ function movBorrarReglasGuardadas() {
 }
 function movUIRecat(i, categoria) { MOV_UI.pendientes[i].categoria = categoria; renderSeccionesNuevas(); }
 function movUIDestino(i, destino) { MOV_UI.pendientes[i].destino = destino || null; }
+// Abre/cierra los selects de categoría y ficha de un movimiento guardado (están ocultos
+// por defecto para que la lista se lea de un vistazo; se editan solo al tocar ✏️).
+function movToggleEditar(id) { MOV_UI.editando = MOV_UI.editando === id ? null : id; renderSeccionesNuevas(); }
+// Agrupa "Últimos movimientos" por categoría+ficha (p. ej. "Gasto de inmueble · Mesías")
+// con un subtotal, en vez de una lista plana por fecha — pensado para ver de un vistazo
+// cuánto se va en cada cosa. Los grupos se ordenan por el movimiento más reciente de cada uno.
+function movAgrupar(items) {
+  const grupos = new Map();
+  items.forEach(m => {
+    const key = `${m.categoria}|${m.destino || ''}`;
+    if (!grupos.has(key)) grupos.set(key, { categoria: m.categoria, destino: m.destino || null, items: [] });
+    grupos.get(key).items.push(m);
+  });
+  return [...grupos.values()].map(g => {
+    g.items.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    g.subtotal = g.items.reduce((s, m) => s + m.importe, 0);
+    g.ultima = g.items[0] ? new Date(g.items[0].fecha) : new Date(0);
+    return g;
+  }).sort((a, b) => b.ultima - a.ultima);
+}
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function movMapeoHTML() {
@@ -6387,28 +6407,43 @@ function renderMovimientos() {
         ${movHayQueReclasificar(items) ? `<button class="btn-mini" onclick="movReclasificarTodo()" style="margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0">🔄 Reclasificar con las reglas actuales</button>` : ''}
         ${movReglasGuardadas().length ? `<button class="btn-mini" onclick="movBorrarReglasGuardadas()" title="Por si alguna categoría se aprendió mal y ya no se corrige sola" style="${items.some(m => m.categoria === 'ingreso' || m.categoria === 'gasto') ? '' : 'margin-left:auto;'}font-size:11px;text-transform:none;letter-spacing:0">🧹 Olvidar reglas aprendidas</button>` : ''}
       </div>
-      ${items.length ? [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60).map(m => {
-        const cat = MOV_CATS[m.categoria] || MOV_CATS.gasto;
-        const opcionesCat = Object.keys(MOV_CATS).filter(k => k !== 'ignorar').map(k => `<option value="${k}" ${k === m.categoria ? 'selected' : ''}>${MOV_CATS[k].icono} ${MOV_CATS[k].label}</option>`).join('');
-        let selDestino = '';
-        if (cat.sec) {
-          const fichas = regLoad(cat.sec);
-          selDestino = `<select onchange="movEditarDestino(${m.id}, this.value)" style="margin-top:4px;font-size:11px"><option value="">(sin vincular)</option>${fichas.map(f => `<option value="${f.id}" ${String(f.id) === String(m.destino) ? 'selected' : ''}>${REsc(f.nombre)}</option>`).join('')}</select>`;
-        } else if (cat.lista) {
-          selDestino = `<select onchange="movEditarDestino(${m.id}, this.value)" style="margin-top:4px;font-size:11px"><option value="">(sin especificar)</option>${cat.lista.map(o => `<option value="${o.id}" ${o.id === m.destino ? 'selected' : ''}>${REsc(o.label)}</option>`).join('')}</select>`;
-        }
+      ${items.length ? movAgrupar([...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60)).map(g => {
+        const cat = MOV_CATS[g.categoria] || MOV_CATS.gasto;
+        const nombreDestino = g.destino ? movNombreFicha(cat, g.destino) : '';
         return `
-        <div class="gasto-row" style="align-items:flex-start;flex-wrap:wrap;gap:10px">
-          <div class="gasto-info">
-            <div class="gasto-nombre">${REsc(m.concepto)}${m.etiqueta ? ` <span class="badge neu">${REsc(m.etiqueta)}</span>` : ''}</div>
-            <div class="gasto-fecha">${fmtFecha(parseFecha(m.fecha))}</div>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 2px 6px;border-bottom:1px solid var(--border);margin-bottom:4px">
+            <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">${cat.icono} ${cat.label}${nombreDestino ? ' · ' + REsc(nombreDestino) : ''}</span>
+            <span style="font-size:12px;font-weight:700" class="${g.subtotal >= 0 ? 'pos' : 'neg'} private">${g.subtotal >= 0 ? '+' : ''}${fmt(g.subtotal, 2)}</span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <select onchange="movEditarCategoria(${m.id}, this.value)" style="font-size:11px">${opcionesCat}</select>
-            ${selDestino}
-          </div>
-          <span class="gasto-importe ${m.importe >= 0 ? 'pos' : 'neg'} private" style="font-weight:700;margin-left:auto">${m.importe >= 0 ? '+' : ''}${fmt(m.importe, 2)}</span>
-          <button class="btn-del-gasto" onclick="movBorrar(${m.id})" title="Eliminar">🗑️</button>
+          ${g.items.map(m => {
+            const editando = MOV_UI.editando === m.id;
+            let selDestino = '';
+            if (cat.sec) {
+              const fichas = regLoad(cat.sec);
+              selDestino = `<select onchange="movEditarDestino(${m.id}, this.value)" style="margin-top:4px;font-size:11px"><option value="">(sin vincular)</option>${fichas.map(f => `<option value="${f.id}" ${String(f.id) === String(m.destino) ? 'selected' : ''}>${REsc(f.nombre)}</option>`).join('')}</select>`;
+            } else if (cat.lista) {
+              selDestino = `<select onchange="movEditarDestino(${m.id}, this.value)" style="margin-top:4px;font-size:11px"><option value="">(sin especificar)</option>${cat.lista.map(o => `<option value="${o.id}" ${o.id === m.destino ? 'selected' : ''}>${REsc(o.label)}</option>`).join('')}</select>`;
+            }
+            const opcionesCat = Object.keys(MOV_CATS).filter(k => k !== 'ignorar').map(k => `<option value="${k}" ${k === m.categoria ? 'selected' : ''}>${MOV_CATS[k].icono} ${MOV_CATS[k].label}</option>`).join('');
+            return `
+            <div style="padding:6px 10px;background:var(--card2);border-radius:8px;margin-bottom:4px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="flex:1;min-width:0" title="${REsc(m.concepto)}">
+                  <div style="font-size:13px;color:var(--text);font-weight:600">${m.etiqueta ? REsc(m.etiqueta) : REsc(m.concepto)}</div>
+                  <div style="font-size:11px;color:var(--muted)">${fmtFecha(parseFecha(m.fecha))}</div>
+                </div>
+                <span class="${m.importe >= 0 ? 'pos' : 'neg'} private" style="font-size:13px;font-weight:700">${m.importe >= 0 ? '+' : ''}${fmt(m.importe, 2)}</span>
+                <button class="btn-del-gasto" onclick="movToggleEditar(${m.id})" title="Editar categoría/ficha" style="font-size:13px">✏️</button>
+                <button class="btn-del-gasto" onclick="movBorrar(${m.id})" title="Eliminar">🗑️</button>
+              </div>
+              ${editando ? `
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+                <select onchange="movEditarCategoria(${m.id}, this.value)" style="font-size:11px">${opcionesCat}</select>
+                ${selDestino}
+              </div>` : ''}
+            </div>`;
+          }).join('')}
         </div>`;
       }).join('') : '<div class="section-sub" style="margin:0">Todavía no has importado movimientos.</div>'}
     </div>`;
