@@ -6246,6 +6246,19 @@ function movBorrar(id) {
   if (!confirm('¿Eliminar este movimiento?')) return;
   movSave(movLoad().filter(m => m.id !== id));
 }
+// Borra TODO lo que el usuario ha "enseñado" marcando recordar (cartera_mov_reglas_v1),
+// volviendo a dejar solo las reglas de fábrica (MOV_REGLAS_DEFECTO). Útil cuando una
+// corrección antigua enseñó mal una categoría (p. ej. importada antes de que existiera la
+// regla de fábrica correcta) y esa regla mal aprendida sigue ganando siempre por ser la más
+// reciente — ver "último gana" en movClasificar. No toca los movimientos ya guardados.
+function movBorrarReglasGuardadas() {
+  const n = movReglasGuardadas().length;
+  if (!n) { showDatosSaved('No hay reglas guardadas que borrar'); return; }
+  if (!confirm(`Esto borra las ${n} regla(s) que has enseñado con "recordar" y vuelve a dejar solo las reglas de fábrica. Los movimientos ya guardados no se tocan. ¿Continuar?`)) return;
+  localStorage.removeItem(MOV_REGLAS_KEY);
+  showDatosSaved('Reglas guardadas borradas ✓ — usa "🔄 Reclasificar" para aplicar las de fábrica a lo ya guardado');
+  renderSeccionesNuevas();
+}
 function movUIRecat(i, categoria) { MOV_UI.pendientes[i].categoria = categoria; renderSeccionesNuevas(); }
 function movUIDestino(i, destino) { MOV_UI.pendientes[i].destino = destino || null; }
 
@@ -6353,6 +6366,7 @@ function renderMovimientos() {
       <div class="chart-title" style="display:flex;align-items:center;gap:10px">
         Últimos movimientos
         ${items.some(m => m.categoria === 'ingreso' || m.categoria === 'gasto') ? `<button class="btn-mini" onclick="movReclasificarTodo()" style="margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0">🔄 Reclasificar con las reglas actuales</button>` : ''}
+        ${movReglasGuardadas().length ? `<button class="btn-mini" onclick="movBorrarReglasGuardadas()" title="Por si alguna categoría se aprendió mal y ya no se corrige sola" style="${items.some(m => m.categoria === 'ingreso' || m.categoria === 'gasto') ? '' : 'margin-left:auto;'}font-size:11px;text-transform:none;letter-spacing:0">🧹 Olvidar reglas aprendidas</button>` : ''}
       </div>
       ${items.length ? [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60).map(m => {
         const cat = MOV_CATS[m.categoria] || MOV_CATS.gasto;
