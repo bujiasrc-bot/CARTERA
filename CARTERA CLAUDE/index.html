@@ -5995,7 +5995,9 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', importe: -48.61, aprox: true, mes: 9 },
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', importe: -213.52, aprox: true, mes: 9 },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
-  { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inmueble', destino: 'mesias', importe: -40.00 },
+  // Comunidad Mesías: se paga todos los meses, y como el IBI puede subir algo de un año a
+  // otro — por eso también "aproximada" (sin mes fijo, al ser mensual) en vez de exacta.
+  { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inmueble', destino: 'mesias', importe: -40.00, aprox: true },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'coche', destino: null, importe: -282.52 },
 ];
 
@@ -6258,7 +6260,7 @@ function movMapeoHTML() {
   const ci = (guardado && guardado.ci < filas[0].length) ? guardado.ci : guess.importe;
   const cabecera = guardado ? guardado.cabecera : true;
   const opciones = sel => (filas[0] || []).map((h, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>Columna ${i + 1}${h ? ': ' + REsc(String(h).slice(0, 24)) : ''}</option>`).join('');
-  const previa = filas.slice(0, 5).map(f => `<tr>${f.map(c => `<td style="padding:4px 8px;font-size:11px;color:var(--muted);white-space:nowrap">${REsc(String(c).slice(0, 24))}</td>`).join('')}</tr>`).join('');
+  const previa = filas.map(f => `<tr>${f.map(c => `<td style="padding:4px 8px;font-size:11px;color:var(--muted);white-space:nowrap">${REsc(String(c).slice(0, 24))}</td>`).join('')}</tr>`).join('');
   return `
     <div class="chart-card" style="margin-bottom:16px">
       <div class="chart-title">Indica qué es cada columna</div>
@@ -6270,8 +6272,8 @@ function movMapeoHTML() {
       <label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;margin:8px 0 14px">
         <input type="checkbox" id="mov-col-cabecera" ${cabecera ? 'checked' : ''} /> La primera fila es un título, no un movimiento
       </label>
-      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Vista previa — solo las primeras filas, para comprobar que las columnas son correctas</div>
-      <div style="overflow-x:auto;margin-bottom:14px"><table style="border-collapse:collapse">${previa}</table></div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Vista previa — todas las filas del archivo, para comprobar que está todo en orden antes de continuar</div>
+      <div style="overflow:auto;max-height:420px;margin-bottom:14px"><table style="border-collapse:collapse">${previa}</table></div>
       <div class="form-actions">
         <button class="btn-save" onclick="movConfirmarMapeo()">Continuar → ver todos los movimientos</button>
         <button class="btn-reset" onclick="movCancelarImport()">Cancelar</button>
