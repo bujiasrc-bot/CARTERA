@@ -6210,6 +6210,36 @@ function movGuardarPendientes() {
   MOV_UI.filas = null; MOV_UI.pendientes = null;
   showDatosSaved(`${n} movimiento(s) guardado(s) ✓`);
 }
+// Corregir un movimiento ya guardado (p. ej. las reglas han mejorado después de guardarlo,
+// o la hubo que elegir a mano y te equivocaste) sin tener que borrarlo y reimportarlo.
+function movEditarCategoria(id, categoria) {
+  const items = movLoad();
+  const m = items.find(x => x.id === id);
+  if (!m) return;
+  m.categoria = categoria;
+  m.destino = null;   // cambia de categoría -> el destino anterior ya no pinta nada
+  movSave(items);
+}
+function movEditarDestino(id, destino) {
+  const items = movLoad();
+  const m = items.find(x => x.id === id);
+  if (!m) return;
+  m.destino = destino || null;
+  movSave(items);
+}
+// Vuelve a aplicar las reglas actuales a lo ya guardado — solo toca los movimientos que
+// siguen en "Otro ingreso/gasto" (genérico); lo que ya elegiste tú a mano no se toca.
+function movReclasificarTodo() {
+  const items = movLoad();
+  let n = 0;
+  items.forEach(m => {
+    if (m.categoria !== 'ingreso' && m.categoria !== 'gasto') return;
+    const regla = movClasificar(m.concepto, m.importe, parseFecha(m.fecha));
+    if (regla) { m.categoria = regla.categoria; m.destino = regla.destino; n++; }
+  });
+  movSave(items);
+  showDatosSaved(n ? `${n} movimiento(s) reclasificado(s) ✓` : 'Nada que reclasificar');
+}
 function movBorrar(id) {
   if (!confirm('¿Eliminar este movimiento?')) return;
   movSave(movLoad().filter(m => m.id !== id));
@@ -6318,17 +6348,31 @@ function renderMovimientos() {
     </div>
     ${bloque}
     <div class="chart-card">
-      <div class="chart-title">Últimos movimientos</div>
+      <div class="chart-title" style="display:flex;align-items:center;gap:10px">
+        Últimos movimientos
+        ${items.some(m => m.categoria === 'ingreso' || m.categoria === 'gasto') ? `<button class="btn-mini" onclick="movReclasificarTodo()" style="margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0">🔄 Reclasificar con las reglas actuales</button>` : ''}
+      </div>
       ${items.length ? [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60).map(m => {
         const cat = MOV_CATS[m.categoria] || MOV_CATS.gasto;
-        const ficha = movNombreFicha(cat, m.destino);
+        const opcionesCat = Object.keys(MOV_CATS).filter(k => k !== 'ignorar').map(k => `<option value="${k}" ${k === m.categoria ? 'selected' : ''}>${MOV_CATS[k].icono} ${MOV_CATS[k].label}</option>`).join('');
+        let selDestino = '';
+        if (cat.sec) {
+          const fichas = regLoad(cat.sec);
+          selDestino = `<select onchange="movEditarDestino(${m.id}, this.value)" style="margin-top:4px;font-size:11px"><option value="">(sin vincular)</option>${fichas.map(f => `<option value="${f.id}" ${String(f.id) === String(m.destino) ? 'selected' : ''}>${REsc(f.nombre)}</option>`).join('')}</select>`;
+        } else if (cat.lista) {
+          selDestino = `<select onchange="movEditarDestino(${m.id}, this.value)" style="margin-top:4px;font-size:11px"><option value="">(sin especificar)</option>${cat.lista.map(o => `<option value="${o.id}" ${o.id === m.destino ? 'selected' : ''}>${REsc(o.label)}</option>`).join('')}</select>`;
+        }
         return `
-        <div class="gasto-row">
+        <div class="gasto-row" style="align-items:flex-start;flex-wrap:wrap;gap:10px">
           <div class="gasto-info">
-            <div class="gasto-nombre">${cat.icono} ${REsc(m.concepto)}${ficha ? ' · ' + REsc(ficha) : ''}</div>
-            <div class="gasto-fecha">${fmtFecha(parseFecha(m.fecha))} · ${cat.label}</div>
+            <div class="gasto-nombre">${REsc(m.concepto)}</div>
+            <div class="gasto-fecha">${fmtFecha(parseFecha(m.fecha))}</div>
           </div>
-          <span class="gasto-importe ${m.importe >= 0 ? 'pos' : 'neg'} private" style="font-weight:700">${m.importe >= 0 ? '+' : ''}${fmt(m.importe, 2)}</span>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <select onchange="movEditarCategoria(${m.id}, this.value)" style="font-size:11px">${opcionesCat}</select>
+            ${selDestino}
+          </div>
+          <span class="gasto-importe ${m.importe >= 0 ? 'pos' : 'neg'} private" style="font-weight:700;margin-left:auto">${m.importe >= 0 ? '+' : ''}${fmt(m.importe, 2)}</span>
           <button class="btn-del-gasto" onclick="movBorrar(${m.id})" title="Eliminar">🗑️</button>
         </div>`;
       }).join('') : '<div class="section-sub" style="margin:0">Todavía no has importado movimientos.</div>'}
