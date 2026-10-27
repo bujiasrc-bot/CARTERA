@@ -6218,9 +6218,10 @@ function movMapeoHTML() {
       <label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;margin:8px 0 14px">
         <input type="checkbox" id="mov-col-cabecera" ${cabecera ? 'checked' : ''} /> La primera fila es un título, no un movimiento
       </label>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Vista previa — solo las primeras filas, para comprobar que las columnas son correctas</div>
       <div style="overflow-x:auto;margin-bottom:14px"><table style="border-collapse:collapse">${previa}</table></div>
       <div class="form-actions">
-        <button class="btn-save" onclick="movConfirmarMapeo()">Continuar</button>
+        <button class="btn-save" onclick="movConfirmarMapeo()">Continuar → ver todos los movimientos</button>
         <button class="btn-reset" onclick="movCancelarImport()">Cancelar</button>
       </div>
     </div>`;
