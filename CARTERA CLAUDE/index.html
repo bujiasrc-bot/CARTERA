@@ -5990,8 +5990,10 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'ADEUDO MENSUAL DE TARJETA', categoria: 'tarjeta' },
   { patron: 'PAYPAL', categoria: 'paypal' },
   { patron: 'OCASO', categoria: 'seguro' },
-  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', importe: -48.61 },
-  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', importe: -213.52 },
+  // IBI: el importe sube un poco cada año, así que estas son "aproximadas" (± variación
+  // razonable) en vez de exactas — y si hace falta desempatar, el mes de cobro (septiembre).
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', importe: -48.61, aprox: true, mes: 9 },
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', importe: -213.52, aprox: true, mes: 9 },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inmueble', destino: 'mesias', importe: -40.00 },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'coche', destino: null, importe: -282.52 },
@@ -6065,24 +6067,44 @@ function movReglaGuardar(patron, categoria, destino, importe) {
 function movNormBuscable(texto) {
   return movNorm(texto).replace(/\d+/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
-// Clasifica un movimiento: coincidencia de texto, y si varias reglas comparten el mismo
-// texto (p. ej. una transferencia genérica a la misma persona por motivos distintos), el
-// importe exacto decide cuál aplica.
-function movClasificar(textoCompleto, importe) {
+// ¿Dos importes son "parecidos"? Margen relativo (25% por defecto) con un mínimo de 3€,
+// para que un recibo pequeño (p. ej. 10€) no case con cualquier cosa por un margen minúsculo.
+function movImporteParecido(a, b, tolerancia = 0.25) {
+  return Math.abs(a - b) <= Math.max(Math.abs(b) * tolerancia, 3);
+}
+// Clasifica un movimiento en 3 niveles, de más a menos seguro:
+//  1) Importe exacto (al céntimo) — reglas normales (recordadas o de fábrica).
+//  2) Importe "aproximado" (reglas marcadas `aprox: true`, p. ej. el IBI, que sube cada año):
+//     mismo signo y dentro del margen; si varias encajan, se prefiere la del mes más parecido
+//     a la fecha del movimiento. SIGUE siendo solo una SUGERENCIA — el usuario la confirma o
+//     la corrige en la pantalla de revisión antes de guardar nada.
+//  3) Reglas sin importe (p. ej. "HIPOTECA"), válidas para cualquier cantidad.
+// Si varias reglas de un mismo nivel comparten texto, gana la última de la lista: las
+// reglas propias (recordadas) van después de las de fábrica, así que una corrección tuya
+// siempre pisa a la regla de fábrica.
+function movClasificar(textoCompleto, importe, fecha) {
   const n = movNormBuscable(textoCompleto);
   const candidatas = movReglas().filter(r => n.includes(r.patron));
   if (!candidatas.length) return null;
-  // Una regla sin importe (p. ej. "HIPOTECA") vale para cualquier cantidad; una regla CON
-  // importe solo vale si coincide al céntimo (±0,01€) — si no coincide, esa regla queda
-  // descartada del todo para este movimiento (nunca se usa "de todos modos").
-  const validas = candidatas.filter(r => r.importe == null || Math.abs(r.importe - importe) < 0.01);
-  if (!validas.length) return null;
-  // Entre las que sí valen, se prefiere la coincidencia exacta de importe sobre la genérica,
-  // y entre varias igual de buenas, la última de la lista: las reglas propias van después de
-  // las de fábrica, así que una corrección tuya siempre pisa a la regla de fábrica.
-  const exactas = validas.filter(r => r.importe != null);
-  const grupo = exactas.length ? exactas : validas;
-  return grupo[grupo.length - 1];
+
+  const exactas = candidatas.filter(r => r.importe != null && !r.aprox && Math.abs(r.importe - importe) < 0.01);
+  if (exactas.length) return exactas[exactas.length - 1];
+
+  const aprox = candidatas.filter(r => r.importe != null && r.aprox &&
+    Math.sign(r.importe) === Math.sign(importe) && movImporteParecido(importe, r.importe));
+  if (aprox.length) {
+    let mejor = aprox[aprox.length - 1];
+    if (aprox.length > 1 && fecha) {
+      const mesMov = fecha.getMonth() + 1;
+      const dist = m => { const d = Math.abs(m - mesMov); return Math.min(d, 12 - d); };
+      mejor = aprox.reduce((best, r) => (r.mes != null && dist(r.mes) < dist(best.mes != null ? best.mes : mesMov)) ? r : best, mejor);
+    }
+    return { ...mejor, _aprox: true };
+  }
+
+  const genericas = candidatas.filter(r => r.importe == null);
+  if (genericas.length) return genericas[genericas.length - 1];
+  return null;
 }
 function movPatronSugerido(texto) {
   return movNormBuscable(texto).slice(0, 60);
@@ -6157,9 +6179,9 @@ function movConfirmarMapeo() {
     if (existentes.has(fp)) { duplicados++; return; }
     existentes.add(fp);
     const textoFila = movTextoBuscable(fila, cf, ci);
-    const regla = movClasificar(textoFila, importe);
+    const regla = movClasificar(textoFila, importe, fecha);
     const categoria = regla ? regla.categoria : (importe >= 0 ? 'ingreso' : 'gasto');
-    pend.push({ fecha, concepto, importe, categoria, destino: regla ? regla.destino : null, detalle: textoFila });
+    pend.push({ fecha, concepto, importe, categoria, destino: regla ? regla.destino : null, detalle: textoFila, aprox: !!(regla && regla._aprox) });
   });
   MOV_UI.pendientes = pend;
   MOV_UI.resumen = { detectados: pend.length, omitidos, duplicados };
@@ -6242,7 +6264,7 @@ function movRevisionHTML() {
     return `
       <div class="gasto-row" style="align-items:flex-start;flex-wrap:wrap;gap:10px">
         <div class="gasto-info" style="min-width:220px">
-          <div class="gasto-nombre">${REsc(p.concepto)}</div>
+          <div class="gasto-nombre">${REsc(p.concepto)}${p.aprox ? ' <span class="badge neu" title="Importe parecido a un año anterior, no idéntico — confirma que es correcto">📍 sugerido</span>' : ''}</div>
           <div class="gasto-fecha">${fmtFecha(p.fecha)} · <span class="${p.importe >= 0 ? 'pos' : 'neg'}">${p.importe >= 0 ? '+' : ''}${fmt(p.importe, 2)}</span></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
