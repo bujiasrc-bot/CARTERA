@@ -6230,15 +6230,33 @@ function movEditarDestino(id, destino) {
   m.destino = destino || null;
   movSave(items);
 }
-// Vuelve a aplicar las reglas actuales a lo ya guardado — solo toca los movimientos que
-// siguen en "Otro ingreso/gasto" (genérico); lo que ya elegiste tú a mano no se toca.
+// ¿Hay algo que "🔄 Reclasificar" podría mejorar? Mismo criterio que movReclasificarTodo,
+// pero sin guardar nada — solo para decidir si mostrar el botón.
+function movHayQueReclasificar(items) {
+  return items.some(m => {
+    if (m.categoria === 'ingreso' || m.categoria === 'gasto') return true;
+    if (m.etiqueta) return false;
+    const regla = movClasificar(m.concepto, m.importe, parseFecha(m.fecha));
+    return !!(regla && regla.etiqueta && regla.categoria === m.categoria && String(regla.destino || '') === String(m.destino || ''));
+  });
+}
+// Vuelve a aplicar las reglas actuales a lo ya guardado. Lo que sigue en "Otro ingreso/gasto"
+// (genérico) se reclasifica del todo; lo que ya está bien categorizado (a mano o por una
+// regla anterior) no se toca EXCEPTO para rellenar la etiqueta (IBI, Comunidad...) si falta
+// y la regla actual coincide en categoría y destino — así un movimiento guardado antes de que
+// existiera la etiqueta la recibe sin perder nada que el usuario haya corregido a mano.
 function movReclasificarTodo() {
   const items = movLoad();
   let n = 0;
   items.forEach(m => {
-    if (m.categoria !== 'ingreso' && m.categoria !== 'gasto') return;
     const regla = movClasificar(m.concepto, m.importe, parseFecha(m.fecha));
-    if (regla) { m.categoria = regla.categoria; m.destino = regla.destino; m.etiqueta = regla.etiqueta || null; n++; }
+    if (!regla) return;
+    const generico = m.categoria === 'ingreso' || m.categoria === 'gasto';
+    if (generico) {
+      m.categoria = regla.categoria; m.destino = regla.destino; m.etiqueta = regla.etiqueta || null; n++;
+    } else if (!m.etiqueta && regla.etiqueta && regla.categoria === m.categoria && String(regla.destino || '') === String(m.destino || '')) {
+      m.etiqueta = regla.etiqueta; n++;
+    }
   });
   movSave(items);
   showDatosSaved(n ? `${n} movimiento(s) reclasificado(s) ✓` : 'Nada que reclasificar');
@@ -6366,7 +6384,7 @@ function renderMovimientos() {
     <div class="chart-card">
       <div class="chart-title" style="display:flex;align-items:center;gap:10px">
         Últimos movimientos
-        ${items.some(m => m.categoria === 'ingreso' || m.categoria === 'gasto') ? `<button class="btn-mini" onclick="movReclasificarTodo()" style="margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0">🔄 Reclasificar con las reglas actuales</button>` : ''}
+        ${movHayQueReclasificar(items) ? `<button class="btn-mini" onclick="movReclasificarTodo()" style="margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0">🔄 Reclasificar con las reglas actuales</button>` : ''}
         ${movReglasGuardadas().length ? `<button class="btn-mini" onclick="movBorrarReglasGuardadas()" title="Por si alguna categoría se aprendió mal y ya no se corrige sola" style="${items.some(m => m.categoria === 'ingreso' || m.categoria === 'gasto') ? '' : 'margin-left:auto;'}font-size:11px;text-transform:none;letter-spacing:0">🧹 Olvidar reglas aprendidas</button>` : ''}
       </div>
       ${items.length ? [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60).map(m => {
