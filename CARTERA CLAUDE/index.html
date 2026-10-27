@@ -5992,12 +5992,12 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'OCASO', categoria: 'seguro' },
   // IBI: el importe sube un poco cada año, así que estas son "aproximadas" (± variación
   // razonable) en vez de exactas — y si hace falta desempatar, el mes de cobro (septiembre).
-  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', importe: -48.61, aprox: true, mes: 9 },
-  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', importe: -213.52, aprox: true, mes: 9 },
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', etiqueta: 'IBI', importe: -48.61, aprox: true, mes: 9 },
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', etiqueta: 'IBI', importe: -213.52, aprox: true, mes: 9 },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
   // Comunidad Mesías: se paga todos los meses, y como el IBI puede subir algo de un año a
   // otro — por eso también "aproximada" (sin mes fijo, al ser mensual) en vez de exacta.
-  { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inmueble', destino: 'mesias', importe: -40.00, aprox: true },
+  { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Comunidad', importe: -40.00, aprox: true },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'coche', destino: null, importe: -282.52 },
 ];
 
@@ -6183,7 +6183,7 @@ function movConfirmarMapeo() {
     const textoFila = movTextoBuscable(fila, cf, ci);
     const regla = movClasificar(textoFila, importe, fecha);
     const categoria = regla ? regla.categoria : (importe >= 0 ? 'ingreso' : 'gasto');
-    pend.push({ fecha, concepto, importe, categoria, destino: regla ? regla.destino : null, detalle: textoFila, aprox: !!(regla && regla._aprox) });
+    pend.push({ fecha, concepto, importe, categoria, destino: regla ? regla.destino : null, etiqueta: regla ? (regla.etiqueta || null) : null, detalle: textoFila, aprox: !!(regla && regla._aprox) });
   });
   MOV_UI.pendientes = pend;
   MOV_UI.resumen = { detectados: pend.length, omitidos, duplicados };
@@ -6201,7 +6201,7 @@ function movGuardarPendientes() {
     const destSel = document.getElementById(`mov-dest-${i}`);
     const destino = destSel && destSel.value ? destSel.value : null;
     const recordar = (document.getElementById(`mov-rec-${i}`) || {}).checked;
-    guardados.push({ id: Date.now() + i, fecha: toISO(p.fecha), concepto: p.concepto, importe: p.importe, categoria, destino, origen: 'import' });
+    guardados.push({ id: Date.now() + i, fecha: toISO(p.fecha), concepto: p.concepto, importe: p.importe, categoria, destino, etiqueta: categoria === p.categoria ? (p.etiqueta || null) : null, origen: 'import' });
     n++;
     if (recordar) {
       const patron = movPatronSugerido(p.detalle || p.concepto);
@@ -6220,6 +6220,7 @@ function movEditarCategoria(id, categoria) {
   if (!m) return;
   m.categoria = categoria;
   m.destino = null;   // cambia de categoría -> el destino anterior ya no pinta nada
+  m.etiqueta = null;  // ni la etiqueta (IBI, Comunidad...) de la categoría anterior
   movSave(items);
 }
 function movEditarDestino(id, destino) {
@@ -6237,7 +6238,7 @@ function movReclasificarTodo() {
   items.forEach(m => {
     if (m.categoria !== 'ingreso' && m.categoria !== 'gasto') return;
     const regla = movClasificar(m.concepto, m.importe, parseFecha(m.fecha));
-    if (regla) { m.categoria = regla.categoria; m.destino = regla.destino; n++; }
+    if (regla) { m.categoria = regla.categoria; m.destino = regla.destino; m.etiqueta = regla.etiqueta || null; n++; }
   });
   movSave(items);
   showDatosSaved(n ? `${n} movimiento(s) reclasificado(s) ✓` : 'Nada que reclasificar');
@@ -6309,7 +6310,7 @@ function movRevisionHTML() {
     return `
       <div class="gasto-row" style="align-items:flex-start;flex-wrap:wrap;gap:10px">
         <div class="gasto-info" style="min-width:220px">
-          <div class="gasto-nombre">${REsc(p.concepto)}${p.aprox ? ' <span class="badge neu" title="Importe parecido a un año anterior, no idéntico — confirma que es correcto">📍 sugerido</span>' : ''}</div>
+          <div class="gasto-nombre">${REsc(p.concepto)}${p.etiqueta ? ` <span class="badge neu">${REsc(p.etiqueta)}</span>` : ''}${p.aprox ? ' <span class="badge neu" title="Importe parecido a un año anterior, no idéntico — confirma que es correcto">📍 sugerido</span>' : ''}</div>
           <div class="gasto-fecha">${fmtFecha(p.fecha)} · <span class="${p.importe >= 0 ? 'pos' : 'neg'}">${p.importe >= 0 ? '+' : ''}${fmt(p.importe, 2)}</span></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
@@ -6381,7 +6382,7 @@ function renderMovimientos() {
         return `
         <div class="gasto-row" style="align-items:flex-start;flex-wrap:wrap;gap:10px">
           <div class="gasto-info">
-            <div class="gasto-nombre">${REsc(m.concepto)}</div>
+            <div class="gasto-nombre">${REsc(m.concepto)}${m.etiqueta ? ` <span class="badge neu">${REsc(m.etiqueta)}</span>` : ''}</div>
             <div class="gasto-fecha">${fmtFecha(parseFecha(m.fecha))}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px">
