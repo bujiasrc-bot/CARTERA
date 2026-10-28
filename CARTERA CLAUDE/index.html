@@ -6403,10 +6403,15 @@ function renderMovimientos() {
   const el = document.getElementById('view-movimientos');
   if (!el) return;
   const items = movLoad();
-  const hoy = new Date();
-  const esteMes = items.filter(m => { const f = parseFecha(m.fecha); return f && f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth(); });
+  // Las tarjetas de resumen usan el mes más reciente que tenga movimientos guardados (no el
+  // mes natural de hoy) — así, mientras el usuario va poniéndose al día importando meses
+  // pasados, siguen mostrando algo útil en vez de 0€. Pedido explícitamente por el usuario.
+  const fechas = items.map(m => parseFecha(m.fecha)).filter(Boolean);
+  const refMes = fechas.length ? fechas.reduce((a, b) => (b > a ? b : a)) : new Date();
+  const esteMes = items.filter(m => { const f = parseFecha(m.fecha); return f && f.getFullYear() === refMes.getFullYear() && f.getMonth() === refMes.getMonth(); });
   const ingresosMes = esteMes.filter(m => (MOV_CATS[m.categoria] || {}).signo > 0).reduce((s, m) => s + Math.abs(m.importe), 0);
   const gastosMes = esteMes.filter(m => (MOV_CATS[m.categoria] || {}).signo < 0).reduce((s, m) => s + Math.abs(m.importe), 0);
+  const nombreMes = BOLSA_MESES[refMes.getMonth()] + ' ' + refMes.getFullYear();
 
   let bloque;
   if (MOV_UI.pendientes) bloque = movRevisionHTML();
@@ -6422,8 +6427,8 @@ function renderMovimientos() {
     <div class="section-title">💵 Movimientos</div>
     <div class="section-sub">Importa tu extracto bancario y clasifica cada movimiento por categoría</div>
     <div class="stats-row">
-      <div class="stat-card" style="--accent-line:var(--green)"><div class="stat-label">Ingresos este mes</div><div class="stat-value pos"><span class="private">${fmt(ingresosMes)}</span></div></div>
-      <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos este mes</div><div class="stat-value neg"><span class="private">${fmt(gastosMes)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--green)"><div class="stat-label">Ingresos · ${nombreMes}</div><div class="stat-value pos"><span class="private">${fmt(ingresosMes)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos · ${nombreMes}</div><div class="stat-value neg"><span class="private">${fmt(gastosMes)}</span></div></div>
       <div class="stat-card" style="--accent-line:var(--accent)"><div class="stat-label">Movimientos guardados</div><div class="stat-value">${items.length}</div></div>
     </div>
     ${bloque}
