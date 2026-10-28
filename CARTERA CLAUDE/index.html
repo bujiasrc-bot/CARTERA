@@ -5986,18 +5986,30 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'HIPOTECA', categoria: 'hipoteca' },
   { patron: 'NOMINA', categoria: 'nomina' },
   { patron: 'PENSION', categoria: 'nomina' },
-  { patron: 'ALQUILER', categoria: 'alquiler' },
+  { patron: 'ALQUILER', categoria: 'alquiler', destino: 'mesias' },
   { patron: 'ADEUDO MENSUAL DE TARJETA', categoria: 'tarjeta' },
   { patron: 'PAYPAL', categoria: 'paypal' },
   { patron: 'OCASO', categoria: 'seguro' },
+  // El usuario aporta a Bestinver con importes variables (mensual + extras puntuales), así
+  // que esta va por texto, no por importe — vale para cualquier cantidad.
+  { patron: 'BESTINVER', categoria: 'inversion', destino: 'bestinver' },
   // IBI: el importe sube un poco cada año, así que estas son "aproximadas" (± variación
   // razonable) en vez de exactas — y si hace falta desempatar, el mes de cobro (septiembre).
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', etiqueta: 'IBI', importe: -48.61, aprox: true, mes: 9 },
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', etiqueta: 'IBI', importe: -213.52, aprox: true, mes: 9 },
+  // Basura y agua: mismo organismo/proveedor que otros recibos, así que van por el texto
+  // completo del recibo (no solo "ORGANISMO AUTONOMO...") para no mezclarse con el IBI.
+  { patron: 'RECIBO BASURA VALENCIA ALCANTARA', categoria: 'inmueble', destino: 'casa', etiqueta: 'Basura' },
+  { patron: 'RECIBO BASURA MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Basura' },
+  { patron: 'RECIBO AGUA VALENCIA ALCANTARA', categoria: 'inmueble', destino: 'casa', etiqueta: 'Agua' },
+  // Seguro de la vivienda de Mesías: el usuario lo transfiere a mano cada año con esta
+  // misma coletilla en el texto, con independencia del importe exacto de ese año.
+  { patron: 'GASTO VARIOS MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Seguro vivienda' },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
-  // Comunidad Mesías: se paga todos los meses, y como el IBI puede subir algo de un año a
-  // otro — por eso también "aproximada" (sin mes fijo, al ser mensual) en vez de exacta.
-  { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Comunidad', importe: -40.00, aprox: true },
+  // Comunidad Mesías: por la palabra "COMUNIDAD" del texto (no por el importe) — así sigue
+  // reconociéndose aunque la cuota suba, sin arriesgarse a confundirse con otro gasto de
+  // importe parecido (p. ej. el seguro de la vivienda, justo arriba).
+  { patron: 'COMUNIDAD', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Comunidad' },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'coche', destino: null, importe: -282.52 },
 ];
 
