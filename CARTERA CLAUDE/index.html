@@ -6438,7 +6438,7 @@ function renderMovimientos() {
         const abierto = MOV_UI.gruposAbiertos.has(key);
         return `
         <div style="margin-bottom:6px">
-          <div onclick="movToggleGrupo(${JSON.stringify(key)})" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border-radius:8px;cursor:pointer">
+          <div onclick="movToggleGrupo('${key.replace(/'/g, "\\'")}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border-radius:8px;cursor:pointer">
             <span style="font-size:15px">${cat.icono}</span>
             <div style="flex:1;min-width:0">
               <div style="font-size:13px;color:var(--text);font-weight:600">${cat.label}${nombreDestino ? ' · ' + REsc(nombreDestino) : ''}</div>
