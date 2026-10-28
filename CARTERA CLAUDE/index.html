@@ -6002,9 +6002,10 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'RECIBO BASURA VALENCIA ALCANTARA', categoria: 'inmueble', destino: 'casa', etiqueta: 'Basura' },
   { patron: 'RECIBO BASURA MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Basura' },
   { patron: 'RECIBO AGUA VALENCIA ALCANTARA', categoria: 'inmueble', destino: 'casa', etiqueta: 'Agua' },
-  // Seguro de la vivienda de Mesías: el usuario lo transfiere a mano cada año con esta
-  // misma coletilla en el texto, con independencia del importe exacto de ese año.
-  { patron: 'GASTO VARIOS MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Seguro vivienda' },
+  // Derrama de la comunidad de Mesías (avería/reparación de algún elemento del bloque,
+  // no es el seguro de la vivienda): el usuario lo transfiere a mano con esta misma
+  // coletilla en el texto, con independencia del importe de cada derrama.
+  { patron: 'GASTO VARIOS MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Derrama comunidad' },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
   // Comunidad Mesías: por la palabra "COMUNIDAD" del texto (no por el importe) — así sigue
   // reconociéndose aunque la cuota suba, sin arriesgarse a confundirse con otro gasto de
