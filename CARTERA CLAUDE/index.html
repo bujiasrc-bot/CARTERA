@@ -6214,7 +6214,7 @@ function movGuardarPendientes() {
     const destSel = document.getElementById(`mov-dest-${i}`);
     const destino = destSel && destSel.value ? destSel.value : null;
     const recordar = (document.getElementById(`mov-rec-${i}`) || {}).checked;
-    guardados.push({ id: Date.now() + i, fecha: toISO(p.fecha), concepto: p.concepto, importe: p.importe, categoria, destino, etiqueta: categoria === p.categoria ? (p.etiqueta || null) : null, origen: 'import' });
+    guardados.push({ id: Date.now() + i, fecha: toISO(p.fecha), concepto: p.concepto, detalle: p.detalle || null, importe: p.importe, categoria, destino, etiqueta: categoria === p.categoria ? (p.etiqueta || null) : null, origen: 'import' });
     n++;
     if (recordar) {
       const patron = movPatronSugerido(p.detalle || p.concepto);
@@ -6248,27 +6248,30 @@ function movEditarDestino(id, destino) {
 function movHayQueReclasificar(items) {
   return items.some(m => {
     if (m.categoria === 'ingreso' || m.categoria === 'gasto') return true;
-    if (m.etiqueta) return false;
-    const regla = movClasificar(m.concepto, m.importe, parseFecha(m.fecha));
-    return !!(regla && regla.etiqueta && regla.categoria === m.categoria && String(regla.destino || '') === String(m.destino || ''));
+    const regla = movClasificar(m.detalle || m.concepto, m.importe, parseFecha(m.fecha));
+    if (!regla || regla.categoria !== m.categoria || String(regla.destino || '') !== String(m.destino || '')) return false;
+    return (regla.etiqueta || null) !== (m.etiqueta || null);
   });
 }
 // Vuelve a aplicar las reglas actuales a lo ya guardado. Lo que sigue en "Otro ingreso/gasto"
 // (genérico) se reclasifica del todo; lo que ya está bien categorizado (a mano o por una
-// regla anterior) no se toca EXCEPTO para rellenar la etiqueta (IBI, Comunidad...) si falta
-// y la regla actual coincide en categoría y destino — así un movimiento guardado antes de que
-// existiera la etiqueta la recibe sin perder nada que el usuario haya corregido a mano.
+// regla anterior) no se toca EXCEPTO la etiqueta (IBI, Comunidad...), que se actualiza si la
+// regla actual coincide en categoría y destino — así un movimiento guardado antes de que
+// existiera la etiqueta la recibe, y uno guardado con una etiqueta que luego se corrigió en
+// el código (p. ej. "Seguro vivienda" → "Derrama comunidad") se pone al día. La etiqueta no
+// se puede editar a mano, así que siempre viene de la regla; nunca se pisa nada que el
+// usuario SÍ haya elegido a mano (categoría/destino).
 function movReclasificarTodo() {
   const items = movLoad();
   let n = 0;
   items.forEach(m => {
-    const regla = movClasificar(m.concepto, m.importe, parseFecha(m.fecha));
+    const regla = movClasificar(m.detalle || m.concepto, m.importe, parseFecha(m.fecha));
     if (!regla) return;
     const generico = m.categoria === 'ingreso' || m.categoria === 'gasto';
     if (generico) {
       m.categoria = regla.categoria; m.destino = regla.destino; m.etiqueta = regla.etiqueta || null; n++;
-    } else if (!m.etiqueta && regla.etiqueta && regla.categoria === m.categoria && String(regla.destino || '') === String(m.destino || '')) {
-      m.etiqueta = regla.etiqueta; n++;
+    } else if (regla.categoria === m.categoria && String(regla.destino || '') === String(m.destino || '') && (regla.etiqueta || null) !== (m.etiqueta || null)) {
+      m.etiqueta = regla.etiqueta || null; n++;
     }
   });
   movSave(items);
