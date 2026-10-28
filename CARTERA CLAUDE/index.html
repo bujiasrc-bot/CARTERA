@@ -6309,7 +6309,8 @@ function movToggleGrupo(key) {
 }
 // Agrupa "Últimos movimientos" por categoría+ficha (p. ej. "Gasto de inmueble · Mesías")
 // con un subtotal, en vez de una lista plana por fecha — pensado para ver de un vistazo
-// cuánto se va en cada cosa. Los grupos se ordenan por el movimiento más reciente de cada uno.
+// cuánto se va en cada cosa. Los grupos de ingresos van primero, luego los de gastos
+// (pedido por el usuario); dentro de cada bloque, el más reciente primero.
 function movAgrupar(items) {
   const grupos = new Map();
   items.forEach(m => {
@@ -6321,8 +6322,9 @@ function movAgrupar(items) {
     g.items.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     g.subtotal = g.items.reduce((s, m) => s + m.importe, 0);
     g.ultima = g.items[0] ? new Date(g.items[0].fecha) : new Date(0);
+    g.signo = (MOV_CATS[g.categoria] || MOV_CATS.gasto).signo;
     return g;
-  }).sort((a, b) => b.ultima - a.ultima);
+  }).sort((a, b) => b.signo - a.signo || b.ultima - a.ultima);
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
