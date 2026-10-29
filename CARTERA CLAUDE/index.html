@@ -5990,9 +5990,21 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'ADEUDO MENSUAL DE TARJETA', categoria: 'tarjeta' },
   { patron: 'PAYPAL', categoria: 'paypal' },
   { patron: 'OCASO', categoria: 'seguro' },
+  // Seguro de vida del propio usuario (Carlos), NO de la vivienda de Mesías aunque el texto
+  // del banco diga "SEGURO MESIAS" — confirmado por el usuario.
+  { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro de vida' },
   // El usuario aporta a Bestinver con importes variables (mensual + extras puntuales), así
   // que esta va por texto, no por importe — vale para cualquier cantidad.
   { patron: 'BESTINVER', categoria: 'inversion', destino: 'bestinver' },
+  // Devoluciones/reembolsos ligados a la tarjeta (importe variable): se cuentan como ingreso
+  // aparte, sin restarlas del gasto de la tarjeta, para que ambas cosas queden a la vista.
+  { patron: 'DEVOLUCION GASTO TARJETA', categoria: 'ingreso', etiqueta: 'Devolución tarjeta' },
+  // Ingreso de dinero en efectivo por cajero: confirmado por el usuario que es dinero nuevo
+  // (no un simple traspaso de efectivo que ya tenía), así que cuenta como ingreso.
+  { patron: 'INGRESO EN CAJERO', categoria: 'ingreso', etiqueta: 'Efectivo' },
+  // Gastos de vacaciones (importe variable, puede ser cualquier cosa: billetes, hotel,
+  // aportaciones compartidas...) — por la palabra del texto, nunca por nombres de persona.
+  { patron: 'VACACION', categoria: 'gasto', etiqueta: 'Vacaciones' },
   // IBI: el importe sube un poco cada año, así que estas son "aproximadas" (± variación
   // razonable) en vez de exactas — y si hace falta desempatar, el mes de cobro (septiembre).
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', etiqueta: 'IBI', importe: -48.61, aprox: true, mes: 9 },
