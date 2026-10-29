@@ -6197,7 +6197,15 @@ function movConfirmarMapeo() {
   try { localStorage.setItem(MOV_MAPEO_KEY, JSON.stringify({ cf, cc, ci, cabecera })); } catch (e) {}
 
   const filas = MOV_UI.filas || [];
-  const existentes = new Set(movLoad().map(m => `${m.fecha}|${movNorm(m.concepto)}|${m.importe}`));
+  // La huella de duplicados usa el texto COMPLETO (detalle), no solo el "Concepto" corto —
+  // si no, dos recibos distintos del mismo día con el mismo importe y el mismo Concepto
+  // genérico (p. ej. dos recibos de "Organismo autonomo de recaudacion" el mismo día, uno
+  // para Mesías y otro para Casa, con Concepto idéntico) se confunden entre sí y uno de los
+  // dos se descarta como si fuera el mismo que el otro, aunque sean movimientos reales
+  // distintos (pasó de verdad: un recibo de basura se perdió así). `m.detalle` existe para
+  // lo guardado después de este arreglo; para lo guardado antes se usa `m.concepto` de
+  // respaldo (mismo riesgo de antes, pero no hay forma de reconstruirlo retroactivamente).
+  const existentes = new Set(movLoad().map(m => `${m.fecha}|${movNorm(m.detalle || m.concepto)}|${m.importe}`));
   const pend = [];
   let omitidos = 0, duplicados = 0;
   filas.forEach((fila, idx) => {
@@ -6206,10 +6214,10 @@ function movConfirmarMapeo() {
     const importe = parseImporteEs(fila[ci]);
     const concepto = String(fila[cc] || '').trim();
     if (!fecha || isNaN(importe) || !concepto) { omitidos++; return; }
-    const fp = `${toISO(fecha)}|${movNorm(concepto)}|${importe}`;
+    const textoFila = movTextoBuscable(fila, cf, ci);
+    const fp = `${toISO(fecha)}|${movNorm(textoFila)}|${importe}`;
     if (existentes.has(fp)) { duplicados++; return; }
     existentes.add(fp);
-    const textoFila = movTextoBuscable(fila, cf, ci);
     const regla = movClasificar(textoFila, importe, fecha);
     const categoria = regla ? regla.categoria : (importe >= 0 ? 'ingreso' : 'gasto');
     pend.push({ fecha, concepto, importe, categoria, destino: regla ? regla.destino : null, etiqueta: regla ? (regla.etiqueta || null) : null, detalle: textoFila, aprox: !!(regla && regla._aprox) });
