@@ -6249,18 +6249,22 @@ function movHayQueReclasificar(items) {
   return items.some(m => {
     if (m.categoria === 'ingreso' || m.categoria === 'gasto') return true;
     const regla = movClasificar(m.detalle || m.concepto, m.importe, parseFecha(m.fecha));
-    if (!regla || regla.categoria !== m.categoria || String(regla.destino || '') !== String(m.destino || '')) return false;
+    if (!regla || regla.categoria !== m.categoria) return false;
+    if (!m.destino && regla.destino) return true;
+    if (String(regla.destino || '') !== String(m.destino || '')) return false;
     return (regla.etiqueta || null) !== (m.etiqueta || null);
   });
 }
 // Vuelve a aplicar las reglas actuales a lo ya guardado. Lo que sigue en "Otro ingreso/gasto"
 // (genérico) se reclasifica del todo; lo que ya está bien categorizado (a mano o por una
-// regla anterior) no se toca EXCEPTO la etiqueta (IBI, Comunidad...), que se actualiza si la
-// regla actual coincide en categoría y destino — así un movimiento guardado antes de que
-// existiera la etiqueta la recibe, y uno guardado con una etiqueta que luego se corrigió en
-// el código (p. ej. "Seguro vivienda" → "Derrama comunidad") se pone al día. La etiqueta no
-// se puede editar a mano, así que siempre viene de la regla; nunca se pisa nada que el
-// usuario SÍ haya elegido a mano (categoría/destino).
+// regla anterior) no se toca EXCEPTO: (1) el destino, si está vacío y la regla actual da uno
+// (p. ej. un alquiler guardado antes de que la regla tuviera "Mesías" por defecto — si no se
+// rellena, se queda en su propio grupo separado del resto de alquileres para siempre); y
+// (2) la etiqueta (IBI, Comunidad...), que se actualiza si la regla actual coincide en
+// categoría y destino — así una guardada antes de que existiera la etiqueta la recibe, y una
+// que luego se corrigió en el código (p. ej. "Seguro vivienda" → "Derrama comunidad") se pone
+// al día. Ninguno de los dos se puede editar a mano en la lista (categoría si), así que
+// siempre vienen de la regla; nunca se pisa un destino que el usuario SÍ haya elegido a mano.
 function movReclasificarTodo() {
   const items = movLoad();
   let n = 0;
@@ -6270,8 +6274,13 @@ function movReclasificarTodo() {
     const generico = m.categoria === 'ingreso' || m.categoria === 'gasto';
     if (generico) {
       m.categoria = regla.categoria; m.destino = regla.destino; m.etiqueta = regla.etiqueta || null; n++;
-    } else if (regla.categoria === m.categoria && String(regla.destino || '') === String(m.destino || '') && (regla.etiqueta || null) !== (m.etiqueta || null)) {
-      m.etiqueta = regla.etiqueta || null; n++;
+    } else if (regla.categoria === m.categoria) {
+      let cambiado = false;
+      if (!m.destino && regla.destino) { m.destino = regla.destino; cambiado = true; }
+      if (String(regla.destino || '') === String(m.destino || '') && (regla.etiqueta || null) !== (m.etiqueta || null)) {
+        m.etiqueta = regla.etiqueta || null; cambiado = true;
+      }
+      if (cambiado) n++;
     }
   });
   movSave(items);
@@ -6307,10 +6316,20 @@ function movToggleGrupo(key) {
   if (MOV_UI.gruposAbiertos.has(key)) MOV_UI.gruposAbiertos.delete(key); else MOV_UI.gruposAbiertos.add(key);
   renderSeccionesNuevas();
 }
+// 3 tipos de movimiento, más allá de solo "entra/sale dinero" (pedido por el usuario,
+// oct-2026): "ingreso" (nómina, pensión, alquiler, otros ingresos — verde), "inversion"
+// (el dinero sale de la cuenta pero no es un gasto, va a un fondo/plataforma propia —
+// azul, para que no infle el total de gastos), "gasto" (todo lo demás que sale — rojo).
+function movTipo(categoria) {
+  if (categoria === 'inversion') return 'inversion';
+  return (MOV_CATS[categoria] || MOV_CATS.gasto).signo > 0 ? 'ingreso' : 'gasto';
+}
+const MOV_TIPO_COLOR = { ingreso: 'var(--green)', inversion: 'var(--blue)', gasto: 'var(--red)' };
+const MOV_TIPO_ORDEN = { ingreso: 0, inversion: 1, gasto: 2 };
 // Agrupa "Últimos movimientos" por categoría+ficha (p. ej. "Gasto de inmueble · Mesías")
 // con un subtotal, en vez de una lista plana por fecha — pensado para ver de un vistazo
-// cuánto se va en cada cosa. Los grupos de ingresos van primero, luego los de gastos
-// (pedido por el usuario); dentro de cada bloque, el más reciente primero.
+// cuánto se va en cada cosa. Los grupos van en 3 bloques — ingresos, inversión, gastos — y
+// dentro de cada bloque, el más reciente primero.
 function movAgrupar(items) {
   const grupos = new Map();
   items.forEach(m => {
@@ -6322,9 +6341,9 @@ function movAgrupar(items) {
     g.items.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     g.subtotal = g.items.reduce((s, m) => s + m.importe, 0);
     g.ultima = g.items[0] ? new Date(g.items[0].fecha) : new Date(0);
-    g.signo = (MOV_CATS[g.categoria] || MOV_CATS.gasto).signo;
+    g.tipo = movTipo(g.categoria);
     return g;
-  }).sort((a, b) => b.signo - a.signo || b.ultima - a.ultima);
+  }).sort((a, b) => MOV_TIPO_ORDEN[a.tipo] - MOV_TIPO_ORDEN[b.tipo] || b.ultima - a.ultima);
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -6409,8 +6428,9 @@ function renderMovimientos() {
   const fechas = items.map(m => parseFecha(m.fecha)).filter(Boolean);
   const refMes = fechas.length ? fechas.reduce((a, b) => (b > a ? b : a)) : new Date();
   const esteMes = items.filter(m => { const f = parseFecha(m.fecha); return f && f.getFullYear() === refMes.getFullYear() && f.getMonth() === refMes.getMonth(); });
-  const ingresosMes = esteMes.filter(m => (MOV_CATS[m.categoria] || {}).signo > 0).reduce((s, m) => s + Math.abs(m.importe), 0);
-  const gastosMes = esteMes.filter(m => (MOV_CATS[m.categoria] || {}).signo < 0).reduce((s, m) => s + Math.abs(m.importe), 0);
+  const ingresosMes = esteMes.filter(m => movTipo(m.categoria) === 'ingreso').reduce((s, m) => s + Math.abs(m.importe), 0);
+  const invertidoMes = esteMes.filter(m => movTipo(m.categoria) === 'inversion').reduce((s, m) => s + Math.abs(m.importe), 0);
+  const gastosMes = esteMes.filter(m => movTipo(m.categoria) === 'gasto').reduce((s, m) => s + Math.abs(m.importe), 0);
   const nombreMes = BOLSA_MESES[refMes.getMonth()] + ' ' + refMes.getFullYear();
 
   let bloque;
@@ -6428,6 +6448,7 @@ function renderMovimientos() {
     <div class="section-sub">Importa tu extracto bancario y clasifica cada movimiento por categoría</div>
     <div class="stats-row">
       <div class="stat-card" style="--accent-line:var(--green)"><div class="stat-label">Ingresos · ${nombreMes}</div><div class="stat-value pos"><span class="private">${fmt(ingresosMes)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--blue)"><div class="stat-label">Invertido · ${nombreMes}</div><div class="stat-value" style="color:var(--blue)"><span class="private">${fmt(invertidoMes)}</span></div></div>
       <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos · ${nombreMes}</div><div class="stat-value neg"><span class="private">${fmt(gastosMes)}</span></div></div>
       <div class="stat-card" style="--accent-line:var(--accent)"><div class="stat-label">Movimientos guardados</div><div class="stat-value">${items.length}</div></div>
     </div>
@@ -6451,7 +6472,7 @@ function renderMovimientos() {
               <div style="font-size:13px;color:var(--text);font-weight:600">${cat.label}${nombreDestino ? ' · ' + REsc(nombreDestino) : ''}</div>
               <div style="font-size:11px;color:var(--muted)">${g.items.length} movimiento${g.items.length === 1 ? '' : 's'}</div>
             </div>
-            <span style="font-size:14px;font-weight:700" class="${g.subtotal >= 0 ? 'pos' : 'neg'} private">${g.subtotal >= 0 ? '+' : ''}${fmt(g.subtotal, 2)}</span>
+            <span style="font-size:14px;font-weight:700;color:${MOV_TIPO_COLOR[g.tipo]}" class="private">${g.subtotal >= 0 ? '+' : ''}${fmt(g.subtotal, 2)}</span>
             <span style="font-size:11px;color:var(--muted);transition:transform 0.15s;transform:rotate(${abierto ? '90deg' : '0deg'})">▸</span>
           </div>
           ${abierto ? `<div style="padding:6px 0 0 4px">${g.items.map(m => {
@@ -6471,7 +6492,7 @@ function renderMovimientos() {
                   <div style="font-size:13px;color:var(--text);font-weight:600">${m.etiqueta ? REsc(m.etiqueta) : REsc(m.concepto)}</div>
                   <div style="font-size:11px;color:var(--muted)">${fmtFecha(parseFecha(m.fecha))}</div>
                 </div>
-                <span class="${m.importe >= 0 ? 'pos' : 'neg'} private" style="font-size:13px;font-weight:700">${m.importe >= 0 ? '+' : ''}${fmt(m.importe, 2)}</span>
+                <span class="private" style="font-size:13px;font-weight:700;color:${MOV_TIPO_COLOR[g.tipo]}">${m.importe >= 0 ? '+' : ''}${fmt(m.importe, 2)}</span>
                 <button class="btn-del-gasto" onclick="movToggleEditar(${m.id})" title="Editar categoría/ficha" style="font-size:13px">✏️</button>
                 <button class="btn-del-gasto" onclick="movBorrar(${m.id})" title="Eliminar">🗑️</button>
               </div>
