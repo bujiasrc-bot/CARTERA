@@ -6097,9 +6097,13 @@ function movImporteParecido(a, b, tolerancia = 0.25) {
 // Si varias reglas de un mismo nivel comparten texto, gana la última de la lista: las
 // reglas propias (recordadas) van después de las de fábrica, así que una corrección tuya
 // siempre pisa a la regla de fábrica.
-function movClasificar(textoCompleto, importe, fecha) {
+// `listaReglas` es opcional: por defecto usa fábrica+recordadas (`movReglas()`), pero se
+// puede pasar `MOV_REGLAS_DEFECTO` para ignorar lo aprendido — útil quando una regla
+// recordada antigua (p. ej. guardada sin ficha, antes de que la de fábrica tuviera una por
+// defecto) tapa para siempre una mejora posterior de la regla de fábrica.
+function movClasificar(textoCompleto, importe, fecha, listaReglas) {
   const n = movNormBuscable(textoCompleto);
-  const candidatas = movReglas().filter(r => n.includes(r.patron));
+  const candidatas = (listaReglas || movReglas()).filter(r => n.includes(r.patron));
   if (!candidatas.length) return null;
 
   const exactas = candidatas.filter(r => r.importe != null && !r.aprox && Math.abs(r.importe - importe) < 0.01);
@@ -6243,40 +6247,55 @@ function movEditarDestino(id, destino) {
   m.destino = destino || null;
   movSave(items);
 }
+// Sugerencia de destino SOLO de las reglas de fábrica (ignora lo aprendido). Hace falta
+// porque una regla recordada antigua (p. ej. un alquiler guardado con ficha vacía, antes de
+// que la regla de fábrica tuviera "Mesías" por defecto) puede coincidir en el mismo importe
+// exacto y tapar para siempre esa mejora posterior de la regla de fábrica — "Reclasificar"
+// se quedaría sin poder rellenar el destino si solo mirara `movClasificar` normal.
+function movDestinoFabrica(texto, importe, fecha, categoria) {
+  const r = movClasificar(texto, importe, fecha, MOV_REGLAS_DEFECTO);
+  return (r && r.categoria === categoria && r.destino) ? r.destino : null;
+}
 // ¿Hay algo que "🔄 Reclasificar" podría mejorar? Mismo criterio que movReclasificarTodo,
 // pero sin guardar nada — solo para decidir si mostrar el botón.
 function movHayQueReclasificar(items) {
   return items.some(m => {
     if (m.categoria === 'ingreso' || m.categoria === 'gasto') return true;
-    const regla = movClasificar(m.detalle || m.concepto, m.importe, parseFecha(m.fecha));
+    const texto = m.detalle || m.concepto, fecha = parseFecha(m.fecha);
+    const regla = movClasificar(texto, m.importe, fecha);
     if (!regla || regla.categoria !== m.categoria) return false;
-    if (!m.destino && regla.destino) return true;
+    if (!m.destino) return !!(regla.destino || movDestinoFabrica(texto, m.importe, fecha, m.categoria));
     if (String(regla.destino || '') !== String(m.destino || '')) return false;
     return (regla.etiqueta || null) !== (m.etiqueta || null);
   });
 }
 // Vuelve a aplicar las reglas actuales a lo ya guardado. Lo que sigue en "Otro ingreso/gasto"
 // (genérico) se reclasifica del todo; lo que ya está bien categorizado (a mano o por una
-// regla anterior) no se toca EXCEPTO: (1) el destino, si está vacío y la regla actual da uno
-// (p. ej. un alquiler guardado antes de que la regla tuviera "Mesías" por defecto — si no se
-// rellena, se queda en su propio grupo separado del resto de alquileres para siempre); y
-// (2) la etiqueta (IBI, Comunidad...), que se actualiza si la regla actual coincide en
-// categoría y destino — así una guardada antes de que existiera la etiqueta la recibe, y una
-// que luego se corrigió en el código (p. ej. "Seguro vivienda" → "Derrama comunidad") se pone
-// al día. Ninguno de los dos se puede editar a mano en la lista (categoría si), así que
-// siempre vienen de la regla; nunca se pisa un destino que el usuario SÍ haya elegido a mano.
+// regla anterior) no se toca EXCEPTO: (1) el destino, si está vacío y la regla actual (o, si
+// esa no da nada, la de fábrica — ver `movDestinoFabrica`) da uno (p. ej. un alquiler
+// guardado antes de que la regla tuviera "Mesías" por defecto — si no se rellena, se queda en
+// su propio grupo separado del resto de alquileres para siempre); y (2) la etiqueta (IBI,
+// Comunidad...), que se actualiza si la regla actual coincide en categoría y destino — así
+// una guardada antes de que existiera la etiqueta la recibe, y una que luego se corrigió en
+// el código (p. ej. "Seguro vivienda" → "Derrama comunidad") se pone al día. Ninguno de los
+// dos se puede editar a mano en la lista (categoría sí), así que siempre vienen de la regla;
+// nunca se pisa un destino que el usuario SÍ haya elegido a mano.
 function movReclasificarTodo() {
   const items = movLoad();
   let n = 0;
   items.forEach(m => {
-    const regla = movClasificar(m.detalle || m.concepto, m.importe, parseFecha(m.fecha));
+    const texto = m.detalle || m.concepto, fecha = parseFecha(m.fecha);
+    const regla = movClasificar(texto, m.importe, fecha);
     if (!regla) return;
     const generico = m.categoria === 'ingreso' || m.categoria === 'gasto';
     if (generico) {
       m.categoria = regla.categoria; m.destino = regla.destino; m.etiqueta = regla.etiqueta || null; n++;
     } else if (regla.categoria === m.categoria) {
       let cambiado = false;
-      if (!m.destino && regla.destino) { m.destino = regla.destino; cambiado = true; }
+      if (!m.destino) {
+        const destinoFabrica = regla.destino || movDestinoFabrica(texto, m.importe, fecha, m.categoria);
+        if (destinoFabrica) { m.destino = destinoFabrica; cambiado = true; }
+      }
       if (String(regla.destino || '') === String(m.destino || '') && (regla.etiqueta || null) !== (m.etiqueta || null)) {
         m.etiqueta = regla.etiqueta || null; cambiado = true;
       }
