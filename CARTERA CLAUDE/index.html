@@ -6017,7 +6017,7 @@ const MOV_REGLAS_DEFECTO = [
   // Derrama de la comunidad de Mesías (avería/reparación de algún elemento del bloque,
   // no es el seguro de la vivienda): el usuario lo transfiere a mano con esta misma
   // coletilla en el texto, con independencia del importe de cada derrama.
-  { patron: 'GASTO VARIOS MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Derrama comunidad' },
+  { patron: 'GASTO VARIOS MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Derramas' },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
   // Comunidad Mesías: por la palabra "COMUNIDAD" del texto (no por el importe) — así sigue
   // reconociéndose aunque la cuota suba, sin arriesgarse a confundirse con otro gasto de
@@ -6137,8 +6137,13 @@ function movClasificar(textoCompleto, importe, fecha, listaReglas) {
   if (genericas.length) return genericas[genericas.length - 1];
   return null;
 }
+// 160 (antes 60): con 60 caracteres, dos recibos distintos pero con un principio de texto
+// largo y parecido (p. ej. "Adeudo organismo autonomo de recaudacion ... RECIBO BASURA
+// VALENCIA ALCANTARA" vs "... RECIBO BASURA MESIAS") se cortaban ANTES de llegar a la
+// palabra que los distingue — la regla aprendida de uno se aplicaba también al otro. Pasó
+// de verdad con los dos recibos de basura del mismo importe.
 function movPatronSugerido(texto) {
-  return movNormBuscable(texto).slice(0, 60);
+  return movNormBuscable(texto).slice(0, 160);
 }
 // Texto "buscable" de una fila: todas las columnas salvo fecha e importe, sin repetir
 // valores duplicados (Movimiento y Observaciones suelen traer lo mismo), unidas con un
