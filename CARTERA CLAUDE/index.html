@@ -5962,7 +5962,8 @@ const MOV_MAPEO_KEY = 'cartera_mov_mapeo_v1';
 // Categorías: `sec` = vincula a una ficha de Hipotecas/Tarjetas/Seguros ya dada de alta;
 // `lista` = opciones fijas (p. ej. qué inmueble). Sin ninguna de las dos = categoría simple.
 const MOV_CATS = {
-  nomina:    { label: 'Nómina / pensión',          icono: '💰', signo: 1 },
+  nomina:    { label: 'Nómina',                     icono: '💰', signo: 1 },
+  pension:   { label: 'Pensión',                     icono: '💰', signo: 1 },
   alquiler:  { label: 'Alquiler recibido',          icono: '🏠', signo: 1,  lista: [{ id:'mesias', label:'Mesías' }, { id:'casa', label:'Casa (vivienda habitual)' }] },
   hipoteca:  { label: 'Hipoteca',                   icono: '🏦', signo: -1, sec: 'hipotecas' },
   tarjeta:   { label: 'Tarjeta',                    icono: '💳', signo: -1, sec: 'tarjetas' },
@@ -5985,7 +5986,7 @@ const MOV_CATS = {
 const MOV_REGLAS_DEFECTO = [
   { patron: 'HIPOTECA', categoria: 'hipoteca' },
   { patron: 'NOMINA', categoria: 'nomina' },
-  { patron: 'PENSION', categoria: 'nomina' },
+  { patron: 'PENSION', categoria: 'pension' },
   { patron: 'ALQUILER', categoria: 'alquiler', destino: 'mesias' },
   { patron: 'ADEUDO MENSUAL DE TARJETA', categoria: 'tarjeta' },
   { patron: 'PAYPAL', categoria: 'paypal' },
@@ -6288,7 +6289,11 @@ function movHayQueReclasificar(items) {
     if (m.categoria === 'ingreso' || m.categoria === 'gasto') return true;
     const texto = m.detalle || m.concepto, fecha = parseFecha(m.fecha);
     const regla = movClasificar(texto, m.importe, fecha);
-    if (!regla || regla.categoria !== m.categoria) return false;
+    if (!regla) return false;
+    // "nomina" se trata como genérica también: desde oct-2026 se separa en Nómina/Pensión,
+    // así que lo guardado antes bajo "nomina" puede necesitar pasar a "pension" del todo.
+    if (m.categoria === 'nomina' && regla.categoria !== m.categoria) return true;
+    if (regla.categoria !== m.categoria) return false;
     if (!m.destino) return !!(regla.destino || movDestinoFabrica(texto, m.importe, fecha, m.categoria));
     if (String(regla.destino || '') !== String(m.destino || '')) return false;
     return (regla.etiqueta || null) !== (m.etiqueta || null);
@@ -6312,7 +6317,9 @@ function movReclasificarTodo() {
     const texto = m.detalle || m.concepto, fecha = parseFecha(m.fecha);
     const regla = movClasificar(texto, m.importe, fecha);
     if (!regla) return;
-    const generico = m.categoria === 'ingreso' || m.categoria === 'gasto';
+    // "nomina" se trata como genérica también, solo para separar en Nómina/Pensión lo que
+    // se guardó antes de que existiera esa división (ver comentario en movHayQueReclasificar).
+    const generico = m.categoria === 'ingreso' || m.categoria === 'gasto' || (m.categoria === 'nomina' && regla.categoria !== 'nomina');
     if (generico) {
       m.categoria = regla.categoria; m.destino = regla.destino; m.etiqueta = regla.etiqueta || null; n++;
     } else if (regla.categoria === m.categoria) {
