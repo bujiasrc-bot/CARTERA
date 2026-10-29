@@ -6441,15 +6441,24 @@ function renderMovimientos() {
   const el = document.getElementById('view-movimientos');
   if (!el) return;
   const items = movLoad();
-  // Las tarjetas de resumen usan el mes más reciente que tenga movimientos guardados (no el
-  // mes natural de hoy) — así, mientras el usuario va poniéndose al día importando meses
-  // pasados, siguen mostrando algo útil en vez de 0€. Pedido explícitamente por el usuario.
+  // Misma lista (y mismo límite de 60) que se agrupa más abajo en "Últimos movimientos" —
+  // así los totales de arriba SIEMPRE cuadran con la suma de lo que se ve en la lista.
+  const listaVisible = [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60);
+  const sumaPorTipo = (lista, tipo) => lista.filter(m => movTipo(m.categoria) === tipo).reduce((s, m) => s + Math.abs(m.importe), 0);
+  // Total acumulado (pedido por el usuario, oct-2026): suma de TODO lo visible en la lista,
+  // no solo el mes más reciente — así puede comprobar que cuadra con los grupos de abajo.
+  const ingresosTotal = sumaPorTipo(listaVisible, 'ingreso');
+  const invertidoTotal = sumaPorTipo(listaVisible, 'inversion');
+  const gastosTotal = sumaPorTipo(listaVisible, 'gasto');
+  // Las tarjetas del mes usan el mes más reciente que tenga movimientos guardados (no el mes
+  // natural de hoy) — así, mientras el usuario va poniéndose al día importando meses pasados,
+  // siguen mostrando algo útil en vez de 0€. Pedido explícitamente por el usuario.
   const fechas = items.map(m => parseFecha(m.fecha)).filter(Boolean);
   const refMes = fechas.length ? fechas.reduce((a, b) => (b > a ? b : a)) : new Date();
-  const esteMes = items.filter(m => { const f = parseFecha(m.fecha); return f && f.getFullYear() === refMes.getFullYear() && f.getMonth() === refMes.getMonth(); });
-  const ingresosMes = esteMes.filter(m => movTipo(m.categoria) === 'ingreso').reduce((s, m) => s + Math.abs(m.importe), 0);
-  const invertidoMes = esteMes.filter(m => movTipo(m.categoria) === 'inversion').reduce((s, m) => s + Math.abs(m.importe), 0);
-  const gastosMes = esteMes.filter(m => movTipo(m.categoria) === 'gasto').reduce((s, m) => s + Math.abs(m.importe), 0);
+  const esteMes = listaVisible.filter(m => { const f = parseFecha(m.fecha); return f && f.getFullYear() === refMes.getFullYear() && f.getMonth() === refMes.getMonth(); });
+  const ingresosMes = sumaPorTipo(esteMes, 'ingreso');
+  const invertidoMes = sumaPorTipo(esteMes, 'inversion');
+  const gastosMes = sumaPorTipo(esteMes, 'gasto');
   const nombreMes = BOLSA_MESES[refMes.getMonth()] + ' ' + refMes.getFullYear();
 
   let bloque;
@@ -6465,11 +6474,18 @@ function renderMovimientos() {
   el.innerHTML = `
     <div class="section-title">💵 Movimientos</div>
     <div class="section-sub">Importa tu extracto bancario y clasifica cada movimiento por categoría</div>
+    <div class="section-sub" style="margin-bottom:6px">Total acumulado${listaVisible.length < items.length ? ` (últimos ${listaVisible.length} movimientos)` : ''}</div>
+    <div class="stats-row" style="margin-bottom:10px">
+      <div class="stat-card" style="--accent-line:var(--green)"><div class="stat-label">Ingresos</div><div class="stat-value pos"><span class="private">${fmt(ingresosTotal)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--blue)"><div class="stat-label">Invertido</div><div class="stat-value" style="color:var(--blue)"><span class="private">${fmt(invertidoTotal)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos</div><div class="stat-value neg"><span class="private">${fmt(gastosTotal)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--accent)"><div class="stat-label">Movimientos guardados</div><div class="stat-value">${items.length}</div></div>
+    </div>
+    <div class="section-sub" style="margin-bottom:6px">Mes más reciente</div>
     <div class="stats-row">
       <div class="stat-card" style="--accent-line:var(--green)"><div class="stat-label">Ingresos · ${nombreMes}</div><div class="stat-value pos"><span class="private">${fmt(ingresosMes)}</span></div></div>
       <div class="stat-card" style="--accent-line:var(--blue)"><div class="stat-label">Invertido · ${nombreMes}</div><div class="stat-value" style="color:var(--blue)"><span class="private">${fmt(invertidoMes)}</span></div></div>
       <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos · ${nombreMes}</div><div class="stat-value neg"><span class="private">${fmt(gastosMes)}</span></div></div>
-      <div class="stat-card" style="--accent-line:var(--accent)"><div class="stat-label">Movimientos guardados</div><div class="stat-value">${items.length}</div></div>
     </div>
     ${bloque}
     <div class="chart-card">
@@ -6478,7 +6494,7 @@ function renderMovimientos() {
         ${movHayQueReclasificar(items) ? `<button class="btn-mini" onclick="movReclasificarTodo()" style="margin-left:auto;font-size:11px;text-transform:none;letter-spacing:0">🔄 Reclasificar con las reglas actuales</button>` : ''}
         ${movReglasGuardadas().length ? `<button class="btn-mini" onclick="movBorrarReglasGuardadas()" title="Por si alguna categoría se aprendió mal y ya no se corrige sola" style="${items.some(m => m.categoria === 'ingreso' || m.categoria === 'gasto') ? '' : 'margin-left:auto;'}font-size:11px;text-transform:none;letter-spacing:0">🧹 Olvidar reglas aprendidas</button>` : ''}
       </div>
-      ${items.length ? movAgrupar([...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60)).map(g => {
+      ${items.length ? movAgrupar(listaVisible).map(g => {
         const cat = MOV_CATS[g.categoria] || MOV_CATS.gasto;
         const nombreDestino = g.destino ? movNombreFicha(cat, g.destino) : '';
         const key = `${g.categoria}|${g.destino || ''}`;
