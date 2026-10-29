@@ -6492,6 +6492,13 @@ function renderMovimientos() {
   const invertidoMes = sumaPorTipo(esteMes, 'inversion');
   const gastosMes = sumaPorTipo(esteMes, 'gasto');
   const nombreMes = BOLSA_MESES[refMes.getMonth()] + ' ' + refMes.getFullYear();
+  // Tarjetas del año (pedido por el usuario, oct-2026): mismo año que el mes más reciente,
+  // entre el total acumulado y el mes — para ver el acumulado de solo este año sin tener
+  // que sumar los meses a mano.
+  const esteAno = listaVisible.filter(m => { const f = parseFecha(m.fecha); return f && f.getFullYear() === refMes.getFullYear(); });
+  const ingresosAno = sumaPorTipo(esteAno, 'ingreso');
+  const invertidoAno = sumaPorTipo(esteAno, 'inversion');
+  const gastosAno = sumaPorTipo(esteAno, 'gasto');
 
   let bloque;
   if (MOV_UI.pendientes) bloque = movRevisionHTML();
@@ -6512,6 +6519,12 @@ function renderMovimientos() {
       <div class="stat-card" style="--accent-line:var(--blue)"><div class="stat-label">Invertido</div><div class="stat-value" style="color:var(--blue)"><span class="private">${fmt(invertidoTotal)}</span></div></div>
       <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos</div><div class="stat-value neg"><span class="private">${fmt(gastosTotal)}</span></div></div>
       <div class="stat-card" style="--accent-line:var(--accent)"><div class="stat-label">Movimientos guardados</div><div class="stat-value">${items.length}</div></div>
+    </div>
+    <div class="section-sub" style="margin-bottom:6px">Año ${refMes.getFullYear()}</div>
+    <div class="stats-row" style="margin-bottom:10px">
+      <div class="stat-card" style="--accent-line:var(--green)"><div class="stat-label">Ingresos</div><div class="stat-value pos"><span class="private">${fmt(ingresosAno)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--blue)"><div class="stat-label">Invertido</div><div class="stat-value" style="color:var(--blue)"><span class="private">${fmt(invertidoAno)}</span></div></div>
+      <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos</div><div class="stat-value neg"><span class="private">${fmt(gastosAno)}</span></div></div>
     </div>
     <div class="section-sub" style="margin-bottom:6px">Mes más reciente</div>
     <div class="stats-row">
