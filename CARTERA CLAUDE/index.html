@@ -6413,7 +6413,7 @@ function movRevisionHTML() {
       <div class="gasto-row" style="align-items:flex-start;flex-wrap:wrap;gap:10px">
         <div class="gasto-info" style="min-width:220px">
           <div class="gasto-nombre">${REsc(p.concepto)}${p.etiqueta ? ` <span class="badge neu">${REsc(p.etiqueta)}</span>` : ''}${p.aprox ? ' <span class="badge neu" title="Importe parecido a un año anterior, no idéntico — confirma que es correcto">📍 sugerido</span>' : ''}</div>
-          <div class="gasto-fecha">${fmtFecha(p.fecha)} · <span class="${p.importe >= 0 ? 'pos' : 'neg'}">${p.importe >= 0 ? '+' : ''}${fmt(p.importe, 2)}</span></div>
+          <div class="gasto-fecha">${fmtFecha(p.fecha)} · <span style="color:${MOV_TIPO_COLOR[movTipo(p.categoria)]}">${p.importe >= 0 ? '+' : ''}${fmt(p.importe, 2)}</span></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
           <select id="mov-cat-${i}" onchange="movUIRecat(${i}, this.value)">${opcionesCat}</select>
