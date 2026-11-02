@@ -1594,7 +1594,7 @@ const BASE = {
   inmuebles:  { inv: 163230,    act: 206704   },
   bbva:       { inv: 21247.53,  act: 23167.68 },
   indexa:     { inv: 13850,     act: 15191.68 },
-  bolsa:      { inv: 13914.40,  act: 14788.64 },
+  bolsa:      { inv: 14574.80,  act: 15449.04 },
   urbanitae:  { inv: 5500,      act: 5801.77  },
   myinvestor: { inv: 3011.6,    act: 3214.69  },
 };
@@ -2449,6 +2449,7 @@ function renderBolsa() {
   const actSan1  = pSan   * 229;
   const actIag   = pIag   * 350;
   const actSan2  = pSan   * 190;
+  const actSan3  = pSan   * 65;
   const actTsm   = pTsmEur * 4;               // valor TSM en €
   const actItx1  = pItx   * 20;
   const actItx2  = pItx   * 26;
@@ -2465,6 +2466,7 @@ function renderBolsa() {
       { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:26,  pComp:54.58,  precio:pItx,    invEur:1419.08,    actEur:actItx2,  fecha:'09/09/2026' },
       { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:100, pComp:4.24,   precio:pScyr,   invEur:423.95,     actEur:actScyr2, fecha:'16/09/2026' },
       { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:260, pComp:3.886,  precio:pScyr,   invEur:1010.36,    actEur:actScyr3, fecha:'01/10/2026' },
+      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:65,  pComp:10.16,  precio:pSan,    invEur:660.40,     actEur:actSan3,  fecha:'30/10/2026' },
     ];
     renderBolsaPos(rows);
   }
@@ -2548,6 +2550,7 @@ const BOLSA_LOTES_EVOL = [
   { key:'itx',  tk:'ITX (x26)',   acc:26,  coste:1419.08, fecha:'2026-09-09', usd:false, color:'#7effd4' },
   { key:'scyr', tk:'SCYR (x100)', acc:100, coste:423.95,  fecha:'2026-09-16', usd:false, color:'#b5e0ff' },
   { key:'scyr', tk:'SCYR (x260)', acc:260, coste:1010.36, fecha:'2026-10-01', usd:false, color:'#8bd8ff' },
+  { key:'san',  tk:'SAN (x65)',   acc:65,  coste:660.40,  fecha:'2026-10-30', usd:false, color:'#ffe9a8' },
 ];
 
 function loadBolsaHist() {
@@ -4076,6 +4079,7 @@ const BOLSA_ACCIONES = [
   { ticker: 'SAN',  nombre: 'Santander', acciones: 229,  coste: 2429.69, key: 'san'  },
   { ticker: 'IAG',  nombre: 'IAG',       acciones: 350,  coste: 1407.00, key: 'iag'  },
   { ticker: 'SAN',  nombre: 'Santander', acciones: 190,  coste: 1905.70, key: 'san2' },
+  { ticker: 'SAN',  nombre: 'Santander', acciones: 65,   coste: 660.40,  key: 'san3' },
   { ticker: 'TSM',  nombre: 'Taiwan Semi.', acciones: 4, coste: 1473.47, key: 'tsm', usd: true },
   { ticker: 'ITX',  nombre: 'Inditex',    acciones: 20,  coste: 1149.60, key: 'itx' },
   { ticker: 'ITX',  nombre: 'Inditex',    acciones: 26,  coste: 1419.08, key: 'itx2' },
@@ -4359,7 +4363,7 @@ function renderDatosBolsaResult() {
           <div style="font-size:16px;font-weight:700">${precios.scyr}€</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SAN · 419 acc.</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SAN · 484 acc.</div>
           <div style="font-size:16px;font-weight:700">${precios.san}€</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
