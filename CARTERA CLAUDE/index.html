@@ -2748,10 +2748,12 @@ async function rehacerHistBolsa(btn) {
 // Los títulos con derecho a cada reparto salen de BOLSA_LOTES_EVOL (fecha de compra < fecha ex-dividendo).
 const BOLSA_DIV_KEY      = 'cartera_bolsa_divs_v1';
 const BOLSA_DIVHIST_KEY  = 'cartera_bolsa_divhist_v1';
-const BOLSA_DIV_SEED_VER = 2;
+const BOLSA_DIV_SEED_VER = 3;
 const BOLSA_DIV_SEED = [
   { id:'seed-scyr-20260129', ticker:'scyr', fecha:'2026-01-29', importe:34.65 },
   { id:'seed-scyr-20260701', ticker:'scyr', fecha:'2026-07-01', importe:57.92 },
+  { id:'seed-itx-20261102',  ticker:'itx',  fecha:'2026-11-02', importe:32.60 },   // ITX 46 acc. (0,875 €/acc bruto)
+  { id:'seed-san-20261102',  ticker:'san',  fecha:'2026-11-02', importe:43.10 },   // SAN 419 acc. (0,127 €/acc bruto)
 ];
 // ret = retención aproximada para estimar el neto (España 19 %; TSM ~21 %, a corregir con el primer cobro real)
 const BOLSA_DIV_TK = {
