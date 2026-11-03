@@ -6359,6 +6359,29 @@ function movReclasificarTodo() {
   movSave(items);
   showDatosSaved(n ? `${n} movimiento(s) reclasificado(s) ✓` : 'Nada que reclasificar');
 }
+// Resumen mes a mes (ingreso/inversión/gasto) para el gráfico de evolución — pedido por el
+// usuario para ver la tendencia de un vistazo en vez de mirar mes a mes suelto. Se recalcula
+// de TODO lo guardado cada vez que se renderiza, así que crece solo según se van importando
+// más meses (hacia delante o hacia atrás, sin tocar código).
+function movResumenMensual(items) {
+  const porMes = new Map();
+  items.forEach(m => {
+    const f = parseFecha(m.fecha);
+    if (!f) return;
+    const key = f.getFullYear() + '-' + String(f.getMonth() + 1).padStart(2, '0');
+    if (!porMes.has(key)) porMes.set(key, { ano: f.getFullYear(), mes: f.getMonth(), ingreso: 0, inversion: 0, gasto: 0 });
+    const d = porMes.get(key);
+    const tipo = movTipo(m.categoria);
+    d[tipo] += Math.abs(m.importe);
+  });
+  const claves = [...porMes.keys()].sort(); // "YYYY-MM" ordena bien como texto
+  return {
+    labels: claves.map(k => BOLSA_MESES[porMes.get(k).mes] + ' ' + porMes.get(k).ano),
+    ingreso: claves.map(k => porMes.get(k).ingreso),
+    inversion: claves.map(k => porMes.get(k).inversion),
+    gasto: claves.map(k => porMes.get(k).gasto),
+  };
+}
 function movBorrar(id) {
   if (!confirm('¿Eliminar este movimiento?')) return;
   movSave(movLoad().filter(m => m.id !== id));
@@ -6557,6 +6580,11 @@ function renderMovimientos() {
       <div class="stat-card" style="--accent-line:var(--blue)"><div class="stat-label">Invertido · ${nombreMes}</div><div class="stat-value" style="color:var(--blue)"><span class="private">${fmt(invertidoMes)}</span></div></div>
       <div class="stat-card" style="--accent-line:var(--red)"><div class="stat-label">Gastos · ${nombreMes}</div><div class="stat-value neg"><span class="private">${fmt(gastosMes)}</span></div></div>
     </div>
+    ${items.length ? `
+    <div class="chart-card" style="margin:16px 0">
+      <div class="chart-title">Evolución mensual</div>
+      <div class="chart-wrap"><canvas id="chart-mov-mensual"></canvas></div>
+    </div>` : ''}
     ${bloque}
     <div class="chart-card">
       <div class="chart-title" style="display:flex;align-items:center;gap:10px">
@@ -6611,6 +6639,24 @@ function renderMovimientos() {
         </div>`;
       }).join('') : '<div class="section-sub" style="margin:0">Todavía no has importado movimientos.</div>'}
     </div>`;
+
+  if (items.length) {
+    const r = movResumenMensual(listaVisible);
+    makeChart('chart-mov-mensual', 'bar', {
+      labels: r.labels,
+      datasets: [
+        { label: 'Ingresos',  data: r.ingreso,   backgroundColor: 'rgba(126,255,212,0.75)', borderRadius: 6 },
+        { label: 'Invertido', data: r.inversion, backgroundColor: 'rgba(107,207,255,0.75)', borderRadius: 6 },
+        { label: 'Gastos',    data: r.gasto,     backgroundColor: 'rgba(255,107,107,0.75)', borderRadius: 6 },
+      ]
+    }, {
+      plugins: { legend: { display: true, labels: { color: '#9e9eb0', font: { family: 'Syne' } } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family: 'Syne' } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b6b85', font: { family: 'Syne' }, callback: v => fmt(v) } }
+      }
+    });
+  }
 }
 </script>
 </body>
