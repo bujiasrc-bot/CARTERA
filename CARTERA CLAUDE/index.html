@@ -6264,7 +6264,12 @@ function movConfirmarMapeo() {
     existentes.add(fp);
     const regla = movClasificar(textoFila, importe, fecha);
     const categoria = regla ? regla.categoria : (importe >= 0 ? 'ingreso' : 'gasto');
-    pend.push({ fecha, concepto, importe, categoria, destino: regla ? regla.destino : null, etiqueta: regla ? (regla.etiqueta || null) : null, detalle: textoFila, aprox: !!(regla && regla._aprox) });
+    // categoriaSugerida NUNCA se toca (a diferencia de p.categoria, que movUIRecat sí
+    // sobrescribe si el usuario cambia el desplegable) — hace falta guardar aparte cuál fue
+    // la sugerencia ORIGINAL para poder detectar en movGuardarPendientes si el usuario la
+    // cambió de verdad, y así saber si la etiqueta (IBI, Comunidad, Aportación hijas...)
+    // sigue aplicando o hay que borrarla.
+    pend.push({ fecha, concepto, importe, categoria, categoriaSugerida: categoria, destino: regla ? regla.destino : null, etiqueta: regla ? (regla.etiqueta || null) : null, detalle: textoFila, aprox: !!(regla && regla._aprox) });
   });
   MOV_UI.pendientes = pend;
   MOV_UI.resumen = { detectados: pend.length, omitidos, duplicados };
@@ -6282,7 +6287,7 @@ function movGuardarPendientes() {
     const destSel = document.getElementById(`mov-dest-${i}`);
     const destino = destSel && destSel.value ? destSel.value : null;
     const recordar = (document.getElementById(`mov-rec-${i}`) || {}).checked;
-    guardados.push({ id: Date.now() + i, fecha: toISO(p.fecha), concepto: p.concepto, detalle: p.detalle || null, importe: p.importe, categoria, destino, etiqueta: categoria === p.categoria ? (p.etiqueta || null) : null, origen: 'import' });
+    guardados.push({ id: Date.now() + i, fecha: toISO(p.fecha), concepto: p.concepto, detalle: p.detalle || null, importe: p.importe, categoria, destino, etiqueta: categoria === p.categoriaSugerida ? (p.etiqueta || null) : null, origen: 'import' });
     n++;
     if (recordar) {
       const patron = movPatronSugerido(p.detalle || p.concepto);
