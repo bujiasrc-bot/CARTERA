@@ -1594,7 +1594,7 @@ const BASE = {
   inmuebles:  { inv: 163230,    act: 206704   },
   bbva:       { inv: 21247.53,  act: 23167.68 },
   indexa:     { inv: 13850,     act: 15191.68 },
-  bolsa:      { inv: 13914.40,  act: 14788.64 },
+  bolsa:      { inv: 14574.80,  act: 15449.04 },
   urbanitae:  { inv: 5500,      act: 5801.77  },
   myinvestor: { inv: 3011.6,    act: 3214.69  },
 };
@@ -2449,6 +2449,7 @@ function renderBolsa() {
   const actSan1  = pSan   * 229;
   const actIag   = pIag   * 350;
   const actSan2  = pSan   * 190;
+  const actSan3  = pSan   * 65;
   const actTsm   = pTsmEur * 4;               // valor TSM en €
   const actItx1  = pItx   * 20;
   const actItx2  = pItx   * 26;
@@ -2465,6 +2466,7 @@ function renderBolsa() {
       { ticker:'ITX',  nombre:'Inditex',      sector:'Textil',          acc:26,  pComp:54.58,  precio:pItx,    invEur:1419.08,    actEur:actItx2,  fecha:'09/09/2026' },
       { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:100, pComp:4.24,   precio:pScyr,   invEur:423.95,     actEur:actScyr2, fecha:'16/09/2026' },
       { ticker:'SCYR', nombre:'Sacyr',        sector:'Infraes.',        acc:260, pComp:3.886,  precio:pScyr,   invEur:1010.36,    actEur:actScyr3, fecha:'01/10/2026' },
+      { ticker:'SAN',  nombre:'Santander',    sector:'Banca',           acc:65,  pComp:10.16,  precio:pSan,    invEur:660.40,     actEur:actSan3,  fecha:'30/10/2026' },
     ];
     renderBolsaPos(rows);
   }
@@ -2548,6 +2550,7 @@ const BOLSA_LOTES_EVOL = [
   { key:'itx',  tk:'ITX (x26)',   acc:26,  coste:1419.08, fecha:'2026-09-09', usd:false, color:'#7effd4' },
   { key:'scyr', tk:'SCYR (x100)', acc:100, coste:423.95,  fecha:'2026-09-16', usd:false, color:'#b5e0ff' },
   { key:'scyr', tk:'SCYR (x260)', acc:260, coste:1010.36, fecha:'2026-10-01', usd:false, color:'#8bd8ff' },
+  { key:'san',  tk:'SAN (x65)',   acc:65,  coste:660.40,  fecha:'2026-10-30', usd:false, color:'#ffe9a8' },
 ];
 
 function loadBolsaHist() {
@@ -2745,17 +2748,21 @@ async function rehacerHistBolsa(btn) {
 // Los títulos con derecho a cada reparto salen de BOLSA_LOTES_EVOL (fecha de compra < fecha ex-dividendo).
 const BOLSA_DIV_KEY      = 'cartera_bolsa_divs_v1';
 const BOLSA_DIVHIST_KEY  = 'cartera_bolsa_divhist_v1';
-const BOLSA_DIV_SEED_VER = 2;
+const BOLSA_DIV_SEED_VER = 4;
 const BOLSA_DIV_SEED = [
   { id:'seed-scyr-20260129', ticker:'scyr', fecha:'2026-01-29', importe:34.65 },
   { id:'seed-scyr-20260701', ticker:'scyr', fecha:'2026-07-01', importe:57.92 },
+  { id:'seed-tsm-20261008',  ticker:'tsm',  fecha:'2026-10-08', importe:2.50 },    // TSM 4 ADR (1,107 $/ADR bruto = 3,95 € al cambio de ese día)
+  { id:'seed-itx-20261102',  ticker:'itx',  fecha:'2026-11-02', importe:32.60 },   // ITX 46 acc. (0,875 €/acc bruto)
+  { id:'seed-san-20261102',  ticker:'san',  fecha:'2026-11-02', importe:43.10 },   // SAN 419 acc. (0,127 €/acc bruto)
 ];
-// ret = retención aproximada para estimar el neto (España 19 %; TSM ~21 %, a corregir con el primer cobro real)
+// ret = retención para estimar el neto: España 19 %. TSM 36,7 %: Taiwán retiene ~21 % en origen y España ~19 % sobre el resto
+// (cobro real del 08/10/2026: 2,50 € netos de 3,95 € brutos = 63,3 %)
 const BOLSA_DIV_TK = {
   scyr: { tk:'SCYR', nombre:'Sacyr',        yf:'SCYR.MC', usd:false, ret:0.19, color:'#c8b5ff', lag:2  },
   san:  { tk:'SAN',  nombre:'Santander',    yf:'SAN.MC',  usd:false, ret:0.19, color:'#ffb86c', lag:4  },
   iag:  { tk:'IAG',  nombre:'IAG',          yf:'IAG.MC',  usd:false, ret:0.19, color:'#6bcfff', lag:5  },
-  tsm:  { tk:'TSM',  nombre:'Taiwan Semi.', yf:'TSM',     usd:true,  ret:0.21, color:'#ff9de2', lag:23 },
+  tsm:  { tk:'TSM',  nombre:'Taiwan Semi.', yf:'TSM',     usd:true,  ret:0.367, color:'#ff9de2', lag:23 },
   itx:  { tk:'ITX',  nombre:'Inditex',      yf:'ITX.MC',  usd:false, ret:0.19, color:'#a8ff78', lag:4  },
 };
 // Yahoo solo da la fecha ex-dividendo. Día de cobro aproximado = ex-dividendo + retraso habitual (lag, en días),
@@ -2979,7 +2986,7 @@ function renderBolsaDivProx(ev, hoy) {
   box.innerHTML =
     `<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Próximos 12 meses: <b style="color:var(--text)" class="private">≈ ${fmtDiv(total)}</b> netos · ${enVentana.length} cobro${enVentana.length === 1 ? '' : 's'}</div>` +
     `<div class="dvc-leg">${leg}</div><div class="dvc-grid">${grid}</div><div class="dvc-det" id="bol-div-det"></div>` +
-    '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">Neto = bruto − retención aprox. (19 % valores españoles, 21 % TSM). El día de cobro es aproximado (ex-dividendo + retraso habitual de cada empresa) hasta que confirmes el reparto con su fecha de pago en Datos → Bolsa. Solo cuentan los títulos comprados antes del ex-dividendo.</div>';
+    '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">Neto = bruto − retención aprox. (19 % valores españoles, ≈ 37 % TSM por la retención de Taiwán más la de España). El día de cobro es aproximado (ex-dividendo + retraso habitual de cada empresa) hasta que confirmes el reparto con su fecha de pago en Datos → Bolsa. Solo cuentan los títulos comprados antes del ex-dividendo.</div>';
 
   // Día seleccionado: el que estaba; si ya no existe, el próximo cobro
   const dias = enVentana.map(e => e.cobroShow).sort();
@@ -4076,6 +4083,7 @@ const BOLSA_ACCIONES = [
   { ticker: 'SAN',  nombre: 'Santander', acciones: 229,  coste: 2429.69, key: 'san'  },
   { ticker: 'IAG',  nombre: 'IAG',       acciones: 350,  coste: 1407.00, key: 'iag'  },
   { ticker: 'SAN',  nombre: 'Santander', acciones: 190,  coste: 1905.70, key: 'san2' },
+  { ticker: 'SAN',  nombre: 'Santander', acciones: 65,   coste: 660.40,  key: 'san3' },
   { ticker: 'TSM',  nombre: 'Taiwan Semi.', acciones: 4, coste: 1473.47, key: 'tsm', usd: true },
   { ticker: 'ITX',  nombre: 'Inditex',    acciones: 20,  coste: 1149.60, key: 'itx' },
   { ticker: 'ITX',  nombre: 'Inditex',    acciones: 26,  coste: 1419.08, key: 'itx2' },
@@ -4359,7 +4367,7 @@ function renderDatosBolsaResult() {
           <div style="font-size:16px;font-weight:700">${precios.scyr}€</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SAN · 419 acc.</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SAN · 484 acc.</div>
           <div style="font-size:16px;font-weight:700">${precios.san}€</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">
