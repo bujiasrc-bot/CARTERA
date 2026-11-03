@@ -5991,9 +5991,11 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'ADEUDO MENSUAL DE TARJETA', categoria: 'tarjeta' },
   { patron: 'PAYPAL', categoria: 'paypal' },
   { patron: 'OCASO', categoria: 'seguro' },
-  // Seguro de vida del propio usuario (Carlos), NO de la vivienda de Mesías aunque el texto
-  // del banco diga "SEGURO MESIAS" — confirmado por el usuario.
-  { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro de vida' },
+  // El usuario tiene DOS pólizas distintas con Allianz, con el mismo texto de banco — solo
+  // se distinguen por el importe exacto (confirmado por el usuario): la de vida (205,89€) y
+  // la del coche BMW M2C (686,97€). Nunca se escribe la matrícula en el código.
+  { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro de vida', importe: -205.89 },
+  { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro coche', importe: -686.97 },
   // El usuario aporta a Bestinver con importes variables (mensual + extras puntuales), así
   // que esta va por texto, no por importe — vale para cualquier cantidad.
   { patron: 'BESTINVER', categoria: 'inversion', destino: 'bestinver' },
@@ -6001,8 +6003,11 @@ const MOV_REGLAS_DEFECTO = [
   // aparte, sin restarlas del gasto de la tarjeta, para que ambas cosas queden a la vista.
   { patron: 'DEVOLUCION GASTO TARJETA', categoria: 'ingreso', etiqueta: 'Devolución tarjeta' },
   // Ingreso de dinero en efectivo por cajero: confirmado por el usuario que es dinero nuevo
-  // (no un simple traspaso de efectivo que ya tenía), así que cuenta como ingreso.
+  // (no un simple traspaso de efectivo que ya tenía), así que cuenta como ingreso. El banco
+  // usa dos redacciones distintas según el mes ("INGRESO EN CAJERO" o, en el Concepto,
+  // "INGRESO EN EFECTIVO"), así que se cubren las dos.
   { patron: 'INGRESO EN CAJERO', categoria: 'ingreso', etiqueta: 'Efectivo' },
+  { patron: 'INGRESO EN EFECTIVO', categoria: 'ingreso', etiqueta: 'Efectivo' },
   // Gastos de vacaciones (importe variable, puede ser cualquier cosa: billetes, hotel,
   // aportaciones compartidas...) — por la palabra del texto, nunca por nombres de persona.
   { patron: 'VACACION', categoria: 'gasto', etiqueta: 'Vacaciones' },
@@ -6010,19 +6015,28 @@ const MOV_REGLAS_DEFECTO = [
   // razonable) en vez de exactas — y si hace falta desempatar, el mes de cobro (septiembre).
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', etiqueta: 'IBI', importe: -48.61, aprox: true, mes: 9 },
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', etiqueta: 'IBI', importe: -213.52, aprox: true, mes: 9 },
-  // Basura y agua: mismo organismo/proveedor que otros recibos, así que van por el texto
-  // completo del recibo (no solo "ORGANISMO AUTONOMO...") para no mezclarse con el IBI.
+  // Basura: algunos meses el banco no incluye la dirección en el texto (solo el organismo),
+  // así que esta regla de respaldo (sin piso, el usuario lo elige a mano) va ANTES de las de
+  // dirección concreta — "último gana" entre reglas del mismo nivel, así que la de dirección
+  // concreta sigue ganando los meses en que sí aparece.
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', etiqueta: 'Basura' },
   { patron: 'RECIBO BASURA VALENCIA ALCANTARA', categoria: 'inmueble', destino: 'casa', etiqueta: 'Basura' },
   { patron: 'RECIBO BASURA MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Basura' },
+  // Agua: "Aqlara" es el nombre de la empresa (siempre de Casa, nunca de Mesías — el agua y
+  // la luz de los pisos alquilados están a nombre de los inquilinos) — más fiable que la
+  // dirección, que algunos meses no aparece en el texto del banco.
+  { patron: 'AQLARA', categoria: 'inmueble', destino: 'casa', etiqueta: 'Agua' },
   { patron: 'RECIBO AGUA VALENCIA ALCANTARA', categoria: 'inmueble', destino: 'casa', etiqueta: 'Agua' },
+  // Comunidad Mesías: algunos meses el texto del banco no trae la palabra "COMUNIDAD", solo
+  // "piso 3. c" — de respaldo, "PISO" (sin nombre de persona) también la reconoce como
+  // Comunidad; va ANTES de Derramas y de "COMUNIDAD" a propósito, para que esas dos, más
+  // específicas, sigan ganando cuando su texto sí aparece ("último gana").
+  { patron: 'PISO', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Comunidad' },
   // Derrama de la comunidad de Mesías (avería/reparación de algún elemento del bloque,
   // no es el seguro de la vivienda): el usuario lo transfiere a mano con esta misma
   // coletilla en el texto, con independencia del importe de cada derrama.
   { patron: 'GASTO VARIOS MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Derramas' },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
-  // Comunidad Mesías: por la palabra "COMUNIDAD" del texto (no por el importe) — así sigue
-  // reconociéndose aunque la cuota suba, sin arriesgarse a confundirse con otro gasto de
-  // importe parecido (p. ej. el seguro de la vivienda, justo arriba).
   { patron: 'COMUNIDAD', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Comunidad' },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'coche', destino: null, importe: -282.52 },
 ];
