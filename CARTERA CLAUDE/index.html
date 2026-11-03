@@ -6497,7 +6497,10 @@ function renderMovimientos() {
   const items = movLoad();
   // Misma lista (y mismo límite de 60) que se agrupa más abajo en "Últimos movimientos" —
   // así los totales de arriba SIEMPRE cuadran con la suma de lo que se ve en la lista.
-  const listaVisible = [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 60);
+  // 1000 (antes 60): con 4 meses ya se habían superado los 60, y "Total acumulado" dejó de
+  // ser el total real sin que se notara a simple vista — con ~20-25 movimientos/mes, 1000 da
+  // margen para varios años antes de que vuelva a hacer falta subirlo.
+  const listaVisible = [...items].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 1000);
   const sumaPorTipo = (lista, tipo) => lista.filter(m => movTipo(m.categoria) === tipo).reduce((s, m) => s + Math.abs(m.importe), 0);
   // Total acumulado (pedido por el usuario, oct-2026): suma de TODO lo visible en la lista,
   // no solo el mes más reciente — así puede comprobar que cuadra con los grupos de abajo.
