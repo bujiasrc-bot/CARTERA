@@ -6007,6 +6007,18 @@ const MOV_REGLAS_DEFECTO = [
   // El usuario aporta a Bestinver con importes variables (mensual + extras puntuales), así
   // que esta va por texto, no por importe — vale para cualquier cantidad.
   { patron: 'BESTINVER', categoria: 'inversion', destino: 'bestinver' },
+  // Aportaciones a Bestinfond a nombre de sus hijas (Marta/Carmen — nunca se escribe el
+  // nombre en el código): el banco no da NINGÚN texto fiable para distinguirlas (el código
+  // de referencia son solo dígitos, que la búsqueda ignora) — así que va por el importe
+  // exacto (-500,00€) excluyendo "HIPOTECA", que también es -500€ pero siempre trae esa
+  // palabra en algún sitio. Si en el futuro -500€ fuera otra cosa sin decir "HIPOTECA", se
+  // clasificaría aquí por error — hay que estar atento y corregir a mano si pasa.
+  { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación hijas', importe: -500.00, excluye: 'HIPOTECA' },
+  // Pago de impuestos a Hacienda (declaración de la renta u otros) — "NRC" es el código que
+  // usa la Agencia Tributaria en sus recibos, distinto del que usa una multa de aparcamiento
+  // (que también aparece como "Pago de impuestos" pero sin NRC) — por eso NO se usa el texto
+  // genérico "Pago de impuestos" solo, que mezclaría las dos cosas.
+  { patron: 'NRC', categoria: 'gasto', etiqueta: 'Impuestos (Hacienda)' },
   // Devoluciones/reembolsos ligados a la tarjeta (importe variable): se cuentan como ingreso
   // aparte, sin restarlas del gasto de la tarjeta, para que ambas cosas queden a la vista.
   { patron: 'DEVOLUCION GASTO TARJETA', categoria: 'ingreso', etiqueta: 'Devolución tarjeta' },
@@ -6136,9 +6148,13 @@ function movImporteParecido(a, b, tolerancia = 0.25) {
 // puede pasar `MOV_REGLAS_DEFECTO` para ignorar lo aprendido — útil quando una regla
 // recordada antigua (p. ej. guardada sin ficha, antes de que la de fábrica tuviera una por
 // defecto) tapa para siempre una mejora posterior de la regla de fábrica.
+// `excluye` (opcional): la regla NO vale si ese texto también está presente — para cuando
+// dos cosas distintas comparten el mismo importe y no hay ningún texto positivo fiable que
+// las distinga (p. ej. una aportación sin ningún texto de banco, que por importe se confunde
+// con la Hipoteca, pero la Hipoteca SIEMPRE dice "HIPOTECA" en algún sitio).
 function movClasificar(textoCompleto, importe, fecha, listaReglas) {
   const n = movNormBuscable(textoCompleto);
-  const candidatas = (listaReglas || movReglas()).filter(r => n.includes(r.patron));
+  const candidatas = (listaReglas || movReglas()).filter(r => n.includes(r.patron) && (!r.excluye || !n.includes(r.excluye)));
   if (!candidatas.length) return null;
 
   const exactas = candidatas.filter(r => r.importe != null && !r.aprox && Math.abs(r.importe - importe) < 0.01);
