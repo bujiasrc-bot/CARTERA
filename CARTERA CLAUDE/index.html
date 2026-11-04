@@ -5978,7 +5978,7 @@ const MOV_CATS = {
   seguro:    { label: 'Seguro',                     icono: '🛡️', signo: -1, sec: 'seguros' },
   coche:     { label: 'Préstamo coche',             icono: '🚗', signo: -1 },
   inmueble:  { label: 'Gasto de inmueble',          icono: '🏠', signo: -1, lista: [{ id:'mesias', label:'Mesías' }, { id:'casa', label:'Casa (vivienda habitual)' }] },
-  inversion: { label: 'Aportación a inversión',     icono: '📈', signo: -1, lista: [{ id:'indexa', label:'Indexa Capital' }, { id:'bestinver', label:'Bestinver' }, { id:'bolsa', label:'Bolsa' }, { id:'otros', label:'Otra' }] },
+  inversion: { label: 'Aportación a inversión',     icono: '📈', signo: -1, lista: [{ id:'indexa', label:'Indexa Capital' }, { id:'bestinver', label:'Bestinver' }, { id:'bolsa', label:'Bolsa' }, { id:'myinvestor', label:'MyInvestor' }, { id:'otros', label:'Otra' }] },
   paypal:    { label: 'PayPal / compras online',    icono: '🛒', signo: -1 },
   ingreso:   { label: 'Otro ingreso',                icono: '⬆️', signo: 1 },
   gasto:     { label: 'Otro gasto',                  icono: '⬇️', signo: -1 },
@@ -5999,21 +5999,36 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'ADEUDO MENSUAL DE TARJETA', categoria: 'tarjeta' },
   { patron: 'PAYPAL', categoria: 'paypal' },
   { patron: 'OCASO', categoria: 'seguro' },
-  // El usuario tiene DOS pólizas distintas con Allianz, con el mismo texto de banco — solo
-  // se distinguen por el importe exacto (confirmado por el usuario): la de vida (205,89€) y
-  // la del coche BMW M2C (686,97€). Nunca se escribe la matrícula en el código.
+  // El usuario tiene TRES pólizas distintas con Allianz, con el mismo texto de banco — solo
+  // se distinguen por el importe exacto (confirmado por el usuario): la de vida (205,89€),
+  // la del propio coche BMW M2C (686,97€) y la del Audi Q3 de Ruth (511,45€). Nunca se
+  // escriben las matrículas en el código.
   { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro de vida', importe: -205.89 },
   { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro coche', importe: -686.97 },
+  { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro coche Ruth', importe: -511.45 },
   // El usuario aporta a Bestinver con importes variables (mensual + extras puntuales), así
   // que esta va por texto, no por importe — vale para cualquier cantidad.
   { patron: 'BESTINVER', categoria: 'inversion', destino: 'bestinver' },
-  // Aportaciones a Bestinfond a nombre de sus hijas (Marta/Carmen — nunca se escribe el
-  // nombre en el código): el banco no da NINGÚN texto fiable para distinguirlas (el código
-  // de referencia son solo dígitos, que la búsqueda ignora) — así que va por el importe
-  // exacto (-500,00€) excluyendo "HIPOTECA", que también es -500€ pero siempre trae esa
-  // palabra en algún sitio. Si en el futuro -500€ fuera otra cosa sin decir "HIPOTECA", se
-  // clasificaría aquí por error — hay que estar atento y corregir a mano si pasa.
+  // Aportaciones por transferencia sin ningún texto fiable (el código de referencia son solo
+  // dígitos, que la búsqueda ignora) — van por el importe exacto, cada una confirmada por el
+  // usuario según iba apareciendo. Se excluye "HIPOTECA" en la de -500€ porque también es a
+  // veces ese importe, pero siempre trae esa palabra en algún sitio. Riesgo conocido: un
+  // importe nuevo sin "HIPOTECA" caería aquí por error si coincidiera — vigilar al revisar
+  // un mes nuevo y corregir a mano si pasa.
   { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación hijas', importe: -500.00, excluye: 'HIPOTECA' },
+  { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación hijas', importe: -55.00 },
+  { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación propia', importe: -5000.00 },
+  { patron: '', categoria: 'inversion', destino: 'myinvestor', importe: -800.00 },
+  // Vado permanente de la puerta cochera de Casa — mismo organismo que el IBI y la basura,
+  // así que hace falta el importe exacto para no mezclarse con la regla de "Basura" de abajo
+  // (que vale para cualquier importe de este organismo sin dirección en el texto): al ser
+  // esta una regla EXACTA, gana siempre a esa, que es solo "genérica".
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', etiqueta: 'Vado permanente', importe: -33.68 },
+  // Préstamo de Leroy Merlin para amueblar el piso de alquiler (Mesías) — por el nombre de
+  // la financiera, vale para cualquier importe (la cuota puede variar).
+  { patron: 'ONEY', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Préstamo muebles' },
+  // Recibo de la luz de Casa — por el nombre de la compañía.
+  { patron: 'OCTOPUS ENERGY', categoria: 'inmueble', destino: 'casa', etiqueta: 'Luz' },
   // Pago de impuestos a Hacienda (declaración de la renta u otros) — "NRC" es el código que
   // usa la Agencia Tributaria en sus recibos, distinto del que usa una multa de aparcamiento
   // (que también aparece como "Pago de impuestos" pero sin NRC) — por eso NO se usa el texto
