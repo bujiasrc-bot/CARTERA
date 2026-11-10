@@ -2748,7 +2748,12 @@ async function rehacerHistBolsa(btn) {
 // Los títulos con derecho a cada reparto salen de BOLSA_LOTES_EVOL (fecha de compra < fecha ex-dividendo).
 const BOLSA_DIV_KEY      = 'cartera_bolsa_divs_v1';
 const BOLSA_DIVHIST_KEY  = 'cartera_bolsa_divhist_v1';
-const BOLSA_DIV_SEED_VER = 4;
+const BOLSA_DIV_SEED_VER = 5;
+// Repartos anunciados y confirmados (se pueden borrar en Datos > Bolsa > Dividendos; al registrar su cobro se retiran solos)
+const BOLSA_DIV_SEED_ANUN = [
+  // IAG: dividendo a cuenta de 2026, 0,053 €/acc bruto (+10,4 %), aprobado el 05/11/2026. Último día con derecho 02/12; ex-dividendo 03/12; pago desde el 07/12 (efectivo, Banco Santander)
+  { id:'seed-an-iag-20261203', ticker:'iag', ex:'2026-12-03', pay:'2026-12-07', ps:0.053 },
+];
 const BOLSA_DIV_SEED = [
   { id:'seed-scyr-20260129', ticker:'scyr', fecha:'2026-01-29', importe:34.65 },
   { id:'seed-scyr-20260701', ticker:'scyr', fecha:'2026-07-01', importe:57.92 },
@@ -2802,6 +2807,8 @@ function loadBolsaDivs() {
     d.cobrados.forEach(c => { if (c.id === 'seed-scyr-20260215') { c.id = 'seed-scyr-20260129'; c.fecha = '2026-01-29'; delete c.aprox; } });
     const have = new Set(d.cobrados.map(c => c.id));
     BOLSA_DIV_SEED.forEach(c => { if (!have.has(c.id)) d.cobrados.push({ ...c }); });
+    const haveA = new Set(d.anunciados.map(a => a.id));
+    BOLSA_DIV_SEED_ANUN.forEach(a => { if (!haveA.has(a.id)) d.anunciados.push({ ...a }); });
     d.ver = BOLSA_DIV_SEED_VER;
     saveBolsaDivs(d);
   }
