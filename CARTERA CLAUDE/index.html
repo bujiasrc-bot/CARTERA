@@ -283,6 +283,33 @@ body {
 .bpos-more { background:none; border:none; padding:0; margin-top:6px; cursor:pointer; color:var(--muted); font-family:inherit; font-size:12px; text-decoration:underline; }
 .bpos-act { display:flex; flex-wrap:wrap; gap:4px 16px; }
 
+/* Precio objetivo en cada ficha */
+.bpos-ob { border-top:1px solid var(--border); margin-top:10px; padding-top:10px; }
+.bpos-oh { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.bpos-oh .l { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
+.bpos-oh .v { font-size:16px; font-weight:700; color:var(--text); }
+.bpos-rc { font-size:12px; margin:2px 0 0; }
+.bpos-rbar { position:relative; height:30px; margin:12px 0 2px; }
+.bpos-rbar .tr { position:absolute; left:0; right:0; top:11px; height:6px; border-radius:3px; background:rgba(255,255,255,0.06); }
+.bpos-rbar .fl { position:absolute; top:11px; height:6px; border-radius:3px; }
+.bpos-rbar .mk { position:absolute; top:5px; width:2px; height:18px; border-radius:1px; transform:translateX(-1px); }
+.bpos-rbar .pt { position:absolute; top:7px; width:14px; height:14px; border-radius:50%; transform:translateX(-7px); border:2px solid #14141c; box-sizing:border-box; }
+.bpos-rtk { position:relative; height:28px; font-size:11px; color:var(--muted); }
+.bpos-rtk span { position:absolute; top:0; white-space:nowrap; }
+.bpos-rtk b { display:block; color:var(--text); font-weight:700; }
+.bpos-osrc { font-size:11px; color:var(--muted); margin:6px 0 0; display:flex; flex-wrap:wrap; gap:4px 8px; align-items:center; }
+.bpos-chip { display:inline-block; font-size:11px; padding:1px 8px; border-radius:6px; }
+.bpos-chip.ok { background:rgba(126,255,212,0.12); color:var(--green); }
+.bpos-chip.old { background:rgba(255,184,108,0.12); color:var(--yellow); }
+.bpos-nota { font-size:11px; color:var(--muted); margin-top:4px; line-height:1.5; }
+.bpos-ofm { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+.bpos-ofm label { display:block; font-size:11px; color:var(--muted); margin:0 0 2px; }
+.bpos-ofm .dvc-in { width:100%; box-sizing:border-box; }
+.bpos-ofm .w { grid-column:1 / -1; }
+.bpos-btn { background:none; border:1px solid var(--border); border-radius:8px; color:var(--muted); cursor:pointer; font-family:inherit; font-size:12px; padding:3px 10px; }
+.bpos-btn:hover { color:var(--text); border-color:var(--muted); }
+.bpos-oact { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+
 /* Simulador de venta (Bolsa) */
 .sim-intro { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; font-size:13px; color:var(--muted); }
 .sim-open { background:none; border:1px solid var(--accent); border-radius:8px; color:var(--text); cursor:pointer; font-family:inherit; font-size:12px; padding:5px 12px; }
@@ -1226,6 +1253,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
 <div id="page-bolsa" class="page">
   <div class="section-title">Bolsa</div>
   <div class="section-sub">Acciones directas en BME · mercado español</div>
+  <div id="bol-obj-alert"></div>
   <div id="bol-div-alert"></div>
 
   <div class="stats-row">
@@ -2477,6 +2505,104 @@ function renderBolsa() {
   renderBolsaDivs();
 }
 
+// ── BOLSA · PRECIO OBJETIVO POR VALOR ─────────────────────────────────────────
+// Un objetivo por acción (consenso de analistas o "mi objetivo") con fecha y nota. Moneda = la de cotización de la app (€ en
+// Madrid, $ en TSM). Se sincroniza entre dispositivos. Los consensos iniciales se cargan una vez (versión de datos) y se editan a mano.
+const BOLSA_OBJ_KEY = 'cartera_bolsa_obj_v1';
+const BOLSA_OBJ_SEED_VER = 1;
+const BOLSA_OBJ_SEED = {
+  iag:  { precio: 6.46,   fuente:'consenso', fecha:'2026-11-10', nota:'15 analistas (13 compra, 1 mantener, 1 venta). Media 539,78 p ≈ 6,46 € a 1 £ = 1,1966 €. Rango 409–628 p' },
+  san:  { precio: 13.68,  fuente:'consenso', fecha:'2026-11-04', nota:'21 analistas (16 compra, 5 mantener, 0 venta). Rango 11,30–15,05 €' },
+  itx:  { precio: 60.39,  fuente:'consenso', fecha:'2026-11-04', nota:'24 analistas (20 compra, 3 mantener, 1 venta). Rango 41,50–67 €. Resultados el 02/12' },
+  scyr: { precio: 5.31,   fuente:'consenso', fecha:'2026-10-27', nota:'Media de Reuters (sin nº de analistas). Oddo BHF: 5,10 €' },
+  tsm:  { precio: 586.69, fuente:'consenso', fecha:'2026-11-11', nota:'21 analistas (20 compra). Mediana 560 $; rango 440–1.000 $' },
+};
+let BOLSA_OBJ_EDIT = '';
+function saveBolsaObj(d) { try { localStorage.setItem(BOLSA_OBJ_KEY, JSON.stringify({ ver: d.ver || BOLSA_OBJ_SEED_VER, items: d.items })); } catch (e) {} }
+function loadBolsaObj() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(BOLSA_OBJ_KEY)); } catch (e) {}
+  if (!d || typeof d !== 'object') d = { ver: 0, items: {} };
+  if (!d.items || typeof d.items !== 'object') d.items = {};
+  if ((d.ver || 0) < BOLSA_OBJ_SEED_VER) {                                      // alta "de fábrica": no pisa lo que ya exista; si se quita un objetivo no vuelve
+    Object.keys(BOLSA_OBJ_SEED).forEach(k => { if (!d.items[k]) d.items[k] = { ...BOLSA_OBJ_SEED[k] }; });
+    d.ver = BOLSA_OBJ_SEED_VER;
+    saveBolsaObj(d);
+  }
+  return d;
+}
+function editarObj(tk)  { BOLSA_OBJ_EDIT = tk; renderBolsaPos(BOLSA_POS_ULT); const i = document.getElementById('obj-p'); if (i) i.focus(); }
+function cancelarObj()  { BOLSA_OBJ_EDIT = ''; renderBolsaPos(BOLSA_POS_ULT); }
+function guardarObj(tk) {
+  const p = parseFloat(String(document.getElementById('obj-p').value).replace(',', '.'));
+  if (!(p > 0)) { showDatosSaved('Escribe el precio objetivo'); return; }
+  const d = loadBolsaObj();
+  d.items[tk.toLowerCase()] = { precio: +p.toFixed(2), fuente: document.getElementById('obj-s').value === 'consenso' ? 'consenso' : 'mio',
+    fecha: document.getElementById('obj-f').value || isoHoy(), nota: (document.getElementById('obj-n').value || '').trim().slice(0, 140) };
+  saveBolsaObj(d); BOLSA_OBJ_EDIT = '';
+  renderBolsaPos(BOLSA_POS_ULT); showDatosSaved('Objetivo guardado ✓');
+}
+function quitarObj(tk) {
+  const d = loadBolsaObj(); delete d.items[tk.toLowerCase()]; saveBolsaObj(d); BOLSA_OBJ_EDIT = '';
+  renderBolsaPos(BOLSA_POS_ULT); showDatosSaved('Objetivo quitado ✓');
+}
+function venderAlObjetivo(tk) {                                                 // abre el simulador de venta con el precio objetivo
+  const O = loadBolsaObj().items[tk.toLowerCase()], r = BOLSA_POS_ULT.find(x => x.ticker === tk);
+  if (!O || !r) return;
+  simularVenta(tk, r.usd ? O.precio * (loadBolsaPrecios().usdeur || 0.8639) : O.precio);
+}
+
+function bolsaObjHtml(g) {
+  const O = loadBolsaObj().items[g.tk.toLowerCase()], mon = g.usd ? '$' : '€';
+  const fp  = v => v.toFixed(2).replace('.', ',') + ' ' + mon;
+  const esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  if (BOLSA_OBJ_EDIT === g.tk) {
+    return `<div class="bpos-ob"><div class="bpos-oh"><span class="l">Objetivo</span></div>
+      <div class="bpos-ofm">
+        <div><label>Precio objetivo (${mon})</label><input id="obj-p" class="dvc-in" type="number" step="0.01" inputmode="decimal" value="${O ? O.precio : ''}"></div>
+        <div><label>Fecha</label><input id="obj-f" class="dvc-in" type="date" value="${O ? O.fecha : isoHoy()}"></div>
+        <div class="w"><label>Fuente</label><select id="obj-s" class="dvc-in"><option value="mio"${O && O.fuente === 'mio' ? ' selected' : ''}>Mi objetivo</option><option value="consenso"${!O || O.fuente === 'consenso' ? ' selected' : ''}>Consenso de analistas</option></select></div>
+        <div class="w"><label>Nota (opcional)</label><input id="obj-n" class="dvc-in" type="text" maxlength="140" placeholder="de dónde sale, o cuándo revisarlo" value="${esc(O && O.nota)}"></div>
+      </div>
+      <div class="bpos-oact"><button class="bpos-btn" onclick="guardarObj('${g.tk}')">Guardar</button><button class="bpos-btn" onclick="cancelarObj()">Cancelar</button>${O ? `<button class="bpos-btn" onclick="quitarObj('${g.tk}')">Quitar objetivo</button>` : ''}</div></div>`;
+  }
+  if (!O) {
+    return `<div class="bpos-ob"><div class="bpos-oh"><span class="l">Objetivo</span><span class="v" style="color:var(--muted);font-weight:400">Sin objetivo</span></div>
+      <div class="bpos-nota">Pon un precio objetivo para ver cuánto recorrido te queda y recibir un aviso cuando se acerque.</div>
+      <div class="bpos-act"><button class="bpos-more" onclick="editarObj('${g.tk}')">Añadir objetivo</button></div></div>`;
+  }
+  const avg = g.costeAcc / g.acc, price = g.precio, t = O.precio;
+  const up = (t / price - 1) * 100, hit = price >= t, edad = isoDias(O.fecha, isoHoy()), viejo = edad > 90;
+  const lo = Math.min(avg, price) * 0.985, hi = Math.max(t, price) * 1.015;
+  const P = v => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
+  const lado = v => P(v) > 55 ? 'right:' + (100 - P(v)) + '%;text-align:right' : 'left:' + P(v) + '%';
+  const f0 = Math.min(avg, price);
+  return `<div class="bpos-ob">
+    <div class="bpos-oh"><span class="l">Objetivo</span><span class="v">${fp(t)}</span></div>
+    <div class="bpos-rc ${hit || up > 0 ? 'bpos-up' : 'bpos-dn'}">${hit ? 'Objetivo superado en un ' + Math.abs(up).toFixed(1).replace('.', ',') + ' %' : 'Te quedan +' + up.toFixed(1).replace('.', ',') + ' % hasta el objetivo'}</div>
+    <div class="bpos-rbar"><div class="tr"></div>
+      <div class="fl" style="left:${P(f0)}%;width:${Math.max(1, P(price) - P(f0))}%;background:${price >= avg ? 'var(--green)' : 'var(--red)'}"></div>
+      <div class="mk" style="left:${P(avg)}%;background:var(--muted)"></div><div class="mk" style="left:${P(t)}%;background:var(--text)"></div>
+      <div class="pt" style="left:${P(price)}%;background:${hit ? 'var(--green)' : 'var(--blue)'}"></div></div>
+    <div class="bpos-rtk"><span style="${lado(avg)}">tu coste<b>${fp(avg)}</b></span><span style="${lado(t)}">objetivo<b>${fp(t)}</b></span></div>
+    <div class="bpos-osrc"><span>${O.fuente === 'mio' ? 'Mi objetivo' : 'Consenso de analistas'} · ${isoDMY(O.fecha)}</span>${hit ? '<span class="bpos-chip ok">Alcanzado</span>' : viejo ? `<span class="bpos-chip old">Desactualizado · hace ${edad} días</span>` : '<span class="bpos-chip ok">Al día</span>'}</div>
+    ${O.nota ? `<div class="bpos-nota">${esc(O.nota)}</div>` : ''}
+    <div class="bpos-act"><button class="bpos-more" onclick="editarObj('${g.tk}')">Editar</button><button class="bpos-more" onclick="venderAlObjetivo('${g.tk}')">Vender al objetivo</button></div></div>`;
+}
+function renderBolsaObjAlert(lista) {                                          // aviso arriba: objetivo superado o a ≤ 5 %
+  const box = document.getElementById('bol-obj-alert');
+  if (!box) return;
+  const items = loadBolsaObj().items, out = [];
+  lista.forEach(g => {
+    const o = items[g.tk.toLowerCase()]; if (!o) return;
+    const m = g.usd ? '$' : '€', fp = v => v.toFixed(2).replace('.', ',') + ' ' + m, up = (o.precio / g.precio - 1) * 100;
+    const mio = o.fuente === 'mio';
+    if (g.precio >= o.precio) out.push(`🎯 <b>${g.tk}</b> ha superado ${mio ? 'tu objetivo' : 'el objetivo de los analistas'} (${fp(o.precio)}): está en ${fp(g.precio)}.`);
+    else if (up <= 5) out.push(`🎯 <b>${g.tk}</b> está a un ${up.toFixed(1).replace('.', ',')} % ${mio ? 'de tu objetivo' : 'del objetivo de los analistas'} (${fp(o.precio)}).`);
+  });
+  box.innerHTML = out.length ? '<div style="background:rgba(255,184,108,0.1);border:1px solid rgba(255,184,108,0.35);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;line-height:1.7">' + out.join('<br>') + '</div>' : '';
+}
+
 // ── BOLSA · POSICIONES (una ficha por acción; las compras quedan plegadas) ────
 // Fusiona los lotes de cada valor: pagaste vs vale hoy, resultado grande en % y €, peso sobre el total de la bolsa.
 let BOLSA_POS_ULT = [];
@@ -2528,10 +2654,14 @@ function renderBolsaPos(rows) {
       <div class="bpos-br"><span class="l">Pagaste</span><span class="tr"><span class="fl" style="width:${g.inv / mx * 100}%;background:rgba(255,255,255,0.28)"></span></span><span class="v private">${n0(g.inv)} €</span></div>
       <div class="bpos-br"><span class="l">Vale hoy</span><span class="tr"><span class="fl" style="width:${g.val / mx * 100}%;background:${g.pg >= 0 ? 'var(--green)' : 'var(--red)'}"></span></span><span class="v private">${n0(g.val)} €</span></div>
       <div class="bpos-ft">${g.acc} acc. · coste medio <span class="private">${px(g.costeAcc / g.acc, g.usd)}</span> · hoy ${px(g.precio, g.usd)}</div>
+      ${bolsaObjHtml(g)}
       <div class="bpos-act"><button class="bpos-more" onclick="togglePosLotes('${g.tk}')">${abierta ? 'Ocultar compras' : 'Ver ' + g.lotes.length + ' compra' + (g.lotes.length > 1 ? 's' : '')}</button><button class="bpos-more" onclick="simularVenta('${g.tk}')">Simular venta</button></div>
       <div class="bpos-lots"${abierta ? '' : ' hidden'}>${lotes}</div>
     </div>`;
   }).join('');
+  renderBolsaObjAlert(lista);
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'SELECT') && box.contains(ae)) return;   // no repintar mientras se edita un objetivo
   box.innerHTML = resumen + `<div class="bpos-grid">${fichas}</div>`;
 }
 
@@ -3408,8 +3538,9 @@ function simOtros() {                                                          /
 }
 const simOtrosAuto = () => Math.round(simOtros().reduce((s, x) => s + x.bruto, 0) * 100) / 100;
 
-function simularVenta(tk) {                                                    // botón "Simular venta" de cada ficha
-  SIM_OPEN = true; SIM_TK_INI = tk;
+let SIM_PX_INI = 0;
+function simularVenta(tk, pxEur) {                                             // botón "Simular venta" de cada ficha (pxEur: precio de venta, p. ej. el objetivo)
+  SIM_OPEN = true; SIM_TK_INI = tk; SIM_PX_INI = pxEur || 0;
   const box = simId('bol-sim'); if (box) box.dataset.b = '';
   renderBolsaSim();
   const card = simId('bol-sim-card'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3428,7 +3559,11 @@ function renderBolsaSim() {
     return;
   }
   if (!BOLSA_POS_ULT.length) return;
-  if (box.dataset.b !== '1') { simBuild(box); box.dataset.b = '1'; simPick(SIM_TK_INI); SIM_TK_INI = ''; return; }
+  if (box.dataset.b !== '1') {
+    simBuild(box); box.dataset.b = '1'; simPick(SIM_TK_INI); SIM_TK_INI = '';
+    if (SIM_PX_INI) { simId('sim-p').value = SIM_PX_INI.toFixed(2); SIM_MANP = true; SIM_PX_INI = 0; simCalc(); }   // precio objetivo
+    return;
+  }
   const ae = document.activeElement;
   if (ae && box.contains(ae)) return;                                          // no repintar mientras escribes
   simCalc();
@@ -4668,6 +4803,7 @@ refreshIbex();           // IBEX 35: diario cada 12 h, mensual (histórico compl
     'cartera_inm_valores_v1',
     'cartera_bolsa_precios_v1', 'cartera_bolsa_ts',
     'cartera_bolsa_divs_v1',
+    'cartera_bolsa_obj_v1',
     'cartera_gastos_ext_v1',
     'cartera_best_aport_v1',
     'cartera_efectivo_v1',
