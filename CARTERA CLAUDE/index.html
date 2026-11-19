@@ -1096,7 +1096,7 @@ body.privacy .donut-center .big { filter: blur(6px); user-select:none; }
       </div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Ranking por rentabilidad %</div>
+      <div class="chart-title">Ranking por rentabilidad % <span style="font-size:11px;color:var(--muted);font-weight:400">· total y anualizada (desde 1 año)</span></div>
       <div id="ranking-list"></div>
     </div>
   </div>
@@ -1987,7 +1987,9 @@ function buildForm() {
     g.className = 'form-group';
     g.innerHTML = `
       <label>${LABELS[k].toUpperCase()}</label>
-      <input type="number" id="inp-${k}" value="${state[k].toFixed(2)}" step="0.01" min="0" placeholder="${BASE[k].act}" class="private" />`;
+      <input type="number" id="inp-${k}" value="${state[k].toFixed(2)}" step="0.01" min="0" placeholder="${BASE[k].act}" class="private" />
+      ${k === 'bolsa' ? '' : `<label style="margin-top:6px;font-size:10px;color:var(--muted)">Fecha de inicio (rent. anualizada)</label>
+      <input type="date" id="inp-${k}-fecha" value="${state[k + '_fecha'] || ''}" />`}`;
     grid.appendChild(g);
   }
 
@@ -2072,6 +2074,8 @@ function saveValues() {
   for (const k in BASE) {
     const val = parseFloat(document.getElementById('inp-' + k).value);
     if (!isNaN(val) && val >= 0) state[k] = val;
+    const fEl = document.getElementById('inp-' + k + '-fecha');
+    if (fEl) { if (fEl.value) state[k + '_fecha'] = fEl.value; else delete state[k + '_fecha']; }
   }
   saveState();
   updateLastUpdateLabel();
@@ -2136,6 +2140,34 @@ function xirr(cashflows) {
     if (flo * fm < 0) hi = mid; else { lo = mid; flo = fm; }
   }
   return (lo + hi) / 2;
+}
+
+// Rentabilidad anualizada (TIR) por plataforma para el Dashboard.
+// Devuelve { r, nota }: r = tasa anual (o null si no se puede calcular) y nota = explicación.
+// Mínimo 1 año de antigüedad (como Bestinver): antes, anualizar exagera.
+const ANUAL_MIN_DIAS = 365;
+function rentAnualFor(k) {
+  const hoy = new Date().toISOString().slice(0, 10);
+  let flows = null, nota = '';
+  if (k === 'bestinver') {
+    flows = bestCashflowsAll();
+    nota = 'Solo con dinero de fecha real conocida (compras base con fecha + aportaciones).';
+  } else if (k === 'bolsa' && typeof BOLSA_LOTES_EVOL !== 'undefined') {
+    flows = BOLSA_LOTES_EVOL.map(l => ({ fecha: l.fecha, importe: -l.coste }));
+    flows.push({ fecha: hoy, importe: actFor(k) });
+    nota = 'Calculada con la fecha de compra de cada lote.';
+  } else {
+    const fecha = state[k + '_fecha'];
+    if (!fecha) return { r: null, nota: 'Falta la fecha de inicio: ponla en "Actualizar valores actuales".' };
+    flows = [{ fecha, importe: -invFor(k) }, { fecha: hoy, importe: actFor(k) }];
+    nota = 'Aproxima todo el dinero como invertido en la fecha de inicio.';
+  }
+  if (!flows || flows.length < 2) return { r: null, nota: 'Sin fechas suficientes.' };
+  const masAntigua = Math.min(...flows.map(f => new Date(f.fecha).getTime()));
+  const dias = Math.round((Date.now() - masAntigua) / 86400000);
+  if (dias < ANUAL_MIN_DIAS) return { r: null, nota: `Solo ${dias} días de antigüedad: se muestra a partir de 1 año.` };
+  const r = xirr(flows);
+  return { r, nota };
 }
 
 // gain/rent para plataformas normales (BASE) o bestinver
@@ -2254,6 +2286,9 @@ function renderDashboard() {
     const pct = (r * 100).toFixed(1);
     const fillW = Math.max(0, (r / maxR) * 100).toFixed(1);
     const color = r >= 0 ? 'var(--green)' : 'var(--red)';
+    const an = rentAnualFor(k);
+    const anTxt = an.r == null ? '—' : fmtPct(an.r) + '/año';
+    const anColor = an.r == null ? 'var(--muted)' : (an.r >= 0 ? 'var(--green)' : 'var(--red)');
     return `
       <div class="rank-item">
         <span class="rank-num">${i + 1}</span>
@@ -2262,6 +2297,7 @@ function renderDashboard() {
           <div class="rank-bar"><div class="rank-fill" style="width:${fillW}%;background:${color}"></div></div>
         </div>
         <span class="rank-pct" style="color:${color}">${r >= 0 ? '+' : ''}${pct}%</span>
+        <span class="rank-pct" style="color:${anColor};min-width:78px;text-align:right;font-size:12px" title="${an.nota.replace(/"/g, '&quot;')}">${anTxt}</span>
       </div>`;
   }).join('');
 
