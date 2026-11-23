@@ -6018,12 +6018,17 @@ const MOV_REGLAS_DEFECTO = [
   { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación hijas', importe: -500.00, excluye: 'HIPOTECA' },
   { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación hijas', importe: -55.00 },
   { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación propia', importe: -5000.00 },
+  { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación propia', importe: -6000.00 },
   { patron: '', categoria: 'inversion', destino: 'myinvestor', importe: -800.00 },
-  // Vado permanente de la puerta cochera de Casa — mismo organismo que el IBI y la basura,
-  // así que hace falta el importe exacto para no mezclarse con la regla de "Basura" de abajo
-  // (que vale para cualquier importe de este organismo sin dirección en el texto): al ser
-  // esta una regla EXACTA, gana siempre a esa, que es solo "genérica".
+  // Vado permanente de la puerta cochera de Casa, e IVTM (impuesto de circulación) del propio
+  // coche BMW M2 — mismo organismo que el IBI y la basura, así que hace falta el importe
+  // exacto para no mezclarse con la regla de "Basura" de abajo (que vale para cualquier
+  // importe de este organismo sin dirección en el texto): al ser estas reglas EXACTAS, ganan
+  // siempre a esa, que es solo "genérica". El detalle del recibo del IVTM (matrícula incluida)
+  // no viene en las columnas del Excel, solo en la web del recibo — no hay texto con el que
+  // hacer una regla más fiable que el importe.
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', etiqueta: 'Vado permanente', importe: -33.68 },
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'coche', etiqueta: 'IVTM (impuesto circulación)', importe: -125.45 },
   // Préstamo de Leroy Merlin para amueblar el piso de alquiler (Mesías) — por el nombre de
   // la financiera, vale para cualquier importe (la cuota puede variar).
   { patron: 'ONEY', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Préstamo muebles' },
@@ -6071,6 +6076,10 @@ const MOV_REGLAS_DEFECTO = [
   // no es el seguro de la vivienda): el usuario lo transfiere a mano con esta misma
   // coletilla en el texto, con independencia del importe de cada derrama.
   { patron: 'GASTO VARIOS MESIAS', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Derramas' },
+  // Otra derrama de Mesías, esta por la instalación de una plataforma en el inmueble — el
+  // texto también dice "piso", así que va DESPUÉS de la regla de respaldo "PISO" (de arriba)
+  // para que esta, más específica, gane ("último gana" entre reglas del mismo nivel).
+  { patron: 'CUOTA PLATAFORMA', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Derramas' },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'inversion', destino: 'indexa', importe: -350.00 },
   { patron: 'COMUNIDAD', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Comunidad' },
   { patron: 'TRANSFERENCIA REALIZADA', categoria: 'coche', destino: null, importe: -282.52 },
