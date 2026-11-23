@@ -6156,6 +6156,7 @@ const MOV_CATS = {
   tarjeta:   { label: 'Tarjeta',                    icono: '💳', signo: -1, sec: 'tarjetas' },
   seguro:    { label: 'Seguro',                     icono: '🛡️', signo: -1, sec: 'seguros' },
   coche:     { label: 'Préstamo coche',             icono: '🚗', signo: -1 },
+  impuestos: { label: 'Impuestos',                  icono: '🧾', signo: -1 },
   inmueble:  { label: 'Gasto de inmueble',          icono: '🏠', signo: -1, lista: [{ id:'mesias', label:'Mesías' }, { id:'casa', label:'Casa (vivienda habitual)' }] },
   inversion: { label: 'Aportación a inversión',     icono: '📈', signo: -1, lista: [{ id:'indexa', label:'Indexa Capital' }, { id:'bestinver', label:'Bestinver' }, { id:'bolsa', label:'Bolsa' }, { id:'myinvestor', label:'MyInvestor' }, { id:'otros', label:'Otra' }] },
   paypal:    { label: 'PayPal / compras online',    icono: '🛒', signo: -1 },
@@ -6207,7 +6208,7 @@ const MOV_REGLAS_DEFECTO = [
   // no viene en las columnas del Excel, solo en la web del recibo — no hay texto con el que
   // hacer una regla más fiable que el importe.
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'casa', etiqueta: 'Vado permanente', importe: -33.68 },
-  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'coche', etiqueta: 'IVTM (impuesto circulación)', importe: -125.45 },
+  { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'impuestos', etiqueta: 'IVTM (BMW)', importe: -125.45 },
   // Préstamo de Leroy Merlin para amueblar el piso de alquiler (Mesías) — por el nombre de
   // la financiera, vale para cualquier importe (la cuota puede variar).
   { patron: 'ONEY', categoria: 'inmueble', destino: 'mesias', etiqueta: 'Préstamo muebles' },
@@ -6217,7 +6218,7 @@ const MOV_REGLAS_DEFECTO = [
   // usa la Agencia Tributaria en sus recibos, distinto del que usa una multa de aparcamiento
   // (que también aparece como "Pago de impuestos" pero sin NRC) — por eso NO se usa el texto
   // genérico "Pago de impuestos" solo, que mezclaría las dos cosas.
-  { patron: 'NRC', categoria: 'gasto', etiqueta: 'Impuestos (Hacienda)' },
+  { patron: 'NRC', categoria: 'impuestos', etiqueta: 'Hacienda' },
   // Devoluciones/reembolsos ligados a la tarjeta (importe variable): se cuentan como ingreso
   // aparte, sin restarlas del gasto de la tarjeta, para que ambas cosas queden a la vista.
   { patron: 'DEVOLUCION GASTO TARJETA', categoria: 'ingreso', etiqueta: 'Devolución tarjeta' },
