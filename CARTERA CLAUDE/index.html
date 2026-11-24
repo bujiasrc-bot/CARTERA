@@ -6181,11 +6181,14 @@ const MOV_REGLAS_DEFECTO = [
   { patron: 'OCASO', categoria: 'seguro' },
   // El usuario tiene TRES pólizas distintas con Allianz, con el mismo texto de banco — solo
   // se distinguen por el importe exacto (confirmado por el usuario): la de vida (205,89€),
-  // la del propio coche BMW M2C (686,97€) y la del Audi Q3 de Ruth (511,45€). Nunca se
-  // escriben las matrículas en el código.
+  // la del propio coche BMW M2C (686,97€), la del Audi Q3 de Ruth (511,45€) y la del Audi A3
+  // que el usuario lleva en leasing (439,62€ — la cuota del leasing en sí, ~282€, es otro
+  // movimiento aparte, categoría "Préstamo coche"). Nunca se escriben las matrículas en el
+  // código.
   { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro de vida', importe: -205.89 },
   { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro coche', importe: -686.97 },
   { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro coche Ruth', importe: -511.45 },
+  { patron: 'ALLIANZ', categoria: 'seguro', etiqueta: 'Seguro coche Audi A3', importe: -439.62 },
   // El usuario aporta a Bestinver con importes variables (mensual + extras puntuales), así
   // que esta va por texto, no por importe — vale para cualquier cantidad.
   { patron: 'BESTINVER', categoria: 'inversion', destino: 'bestinver' },
@@ -6200,6 +6203,9 @@ const MOV_REGLAS_DEFECTO = [
   { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación propia', importe: -5000.00 },
   { patron: '', categoria: 'inversion', destino: 'bestinver', etiqueta: 'Aportación propia', importe: -6000.00 },
   { patron: '', categoria: 'inversion', destino: 'myinvestor', importe: -800.00 },
+  // Dinero destinado a comprar acciones en Bolsa, sin ningún texto fiable del banco.
+  { patron: '', categoria: 'inversion', destino: 'bolsa', importe: -900.00 },
+  { patron: '', categoria: 'inversion', destino: 'bolsa', importe: -660.00 },
   // Vado permanente de la puerta cochera de Casa, e IVTM (impuesto de circulación) del propio
   // coche BMW M2 — mismo organismo que el IBI y la basura, así que hace falta el importe
   // exacto para no mezclarse con la regla de "Basura" de abajo (que vale para cualquier
@@ -6231,6 +6237,10 @@ const MOV_REGLAS_DEFECTO = [
   // Gastos de vacaciones (importe variable, puede ser cualquier cosa: billetes, hotel,
   // aportaciones compartidas...) — por la palabra del texto, nunca por nombres de persona.
   { patron: 'VACACION', categoria: 'gasto', etiqueta: 'Vacaciones' },
+  // Cambio de divisas antes de un viaje: no siempre dice "vacaciones" en el texto, así que
+  // también se reconoce por esta coletilla fija del banco (venta de billetes extranjeros al
+  // usuario, para comprar moneda del país de destino).
+  { patron: 'VENTA BILLETES EXTRANJEROS', categoria: 'gasto', etiqueta: 'Vacaciones' },
   // IBI: el importe sube un poco cada año, así que estas son "aproximadas" (± variación
   // razonable) en vez de exactas — y si hace falta desempatar, el mes de cobro (septiembre).
   { patron: 'ORGANISMO AUTONOMO DE RECAUDACION', categoria: 'inmueble', destino: 'mesias', etiqueta: 'IBI', importe: -48.61, aprox: true, mes: 9 },
